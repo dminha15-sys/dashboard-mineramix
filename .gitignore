@@ -1,0 +1,22 @@
+# Chaves secretas - NUNCA subir!
+dashboard-service-key.json
+*.key
+*.pem
+*.json com credenciais
+
+# Backend
+backend/node_modules/
+backend/.env
+backend/*.log
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
