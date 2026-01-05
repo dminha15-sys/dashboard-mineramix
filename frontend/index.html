@@ -7,7 +7,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
+        :root 
+            body.dark {
+            --cor-primaria: #ffffff;
+            --cor-secundaria: #FF6B35;
+            --cor-fundo: #121212;
+            --cor-card: #1e1e1e;
+            --cor-texto: #e9ecef;
+            --cor-texto-sec: #adb5bd;
+            --cor-borda: #2c2c2c;
+            --cor-sidebar: #0d0f12;
+        }
+
+        
+        
+        {
             --cor-primaria: #000000;
             --cor-secundaria: #FF6B35;
             --cor-fundo: #F8F9FA;
@@ -143,6 +157,10 @@
 
         /* Botões */
         .action-buttons {
+            <button class="btn btn-secondary" onclick="toggleDarkMode()" id="btnDark">
+    <i class="fas fa-moon"></i> Modo Noturno
+</button>
+
             display: flex;
             gap: 8px;
             margin-bottom: 1.5rem;
