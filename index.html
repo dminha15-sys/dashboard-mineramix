@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Mineramix - SIMPLES</title>
+    <title>TRANSPORTE MINÉRIO - CRISTHIAN - SIMPLES</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -27,8 +27,15 @@
             font-size: 2.5rem;
             margin-bottom: 10px;
         }
-        h1 span {
-            color: #FF6B35;
+.titulo-mineramix {
+    color: white;      /* MINERA em branco */
+    font-weight: bold;
+}
+
+.titulo-mineramix span {
+    color: #FF6B35;    /* MIX em laranja */
+}
+
         }
         .status {
             background: white;
@@ -132,13 +139,90 @@
         tr:hover {
             background: #f9f9f9;
         }
+
+        /* Estilo para telas pequenas (celular) */
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+        font-size: 14px;
+    }
+    
+    header {
+        padding: 20px 15px;
+    }
+    
+    h1 {
+        font-size: 1.8rem;
+    }
+    
+    .cards {
+        grid-template-columns: 1fr; /* Só uma coluna, para ficar vertical */
+        gap: 15px;
+    }
+    
+    .card {
+        padding: 15px;
+        font-size: 0.9rem;
+    }
+    
+    .valor {
+        font-size: 1.8rem;
+    }
+    
+    button {
+        width: 100%; /* Botão ocupa a largura toda */
+        padding: 12px 0;
+        font-size: 1.1rem;
+        margin: 8px 0;
+    }
+    
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+    
+    thead tr {
+        display: none; /* Esconde cabeçalho para simplificar */
+    }
+    
+    tbody tr {
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 10px;
+        background: white;
+    }
+    
+    tbody td {
+        padding-left: 50%;
+        position: relative;
+        text-align: left;
+        border: none;
+        border-bottom: 1px solid #eee;
+    }
+    
+    tbody td::before {
+        position: absolute;
+        left: 15px;
+        width: 45%;
+        white-space: nowrap;
+        font-weight: bold;
+        content: attr(data-label);
+        text-align: left;
+        color: #333;
+    }
+    
+    #tabelaContainer {
+        overflow-x: auto;
+    }
+}
+
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Dashboard <span>Mineramix</span></h1>
-            <p>Controle de Logística em Tempo Real</p>
+            <h1>Dashboard <span class="titulo-mineramix">MINERA<span>MIX</span></span></h1>
+            <p>Controle de Logística em Transporte Minério</p>
             <div class="status offline" id="status">🔴 OFFLINE</div>
         </header>
 
@@ -310,13 +394,14 @@
                     <tbody>
             `;
             
-            linhas.forEach(linha => {
-                tabelaHTML += `
-                    <tr>
-                        ${linha.map(celula => `<td>${celula || ''}</td>`).join('')}
-                    </tr>
-                `;
-            });
+linhas.forEach(linha => {
+    tabelaHTML += `
+        <tr>
+            ${linha.map((celula, i) => `<td data-label="${cabecalhos[i]}">${celula || ''}</td>`).join('')}
+        </tr>
+    `;
+});
+
             
             tabelaHTML += `
                     </tbody>
