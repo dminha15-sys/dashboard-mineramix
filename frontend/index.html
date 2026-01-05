@@ -507,14 +507,6 @@
                     <i class="fas fa-chart-pie"></i>
                     <span class="menu-text">Visão Geral</span>
                 </li>
-                <li class="menu-item" data-report="status">
-                    <i class="fas fa-check-circle"></i>
-                    <span class="menu-text">Por Status</span>
-                </li>
-                <li class="menu-item" data-report="pagamento">
-                    <i class="fas fa-money-check-alt"></i>
-                    <span class="menu-text">Formas de PGTO</span>
-                </li>
                 <li class="menu-item" data-report="motoristas">
                     <i class="fas fa-user-tie"></i>
                     <span class="menu-text">Por Motorista</span>
@@ -964,32 +956,6 @@
                 </div>
             `;
             
-            // Status (gráfico)
-            const statusEntries = Object.entries(resumo.status);
-            const statusChart = statusEntries.length > 0 ? `
-                <div class="chart-container">
-                    <h3 style="margin-bottom: 1rem; font-size: 1rem;">Distribuição por Status</h3>
-                    <div class="chart-bars">
-                        ${statusEntries.map(([status, dados]) => {
-                            const percentual = (dados.valor / resumo.totalValor * 100).toFixed(1);
-                            const altura = Math.max(20, percentual * 1.5);
-                            let cor = 'var(--cor-secundaria)';
-                            
-                            if (status.toLowerCase().includes('pago')) cor = 'var(--cor-pago)';
-                            else if (status.toLowerCase().includes('pendente')) cor = 'var(--cor-pendente)';
-                            else if (status.toLowerCase().includes('analise') || status.toLowerCase().includes('análise')) cor = 'var(--cor-analise)';
-                            
-                            return `
-                                <div class="chart-bar">
-                                    <div class="bar" style="height: ${altura}px; background: ${cor};"></div>
-                                    <div class="bar-label">${status}</div>
-                                    <div style="font-size: 0.7rem; margin-top: 2px;">${percentual}%</div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            ` : '';
             
             // Top motoristas e veículos
             const topMotoristas = resumo.motoristasOrdenados.slice(0, 5);
@@ -1051,7 +1017,8 @@
                 </div>
             `;
             
-            elementos.contentArea.innerHTML = metricsHTML + statusChart + summaryHTML;
+                elementos.contentArea.innerHTML = metricsHTML + summaryHTML;
+
         }
 
         // Relatório por Status
