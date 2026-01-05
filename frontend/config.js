@@ -2,10 +2,7 @@
 const CONFIG = {
     // Mude para sua URL do Render quando hospedar
     API_URL: 'https://seu-backend.onrender.com/api/dados',
-    
-    // Ou use localhost para desenvolvimento
-    // API_URL: 'http://localhost:3000/api/dados',
-    
+       
     UPDATE_INTERVAL: 300000, // 5 minutos
     ITEMS_PER_PAGE: 10,
     
