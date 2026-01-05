@@ -476,50 +476,61 @@
         // ========== FUNÇÕES DE ANÁLISE ESPECÍFICA ==========
 
         // Detectar colunas da SUA planilha
-        function detectarColunas(cabecalhos) {
-            const mapeamento = {
-                'DATA': { tipo: 'data', indice: null, nomeExato: 'DATA' },
-                'CLIENTE': { tipo: 'cliente', indice: null, nomeExato: 'CLIENTE' },
-                'MOTORISTA': { tipo: 'motorista', indice: null, nomeExato: 'MOTORISTA' },
-                'PLACA': { tipo: 'veiculo', indice: null, nomeExato: 'PLACA' },
-                'ORIGEM': { tipo: 'origem', indice: null, nomeExato: 'ORIGEM' },
-                'DESTINO': { tipo: 'destino', indice: null, nomeExato: 'DESTINO' },
-                'KM': { tipo: 'km', indice: null, nomeExato: 'KM' },
-                'VALOR': { tipo: 'valor', indice: null, nomeExato: 'VALOR' },
-                'FORMA PGTO': { tipo: 'pagamento', indice: null, nomeExato: 'FORMA PGTO' },
-                'COMPROVANTE': { tipo: 'comprovante', indice: null, nomeExato: 'COMPROVANTE' },
-                'DATA PGTO': { tipo: 'data_pgto', indice: null, nomeExato: 'DATA PGTO' },
-                'STATUS': { tipo: 'status', indice: null, nomeExato: 'STATUS' }
-            };
-            
-            // Mapear índices baseado nos cabeçalhos exatos
-            cabecalhos.forEach((cabecalho, index) => {
-                const cabecalhoUpper = cabecalho.trim().toUpperCase();
-                
-                // Verificar mapeamento direto
-                for (const key in mapeamento) {
-                    if (cabecalhoUpper === key || cabecalhoUpper.includes(key)) {
-                        mapeamento[key].indice = index;
-                        break;
-                    }
-                }
-            });
-            
-            // Converter para array
-            const colunas = [];
-            for (const key in mapeamento) {
-                if (mapeamento[key].indice !== null) {
-                    colunas.push({
-                        nome: mapeamento[key].nomeExato,
-                        indice: mapeamento[key].indice,
-                        tipo: mapeamento[key].tipo
-                    });
-                }
-            }
-            
-            return colunas;
+      function detectarColunas(cabecalhos) {
+    console.log("🔍 Cabeçalhos recebidos:", cabecalhos); // Para debug
+    
+    const mapeamento = {};
+    
+    cabecalhos.forEach((cabecalho, index) => {
+        const cabecalhoLower = cabecalho.toString().toLowerCase().trim();
+        
+        // Mapeamento FLEXÍVEL dos cabeçalhos
+        if (cabecalhoLower.includes('data') && !cabecalhoLower.includes('pgto')) {
+            mapeamento['DATA'] = { indice: index, tipo: 'data' };
         }
-
+        else if (cabecalhoLower.includes('cliente')) {
+            mapeamento['CLIENTE'] = { indice: index, tipo: 'cliente' };
+        }
+        else if (cabecalhoLower.includes('motorista')) {
+            mapeamento['MOTORISTA'] = { indice: index, tipo: 'motorista' };
+        }
+        else if (cabecalhoLower.includes('placa') || cabecalhoLower.includes('veículo') || cabecalhoLower.includes('cavalo')) {
+            mapeamento['PLACA'] = { indice: index, tipo: 'veiculo' };
+        }
+        else if (cabecalhoLower.includes('origem')) {
+            mapeamento['ORIGEM'] = { indice: index, tipo: 'origem' };
+        }
+        else if (cabecalhoLower.includes('destino')) {
+            mapeamento['DESTINO'] = { indice: index, tipo: 'destino' };
+        }
+        else if (cabecalhoLower.includes('km') || cabecalhoLower.includes('quilometragem')) {
+            mapeamento['KM'] = { indice: index, tipo: 'km' };
+        }
+        else if (cabecalhoLower.includes('valor') || cabecalhoLower.includes('total') || cabecalhoLower.includes('preço')) {
+            mapeamento['VALOR'] = { indice: index, tipo: 'valor' };
+        }
+        else if (cabecalhoLower.includes('forma') && cabecalhoLower.includes('pgto')) {
+            mapeamento['FORMA_PGTO'] = { indice: index, tipo: 'pagamento' };
+        }
+        else if (cabecalhoLower.includes('status')) {
+            mapeamento['STATUS'] = { indice: index, tipo: 'status' };
+        }
+    });
+    
+    console.log("📊 Colunas detectadas:", mapeamento); // Para debug
+    
+    // Converter para array
+    const colunas = [];
+    Object.keys(mapeamento).forEach(nome => {
+        colunas.push({
+            nome: nome,
+            indice: mapeamento[nome].indice,
+            tipo: mapeamento[nome].tipo
+        });
+    });
+    
+    return colunas;
+}
         // Extrair número (para valores e KM)
         function extrairNumero(texto) {
             if (!texto) return 0;
