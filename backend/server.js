@@ -47,19 +47,14 @@ app.get('/api/dados', async (req, res) => {
     try {
         console.log('🔍 Tentando conectar ao Google Sheets...');
         
-        // Configurar autenticação
         let auth;
-        
-        // Verificar se estamos no Render (com variável de ambiente)
         if (process.env.GOOGLE_CREDENTIALS) {
-            // No Render - usar variável de ambiente
             const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
             auth = new google.auth.GoogleAuth({
                 credentials: credentials,
                 scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly']
             });
         } else {
-            // Localmente - usar arquivo
             auth = new google.auth.GoogleAuth({
                 keyFile: path.join(__dirname, '../dashboard-service-key.json'),
                 scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly']
@@ -68,11 +63,10 @@ app.get('/api/dados', async (req, res) => {
         
         const sheets = google.sheets({ version: 'v4', auth });
         
-        // TENTAR buscar dados de uma aba simples primeiro
         const response = await sheets.spreadsheets.values.get({
-        spreadsheetId: SPREADSHEET_ID,
-        range: 'API_DADOS!A:K'  // Lê a aba nova e só as colunas que você usa
-});
+            spreadsheetId: SPREADSHEET_ID,
+            range: 'API_DADOS!A:K'  // <-- ALTERAÇÃO AQUI
+        });
         
         const dados = response.data.values || [];
         
@@ -81,8 +75,8 @@ app.get('/api/dados', async (req, res) => {
         res.json({
             status: 'sucesso',
             mensagem: 'Dados carregados do Google Sheets',
-            totalLinhas: dados.length,
-            dados: dados,
+            totalLinhas: dados.length - 1,  // conta sem o cabeçalho
+            dados: dados,                   // dados crus em array de arrays
             atualizadoEm: new Date().toISOString()
         });
         
@@ -97,6 +91,7 @@ app.get('/api/dados', async (req, res) => {
         });
     }
 });
+
 
 // Iniciar servidor
 app.listen(PORT, () => {
