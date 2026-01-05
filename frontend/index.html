@@ -338,13 +338,81 @@
             .summary-cards { grid-template-columns: 1fr; }
             .metrics-grid { grid-template-columns: repeat(2, 1fr); }
         }
-        @media (max-width: 576px) {
-            .main-content { padding: 1rem; }
-            .top-bar { flex-direction: column; align-items: flex-start; }
-            .action-buttons { margin-top: 1rem; width: 100%; }
-            .btn { flex: 1; justify-content: center; }
-            .metrics-grid { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 600px) {
+    body {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    header {
+        padding: 20px 15px;
+    }
+
+    h1 {
+        font-size: 1.6rem;  /* menor para caber melhor */
+        word-wrap: break-word; /* quebra de linha automática */
+    }
+
+    .cards {
+        grid-template-columns: 1fr; /* coluna única vertical */
+        gap: 15px;
+    }
+
+    .card {
+        padding: 15px;
+        font-size: 0.9rem;
+    }
+
+    .valor {
+        font-size: 1.8rem;
+    }
+
+    button {
+        width: 100%; /* botão ocupa largura toda */
+        padding: 12px 0;
+        font-size: 1.1rem;
+        margin: 8px 0;
+    }
+
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    thead tr {
+        display: none; /* oculta cabeçalho */
+    }
+
+    tbody tr {
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 10px;
+        background: white;
+    }
+
+    tbody td {
+        padding-left: 50%;
+        position: relative;
+        text-align: left;
+        border: none;
+        border-bottom: 1px solid #eee;
+    }
+
+    tbody td::before {
+        position: absolute;
+        left: 15px;
+        width: 45%;
+        white-space: nowrap;
+        font-weight: bold;
+        content: attr(data-label);
+        text-align: left;
+        color: #333;
+    }
+
+    #tabelaContainer {
+        overflow-x: auto;
+    }
+
     </style>
 </head>
 <body>
