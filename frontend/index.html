@@ -331,87 +331,164 @@
         }
 
         /* Responsividade */
-        @media (max-width: 992px) {
-            .sidebar { width: 70px; }
-            .main-content { margin-left: 70px; }
-            .menu-text, .menu-title, .logo small, .logo h1 span { display: none; }
-            .summary-cards { grid-template-columns: 1fr; }
-            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 600px) {
+     /* ======== RESPONSIVIDADE MOBILE AVANÇADA ======== */
+
+/* geral para telas até 768px (tablets) */
+@media (max-width: 768px) {
     body {
         padding: 10px;
         font-size: 14px;
     }
-
     header {
-        padding: 20px 15px;
+        padding: 18px 12px;
     }
-
-    h1 {
-        font-size: 1.6rem;  /* menor para caber melhor */
-        word-wrap: break-word; /* quebra de linha automática */
-    }
-
     .cards {
-        grid-template-columns: 1fr; /* coluna única vertical */
-        gap: 15px;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
     }
-
     .card {
-        padding: 15px;
-        font-size: 0.9rem;
+        padding: 16px;
     }
-
     .valor {
         font-size: 1.8rem;
     }
-
     button {
-        width: 100%; /* botão ocupa largura toda */
+        padding: 10px 15px;
+        font-size: 1rem;
+    }
+}
+
+/* telas pequenas até ~600px */
+@media (max-width: 600px) {
+    .cards {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    button {
+        width: 100%;
         padding: 12px 0;
         font-size: 1.1rem;
-        margin: 8px 0;
+    }
+    .container {
+        padding: 0 10px;
+    }
+    header h1 {
+        font-size: 2rem;
+        line-height: 1.2em;
+        word-break: break-word;
+    }
+}
+
+/* telas muito estreitas até ~420px */
+@media (max-width: 420px) {
+
+    header {
+        padding: 16px 8px;
     }
 
+    /* ajuste adicional do título */
+    .titulo-mineramix {
+        font-size: 1.8rem;
+        text-align: center;
+        white-space: normal;
+    }
+    .titulo-mineramix span {
+        font-size: 1.8rem;
+    }
+
+    .cards {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .card h3 {
+        font-size: 1.1rem;
+    }
+
+    .valor {
+        font-size: 1.6rem;
+    }
+
+    button {
+        width: 100%;
+        padding: 10px 0;
+        font-size: 1rem;
+    }
+}
+
+/* telas extra estreitas até ~380px */
+@media (max-width: 380px) {
+
+    body {
+        font-size: 13px;
+        padding: 6px;
+    }
+
+    header {
+        padding: 14px 6px;
+    }
+
+    .titulo-mineramix {
+        font-size: 1.6rem;
+    }
+    .titulo-mineramix span {
+        font-size: 1.6rem;
+    }
+
+    .cards {
+        gap: 6px;
+    }
+
+    .card {
+        padding: 12px;
+    }
+
+    .card h3 {
+        font-size: 1rem;
+    }
+
+    .valor {
+        font-size: 1.4rem;
+    }
+
+    button {
+        font-size: 0.95rem;
+        padding: 8px;
+    }
+
+    /* Tabela responsiva ainda mais estreita */
     table, thead, tbody, th, td, tr {
         display: block;
     }
-
     thead tr {
-        display: none; /* oculta cabeçalho */
+        display: none;
     }
-
     tbody tr {
-        margin-bottom: 15px;
+        margin-bottom: 10px;
         border: 1px solid #ccc;
         border-radius: 8px;
-        padding: 10px;
+        padding: 6px;
         background: white;
     }
-
     tbody td {
-        padding-left: 50%;
+        padding-left: 45%;
         position: relative;
         text-align: left;
         border: none;
         border-bottom: 1px solid #eee;
     }
-
     tbody td::before {
         position: absolute;
-        left: 15px;
-        width: 45%;
+        left: 12px;
+        width: 40%;
         white-space: nowrap;
         font-weight: bold;
         content: attr(data-label);
-        text-align: left;
         color: #333;
+        font-size: 0.85rem;
     }
+}
 
-    #tabelaContainer {
-        overflow-x: auto;
-    }
 
     </style>
 </head>
