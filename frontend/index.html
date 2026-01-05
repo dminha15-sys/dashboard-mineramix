@@ -1589,6 +1589,9 @@
                                         }
                     let indiceColunaData = null;
                 let dadosOriginais = null;
+                    if (cabecalhoLower.includes('data') && !cabecalhoLower.includes('pgto')) {
+    mapeamento['DATA'] = { indice: index, tipo: 'data' };
+}
                     dadosOriginais = resultado.dados;
 dadosAnalisados = analisarDadosMineramix(resultado.dados);
         const colunas = detectarColunas(cabecalhos);
