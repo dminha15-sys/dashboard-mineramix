@@ -145,23 +145,23 @@
             border-radius: 50%;
             display: inline-block;
         }
+        
         .online { background: var(--cor-pago); }
+        
         .offline { background: #dc3545; }
+        
         .last-update {
             color: var(--cor-texto-sec);
             font-size: 0.8rem;
         }
 
-        /* Botões */
         .action-buttons {
-            <button class="btn btn-secondary" onclick="toggleDarkMode()" id="btnDark">
-    <i class="fas fa-moon"></i> Modo Noturno
-</button>
-
             display: flex;
             gap: 8px;
             margin-bottom: 1.5rem;
-        }
+    }
+
+        
         .btn {
             padding: 0.6rem 1rem;
             border-radius: 6px;
@@ -575,15 +575,20 @@
                 <p id="reportSubtitle">Análise completa da planilha de logística</p>
             </div>
             
-            <div class="action-buttons">
-                <button class="btn btn-primary" onclick="carregarDados()" id="btnCarregar">
-                    <i class="fas fa-sync-alt"></i> Atualizar
-                </button>
-                <button class="btn btn-secondary" onclick="testarConexao()">
-                    <i class="fas fa-plug"></i> Testar Conexão
-                </button>
-            </div>
-        </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="carregarDados()" id="btnCarregar">
+                            <i class="fas fa-sync-alt"></i> Atualizar
+                            </button>
+                    
+                                <button class="btn btn-secondary" onclick="testarConexao()">
+                                    <i class="fas fa-plug"></i> Testar Conexão
+                                </button>
+                        
+                                <button class="btn btn-secondary" onclick="toggleDarkMode()" id="btnDark">
+                            <i class="fas fa-moon"></i> Modo Noturno
+                        </button>
+                    </div>
+
 
         <!-- Status -->
         <div class="system-status" id="systemStatus">
@@ -1440,46 +1445,66 @@
 
         // Carregar dados
         async function carregarDados() {
-            try {
-                elementos.btnCarregar.disabled = true;
-                elementos.btnCarregar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
-                
-                atualizarStatus(false, '🔄 Conectando e analisando dados...');
-                
+    try {
+        elementos.btnCarregar.disabled = true;
+        elementos.btnCarregar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
 
-                                    const resposta = await fetch(CONFIG.API_URL);
-                
-                if (!resposta.ok) {
-                    throw new Error(`Erro ${resposta.status}: ${resposta.statusText}`);
-                }
-                
-                const resultado = await resposta.json();
-                
-                if (resultado.status === 'erro') {
-                    throw new Error(resultado.mensagem);
+        atualizarStatus(false, '🔄 Conectando e analisando dados...');
 
-                                    const resultado = await resposta.json();
+        const resposta = await fetch(CONFIG.API_URL);
+        if (!resposta.ok) {
+            throw new Error(`Erro ${resposta.status}: ${resposta.statusText}`);
+        }
 
-                // Salvar dados originais para filtros
-                dadosOriginais = resultado.dados;
-                
-                // Detectar coluna de data
-                const cabecalhos = dadosOriginais[0];
-                const colunasDetectadas = detectarColunas(cabecalhos);
-                
-                const colunaData = colunasDetectadas.find(c => c.tipo === 'data');
-                indiceColunaData = colunaData ? colunaData.indice : null;
-                
-                console.log('📅 Índice da coluna de data:', indiceColunaData);
+        const resultado = await resposta.json();
 
-                    function aplicarFiltroData() {
+        if (resultado.status === 'erro') {
+            throw new Error(resultado.mensagem);
+        }
+
+        // 🔹 salvar dados originais
+        dadosOriginais = resultado.dados;
+
+        // 🔹 detectar coluna de data
+        const cabecalhos = dadosOriginais[0];
+        const colunasDetectadas = detectarColunas(cabecalhos);
+        const colunaData = colunasDetectadas.find(c => c.tipo === 'data');
+        indiceColunaData = colunaData ? colunaData.indice : null;
+
+        console.log('📅 Índice da coluna de data:', indiceColunaData);
+
+        // 🔹 analisar dados completos
+        dadosAnalisados = analisarDadosMineramix(dadosOriginais);
+
+        mostrarRelatorio('overview');
+
+        const agora = new Date().toLocaleTimeString('pt-BR');
+        elementos.lastUpdate.textContent = `Última atualização: ${agora}`;
+        atualizarStatus(true, `✅ ${dadosAnalisados.totalLinhas} registros analisados`);
+
+        mostrarNotificacao('✅ Dados carregados com sucesso', 'success');
+
+        } catch (erro) {
+            console.error(erro);
+            atualizarStatus(false, `❌ ${erro.message}`);
+            mostrarNotificacao(`❌ Erro: ${erro.message}`, 'error');
+        } finally {
+            elementos.btnCarregar.disabled = false;
+            elementos.btnCarregar.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar';
+        }
+                
+        }
+
+        
+function aplicarFiltroData() 
+    {
     if (!dadosOriginais) {
         mostrarNotificacao('❌ Dados ainda não carregados', 'error');
         return;
     }
 
     if (indiceColunaData === null) {
-        mostrarNotificacao('❌ Coluna de data não encontrada na planilha', 'error');
+        mostrarNotificacao('❌ Coluna de data não encontrada', 'error');
         return;
     }
 
@@ -1487,7 +1512,7 @@
     const fim = document.getElementById('dataFim').value;
 
     if (!inicio || !fim) {
-        mostrarNotificacao('⚠️ Selecione a data inicial e final', 'error');
+        mostrarNotificacao('⚠️ Selecione as duas datas', 'error');
         return;
     }
 
@@ -1499,28 +1524,25 @@
     const linhas = dadosOriginais.slice(1);
 
     const linhasFiltradas = linhas.filter(linha => {
-        const dataStr = linha[indiceColunaData];
-        const data = parsearDataBR(dataStr);
+        const data = parsearDataBR(linha[indiceColunaData]);
         return data && data >= dataInicio && data <= dataFim;
     });
 
-    if (linhasFiltradas.length === 0) {
-        mostrarNotificacao('⚠️ Nenhum registro encontrado nesse período', 'error');
+    if (!linhasFiltradas.length) {
+        mostrarNotificacao('⚠️ Nenhum registro no período', 'error');
         return;
     }
 
-    const dadosFiltrados = [cabecalho, ...linhasFiltradas];
-    dadosAnalisados = analisarDadosMineramix(dadosFiltrados);
-
+    dadosAnalisados = analisarDadosMineramix([cabecalho, ...linhasFiltradas]);
     mostrarRelatorio('overview');
 
     mostrarNotificacao(
         `📅 Período aplicado: ${linhasFiltradas.length} registros`,
         'success'
     );
-}
+    }
 
-                }
+                
                 
                 // Analisar dados ESPECÍFICOS da sua planilha
                 dadosAnalisados = analisarDadosMineramix(resultado.dados);
