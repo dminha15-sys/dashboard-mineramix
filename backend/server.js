@@ -71,7 +71,7 @@ app.get('/api/dados', async (req, res) => {
         // TENTAR buscar dados de uma aba simples primeiro
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
-            range: 'MINERAMIX!A1:L10' // Pega só as primeiras 10 linhas para teste
+            range: 'MINERAMIX' // Pega só as primeiras 10 linhas para teste
         });
         
         const dados = response.data.values || [];
