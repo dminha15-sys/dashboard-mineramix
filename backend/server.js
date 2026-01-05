@@ -70,9 +70,9 @@ app.get('/api/dados', async (req, res) => {
         
         // TENTAR buscar dados de uma aba simples primeiro
         const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'MINERAMIX' // Pega só as primeiras 10 linhas para teste
-        });
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'API_DADOS!A:K'  // Lê a aba nova e só as colunas que você usa
+});
         
         const dados = response.data.values || [];
         
