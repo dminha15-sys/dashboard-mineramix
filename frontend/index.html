@@ -630,6 +630,8 @@
 
         // Variáveis globais
         let dadosAnalisados = null;
+        let dadosOriginais = null;
+        let indiceColunaData = null;
 
         // Elementos
         const elementos = {
@@ -1444,6 +1446,21 @@
                 
                 atualizarStatus(false, '🔄 Conectando e analisando dados...');
                 
+                const resultado = await resposta.json();
+
+                // Salvar dados originais para filtros
+                dadosOriginais = resultado.dados;
+                
+                // Detectar coluna de data
+                const cabecalhos = dadosOriginais[0];
+                const colunasDetectadas = detectarColunas(cabecalhos);
+                
+                const colunaData = colunasDetectadas.find(c => c.tipo === 'data');
+                indiceColunaData = colunaData ? colunaData.indice : null;
+                
+                console.log('📅 Índice da coluna de data:', indiceColunaData);
+
+
                 const resposta = await fetch(CONFIG.API_URL);
                 
                 if (!resposta.ok) {
@@ -1587,60 +1604,7 @@
                                             localStorage.setItem('darkMode', 'off');
                                         }
                                         }
-                    let indiceColunaData = null;
-                let dadosOriginais = null;
-                    if (cabecalhoLower.includes('data') && !cabecalhoLower.includes('pgto')) {
-    mapeamento['DATA'] = { indice: index, tipo: 'data' };
-}
-                    dadosOriginais = resultado.dados;
-dadosAnalisados = analisarDadosMineramix(resultado.dados);
-        const colunas = detectarColunas(cabecalhos);
-        const colunaData = colunas.find(c => c.tipo === 'data');
-indiceColunaData = colunaData ? colunaData.indice : null;
 
-
-                        function aplicarFiltroData() {
-    if (!dadosOriginais || indiceColunaData === null) {
-        mostrarNotificacao('❌ Coluna de data não encontrada', 'error');
-        return;
-    }
-
-    const inicio = document.getElementById('dataInicio').value;
-    const fim = document.getElementById('dataFim').value;
-
-    if (!inicio || !fim) {
-        mostrarNotificacao('⚠️ Selecione as duas datas', 'error');
-        return;
-    }
-
-    const dataInicio = new Date(inicio);
-    const dataFim = new Date(fim);
-    dataFim.setHours(23, 59, 59, 999);
-
-    const cabecalho = dadosOriginais[0];
-    const linhas = dadosOriginais.slice(1);
-
-    const linhasFiltradas = linhas.filter(linha => {
-        const dataStr = linha[indiceColunaData];
-        const data = parsearDataBR(dataStr);
-        return data && data >= dataInicio && data <= dataFim;
-    });
-
-    if (linhasFiltradas.length === 0) {
-        mostrarNotificacao('⚠️ Nenhum registro encontrado no período', 'error');
-        return;
-    }
-
-    const dadosFiltrados = [cabecalho, ...linhasFiltradas];
-    dadosAnalisados = analisarDadosMineramix(dadosFiltrados);
-
-    mostrarRelatorio('overview');
-
-    mostrarNotificacao(
-        `📅 Período aplicado: ${linhasFiltradas.length} registros`,
-        'success'
-    );
-}
 
 
         
