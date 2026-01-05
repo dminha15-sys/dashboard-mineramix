@@ -596,6 +596,23 @@
             </div>
         </div>
 
+        <div class="summary-card" style="margin-bottom: 1.5rem;">
+            <div style="display: flex; gap: 12px; align-items: end; flex-wrap: wrap;">
+                <div>
+                    <label style="font-size: 0.8rem;">Data inicial</label>
+                    <input type="date" id="dataInicio" class="btn btn-secondary">
+                </div>
+                <div>
+                    <label style="font-size: 0.8rem;">Data final</label>
+                    <input type="date" id="dataFim" class="btn btn-secondary">
+                </div>
+                <button class="btn btn-primary" onclick="aplicarFiltroData()">
+                    <i class="fas fa-filter"></i> Aplicar Período
+                </button>
+            </div>
+        </div>
+
+        
         <!-- Área de Conteúdo -->
         <div id="contentArea">
             <div class="loading">
@@ -1553,7 +1570,8 @@
         });
 
 
-                                            function toggleDarkMode() {
+                                            function toggleDarkMode() 
+                                        {
                                         document.body.classList.toggle('dark');
                                     
                                         const btn = document.getElementById('btnDark');
@@ -1568,7 +1586,46 @@
                                             btn.innerHTML = '<i class="fas fa-moon"></i> Modo Noturno';
                                             localStorage.setItem('darkMode', 'off');
                                         }
+                                        }
+
+                let dadosOriginais = null;
+                    dadosOriginais = resultado.dados;
+dadosAnalisados = analisarDadosMineramix(resultado.dados);
+                        function aplicarFiltroData() {
+    const inicio = document.getElementById('dataInicio').value;
+    const fim = document.getElementById('dataFim').value;
+
+    if (!inicio || !fim) {
+        mostrarNotificacao('⚠️ Selecione as duas datas', 'error');
+        return;
+    }
+
+    const dataInicio = new Date(inicio);
+    const dataFim = new Date(fim);
+    dataFim.setHours(23, 59, 59, 999);
+
+    // mantém cabeçalho
+    const cabecalho = dadosOriginais[0];
+    const linhas = dadosOriginais.slice(1);
+
+    const linhasFiltradas = linhas.filter(linha => {
+        const dataStr = linha.find(v => v && v.toString().includes('/'));
+        const data = parsearDataBR(dataStr);
+        return data && data >= dataInicio && data <= dataFim;
+    });
+
+    const dadosFiltrados = [cabecalho, ...linhasFiltradas];
+
+    dadosAnalisados = analisarDadosMineramix(dadosFiltrados);
+    mostrarRelatorio('overview');
+
+    mostrarNotificacao(
+        `📅 Período aplicado: ${linhasFiltradas.length} registros`,
+        'success'
+    );
 }
+
+        
     </script>
 </body>
 </html>
