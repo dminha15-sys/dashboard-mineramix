@@ -1551,6 +1551,24 @@
                 testarConexao();
             }, 1000);
         });
+
+
+                                            function toggleDarkMode() {
+                                        document.body.classList.toggle('dark');
+                                    
+                                        const btn = document.getElementById('btnDark');
+                                        const icon = btn.querySelector('i');
+                                    
+                                        if (document.body.classList.contains('dark')) {
+                                            icon.className = 'fas fa-sun';
+                                            btn.innerHTML = '<i class="fas fa-sun"></i> Modo Claro';
+                                            localStorage.setItem('darkMode', 'on');
+                                        } else {
+                                            icon.className = 'fas fa-moon';
+                                            btn.innerHTML = '<i class="fas fa-moon"></i> Modo Noturno';
+                                            localStorage.setItem('darkMode', 'off');
+                                        }
+}
     </script>
 </body>
 </html>
