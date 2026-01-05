@@ -1587,11 +1587,21 @@
                                             localStorage.setItem('darkMode', 'off');
                                         }
                                         }
-
+                    let indiceColunaData = null;
                 let dadosOriginais = null;
                     dadosOriginais = resultado.dados;
 dadosAnalisados = analisarDadosMineramix(resultado.dados);
+        const colunas = detectarColunas(cabecalhos);
+        const colunaData = colunas.find(c => c.tipo === 'data');
+indiceColunaData = colunaData ? colunaData.indice : null;
+
+
                         function aplicarFiltroData() {
+    if (!dadosOriginais || indiceColunaData === null) {
+        mostrarNotificacao('❌ Coluna de data não encontrada', 'error');
+        return;
+    }
+
     const inicio = document.getElementById('dataInicio').value;
     const fim = document.getElementById('dataFim').value;
 
@@ -1604,19 +1614,23 @@ dadosAnalisados = analisarDadosMineramix(resultado.dados);
     const dataFim = new Date(fim);
     dataFim.setHours(23, 59, 59, 999);
 
-    // mantém cabeçalho
     const cabecalho = dadosOriginais[0];
     const linhas = dadosOriginais.slice(1);
 
     const linhasFiltradas = linhas.filter(linha => {
-        const dataStr = linha.find(v => v && v.toString().includes('/'));
+        const dataStr = linha[indiceColunaData];
         const data = parsearDataBR(dataStr);
         return data && data >= dataInicio && data <= dataFim;
     });
 
-    const dadosFiltrados = [cabecalho, ...linhasFiltradas];
+    if (linhasFiltradas.length === 0) {
+        mostrarNotificacao('⚠️ Nenhum registro encontrado no período', 'error');
+        return;
+    }
 
+    const dadosFiltrados = [cabecalho, ...linhasFiltradas];
     dadosAnalisados = analisarDadosMineramix(dadosFiltrados);
+
     mostrarRelatorio('overview');
 
     mostrarNotificacao(
@@ -1624,6 +1638,7 @@ dadosAnalisados = analisarDadosMineramix(resultado.dados);
         'success'
     );
 }
+
 
         
     </script>
