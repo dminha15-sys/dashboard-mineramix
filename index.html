@@ -27,16 +27,16 @@
             font-size: 2.5rem;
             margin-bottom: 10px;
         }
-.titulo-mineramix {
-    color: white;      /* MINERA em branco */
-    font-weight: bold;
-}
 
-.titulo-mineramix span {
-    color: #FF6B35;    /* MIX em laranja */
-}
-
+        /* Título MINERAMIX */
+        .titulo-mineramix {
+            color: white;      /* MINERA em branco */
+            font-weight: bold;
         }
+        .titulo-mineramix span {
+            color: #FF6B35;    /* MIX em laranja */
+        }
+
         .status {
             background: white;
             padding: 10px 20px;
@@ -45,12 +45,9 @@
             margin-top: 10px;
             font-weight: bold;
         }
-        .status.online {
-            color: #28a745;
-        }
-        .status.offline {
-            color: #dc3545;
-        }
+        .status.online { color: #28a745; }
+        .status.offline { color: #dc3545; }
+
         .cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -90,13 +87,9 @@
             margin: 10px 5px;
             transition: background 0.3s;
         }
-        button:hover {
-            background: #e55a2b;
-        }
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
+        button:hover { background: #e55a2b; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+
         .alert {
             padding: 15px;
             border-radius: 8px;
@@ -118,6 +111,7 @@
             border-color: #17a2b8;
             color: #0c5460;
         }
+
         table {
             width: 100%;
             background: white;
@@ -136,87 +130,55 @@
             padding: 15px;
             border-bottom: 1px solid #eee;
         }
-        tr:hover {
-            background: #f9f9f9;
+        tr:hover { background: #f9f9f9; }
+
+        /* Responsividade celular */
+        @media (max-width: 600px) {
+            body { padding: 10px; font-size: 14px; }
+            header { padding: 20px 15px; }
+            h1 { font-size: 1.6rem; word-wrap: break-word; }
+
+            .cards {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            .card { padding: 15px; font-size: 0.9rem; }
+            .valor { font-size: 1.8rem; }
+            button {
+                width: 100%;
+                padding: 12px 0;
+                font-size: 1.1rem;
+                margin: 8px 0;
+            }
+
+            table, thead, tbody, th, td, tr { display: block; }
+            thead tr { display: none; }
+            tbody tr {
+                margin-bottom: 15px;
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                padding: 10px;
+                background: white;
+            }
+            tbody td {
+                padding-left: 50%;
+                position: relative;
+                text-align: left;
+                border: none;
+                border-bottom: 1px solid #eee;
+            }
+            tbody td::before {
+                position: absolute;
+                left: 15px;
+                width: 45%;
+                white-space: nowrap;
+                font-weight: bold;
+                content: attr(data-label);
+                text-align: left;
+                color: #333;
+            }
+            #tabelaContainer { overflow-x: auto; }
         }
-
-        /* Estilo para telas pequenas (celular) */
-@media (max-width: 600px) {
-    body {
-        padding: 10px;
-        font-size: 14px;
-    }
-
-    header {
-        padding: 20px 15px;
-    }
-
-    h1 {
-        font-size: 1.6rem;  /* menor para caber melhor */
-        word-wrap: break-word; /* quebra de linha automática */
-    }
-
-    .cards {
-        grid-template-columns: 1fr; /* coluna única vertical */
-        gap: 15px;
-    }
-
-    .card {
-        padding: 15px;
-        font-size: 0.9rem;
-    }
-
-    .valor {
-        font-size: 1.8rem;
-    }
-
-    button {
-        width: 100%; /* botão ocupa largura toda */
-        padding: 12px 0;
-        font-size: 1.1rem;
-        margin: 8px 0;
-    }
-
-    table, thead, tbody, th, td, tr {
-        display: block;
-    }
-
-    thead tr {
-        display: none; /* oculta cabeçalho */
-    }
-
-    tbody tr {
-        margin-bottom: 15px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        padding: 10px;
-        background: white;
-    }
-
-    tbody td {
-        padding-left: 50%;
-        position: relative;
-        text-align: left;
-        border: none;
-        border-bottom: 1px solid #eee;
-    }
-
-    tbody td::before {
-        position: absolute;
-        left: 15px;
-        width: 45%;
-        white-space: nowrap;
-        font-weight: bold;
-        content: attr(data-label);
-        text-align: left;
-        color: #333;
-    }
-
-    #tabelaContainer {
-        overflow-x: auto;
-    }
-}
-
 
     </style>
 </head>
@@ -267,16 +229,11 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO - MUDE AQUI QUANDO HOSPEDAR!
         const CONFIG = {
-            // Para desenvolvimento local:
             API_URL: 'https://dashboard-mineramix-backend.onrender.com/api/dados',
-            
-            // URL de teste:
-            TEST_URL: 'https://dashboard-mineramix-backend.onrender.com/api/teste    '
+            TEST_URL: 'https://dashboard-mineramix-backend.onrender.com/api/teste'
         };
 
-        // Elementos da página
         const elementos = {
             status: document.getElementById('status'),
             alert: document.getElementById('alert'),
@@ -291,154 +248,87 @@
             btnCarregar: document.getElementById('btnCarregar')
         };
 
-        // Mostrar mensagem na tela
         function mostrarMensagem(texto, tipo = 'info') {
-            elementos.alert.innerHTML = `
-                <div class="alert ${tipo}">
-                    ${texto}
-                </div>
-            `;
-            
-            // Remover após 5 segundos (exceto erros)
-            if (tipo !== 'error') {
-                setTimeout(() => {
-                    elementos.alert.innerHTML = '';
-                }, 5000);
-            }
+            elementos.alert.innerHTML = `<div class="alert ${tipo}">${texto}</div>`;
+            if (tipo !== 'error') setTimeout(() => elementos.alert.innerHTML = '', 5000);
         }
 
-        // Testar conexão com o servidor
         async function testarConexao() {
             try {
                 mostrarMensagem('🔍 Testando conexão com o servidor...', 'info');
-                
                 const resposta = await fetch(CONFIG.TEST_URL);
                 const dados = await resposta.json();
-                
                 elementos.statusSistema.textContent = '✅ ONLINE';
                 elementos.detalhesStatus.textContent = 'Servidor respondendo normalmente';
                 elementos.status.className = 'status online';
                 elementos.status.textContent = '🟢 ONLINE';
-                
                 mostrarMensagem(`✅ Conexão bem-sucedida! ${dados.mensagem}`, 'success');
-                
             } catch (erro) {
                 elementos.statusSistema.textContent = '❌ OFFLINE';
                 elementos.detalhesStatus.textContent = 'Não foi possível conectar ao servidor';
                 elementos.status.className = 'status offline';
                 elementos.status.textContent = '🔴 OFFLINE';
-                
                 mostrarMensagem(`❌ Erro de conexão: ${erro.message}`, 'error');
             }
         }
 
-        // Carregar dados da planilha
         async function carregarDados() {
             try {
                 elementos.btnCarregar.disabled = true;
                 elementos.btnCarregar.textContent = '⏳ Carregando...';
-                
                 mostrarMensagem('📊 Buscando dados do Google Sheets...', 'info');
-                
                 const resposta = await fetch(CONFIG.API_URL);
                 const dados = await resposta.json();
-                
-                if (dados.status === 'erro') {
-                    throw new Error(dados.mensagem);
-                }
-                
-                // Atualizar métricas
+                if (dados.status === 'erro') throw new Error(dados.mensagem);
+
                 elementos.totalViagens.textContent = dados.totalLinhas || 0;
                 elementos.ultimaAtualizacao.textContent = new Date().toLocaleTimeString('pt-BR');
                 elementos.fonteDados.textContent = `Fonte: Google Sheets (${dados.totalLinhas} registros)`;
-                
-                // Mostrar tabela com dados
                 mostrarTabela(dados.dados);
-                
                 elementos.tabelaContainer.style.display = 'block';
-                
                 mostrarMensagem(`✅ ${dados.mensagem} | ${dados.totalLinhas} registros carregados`, 'success');
                 elementos.infoConexao.textContent = `Última atualização: ${new Date().toLocaleString('pt-BR')}`;
-                
             } catch (erro) {
-                console.error('Erro:', erro);
                 mostrarMensagem(`❌ Falha ao carregar dados: ${erro.message}`, 'error');
-                
-                // Mostrar dados de exemplo em caso de erro
                 mostrarDadosExemplo();
-                
             } finally {
                 elementos.btnCarregar.disabled = false;
                 elementos.btnCarregar.textContent = '📥 Carregar Dados';
             }
         }
 
-        // Mostrar tabela com dados
         function mostrarTabela(dados) {
             if (!dados || dados.length === 0) {
                 elementos.tabelaDados.innerHTML = '<p style="text-align: center; padding: 20px;">Nenhum dado encontrado</p>';
                 return;
             }
-            
-            // Pegar cabeçalhos (primeira linha)
             const cabecalhos = dados[0];
-            
-            // Pegar dados (linhas seguintes)
-            const linhas = dados.slice(1, 11); // Mostrar só 10 linhas
-            
-            let tabelaHTML = `
-                <table>
-                    <thead>
-                        <tr>
-                            ${cabecalhos.map(h => `<th>${h}</th>`).join('')}
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-            
-linhas.forEach(linha => {
-    tabelaHTML += `
-        <tr>
-            ${linha.map((celula, i) => `<td data-label="${cabecalhos[i]}">${celula || ''}</td>`).join('')}
-        </tr>
-    `;
-});
-
-            
-            tabelaHTML += `
-                    </tbody>
-                </table>
-                <p style="text-align: center; margin-top: 10px; color: #666;">
-                    Mostrando ${linhas.length} de ${dados.length - 1} registros
-                </p>
-            `;
-            
+            const linhas = dados.slice(1, 11);
+            let tabelaHTML = `<table><thead><tr>${cabecalhos.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>`;
+            linhas.forEach(linha => {
+                tabelaHTML += `<tr>${linha.map((celula, i) => `<td data-label="${cabecalhos[i]}">${celula || ''}</td>`).join('')}</tr>`;
+            });
+            tabelaHTML += `</tbody></table><p style="text-align: center; margin-top: 10px; color: #666;">Mostrando ${linhas.length} de ${dados.length - 1} registros</p>`;
             elementos.tabelaDados.innerHTML = tabelaHTML;
         }
 
-        // Mostrar dados de exemplo (se a API falhar)
         function mostrarDadosExemplo() {
             elementos.totalViagens.textContent = '115';
             elementos.ultimaAtualizacao.textContent = new Date().toLocaleTimeString('pt-BR');
             elementos.fonteDados.textContent = 'Fonte: Dados de exemplo (modo offline)';
-            
             const dadosExemplo = [
-                ['DATA', 'CLIENTE', 'MOTORISTA', 'PLACA', 'DESTINO', 'KM', 'VALOR'],
-                ['01/12/2025', 'POLIMIX', 'VALDECI', 'LLJ1600', 'São Pedro da Aldeia, RJ', '75', 'R$ 616,00'],
-                ['01/12/2025', 'CIMENT RIO', 'EDUARDO', 'KZB6391', 'Araruama, RJ', '102', 'R$ 1.060,00'],
-                ['01/12/2025', 'CONCREVIT', 'ALEXANDRE', 'KNZ3136', 'Rio de Janeiro, RJ', '340', 'R$ 2.175,00']
+                ['DATA','CLIENTE','MOTORISTA','PLACA','DESTINO','KM','VALOR'],
+                ['01/12/2025','POLIMIX','VALDECI','LLJ1600','São Pedro da Aldeia, RJ','75','R$ 616,00'],
+                ['01/12/2025','CIMENT RIO','EDUARDO','KZB6391','Araruama, RJ','102','R$ 1.060,00'],
+                ['01/12/2025','CONCREVIT','ALEXANDRE','KNZ3136','Rio de Janeiro, RJ','340','R$ 2.175,00']
             ];
-            
             mostrarTabela(dadosExemplo);
             elementos.tabelaContainer.style.display = 'block';
-            
             mostrarMensagem('⚠️ Usando dados de exemplo (modo offline)', 'info');
         }
 
-        // Testar conexão automaticamente ao carregar a página
-        window.addEventListener('load', () => {
-            setTimeout(testarConexao, 1000);
-        });
+        window.addEventListener('load', () => setTimeout(testarConexao, 1000));
     </script>
 </body>
 </html>
+
