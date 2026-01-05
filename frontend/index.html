@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root 
-        
         {
             --cor-primaria: #000000;
             --cor-secundaria: #FF6B35;
@@ -1444,7 +1443,7 @@
         // ========== FUNÇÕES PRINCIPAIS ==========
 
         // Carregar dados
-        async function carregarDados() {
+       async function carregarDados() {
     try {
         elementos.btnCarregar.disabled = true;
         elementos.btnCarregar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
@@ -1462,10 +1461,10 @@
             throw new Error(resultado.mensagem);
         }
 
-        // 🔹 salvar dados originais
+        // Salvar dados originais
         dadosOriginais = resultado.dados;
 
-        // 🔹 detectar coluna de data
+        // Detectar coluna de data
         const cabecalhos = dadosOriginais[0];
         const colunasDetectadas = detectarColunas(cabecalhos);
         const colunaData = colunasDetectadas.find(c => c.tipo === 'data');
@@ -1473,7 +1472,7 @@
 
         console.log('📅 Índice da coluna de data:', indiceColunaData);
 
-        // 🔹 analisar dados completos
+        // Analisar dados completos
         dadosAnalisados = analisarDadosMineramix(dadosOriginais);
 
         mostrarRelatorio('overview');
@@ -1484,20 +1483,27 @@
 
         mostrarNotificacao('✅ Dados carregados com sucesso', 'success');
 
-        } catch (erro) {
-            console.error(erro);
-            atualizarStatus(false, `❌ ${erro.message}`);
-            mostrarNotificacao(`❌ Erro: ${erro.message}`, 'error');
-        } finally {
-            elementos.btnCarregar.disabled = false;
-            elementos.btnCarregar.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar';
-        }
-                
-        }
+    } catch (erro) {
+        console.error(erro);
+        atualizarStatus(false, `❌ ${erro.message}`);
+        mostrarNotificacao(`❌ Erro: ${erro.message}`, 'error');
+        
+        elementos.contentArea.innerHTML = `
+            <div class="loading">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Erro ao analisar dados: ${erro.message}</p>
+                <button class="btn btn-primary" onclick="carregarDados()" style="margin-top: 1rem;">
+                    Tentar Novamente
+                </button>
+            </div>`;
+    } finally {
+        elementos.btnCarregar.disabled = false;
+        elementos.btnCarregar.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar';
+    }
+}
 
         
-function aplicarFiltroData() 
-    {
+function aplicarFiltroData() {
     if (!dadosOriginais) {
         mostrarNotificacao('❌ Dados ainda não carregados', 'error');
         return;
@@ -1540,8 +1546,7 @@ function aplicarFiltroData()
         `📅 Período aplicado: ${linhasFiltradas.length} registros`,
         'success'
     );
-    }
-
+}
                 
                 
                 // Analisar dados ESPECÍFICOS da sua planilha
