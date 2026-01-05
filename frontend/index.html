@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Mineramix - Análise Inteligente</title>
+    <title>Dashboard Mineramix - Análise Completa</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -16,6 +16,9 @@
             --cor-texto-sec: #6C757D;
             --cor-borda: #E9ECEF;
             --cor-sidebar: #1A1D21;
+            --cor-pago: #28a745;
+            --cor-pendente: #ffc107;
+            --cor-analise: #17a2b8;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -48,8 +51,14 @@
             color: white;
         }
         .logo span { color: var(--cor-secundaria); }
+        .logo small {
+            display: block;
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.6);
+            margin-top: 5px;
+        }
 
-        .menu-section { margin-bottom: 2rem; }
+        .menu-section { margin-bottom: 1.5rem; }
         .menu-title {
             font-size: 0.75rem;
             text-transform: uppercase;
@@ -60,7 +69,7 @@
         }
         .menu-lista { list-style: none; }
         .menu-item {
-            padding: 0.85rem 1.5rem;
+            padding: 0.75rem 1.5rem;
             display: flex;
             align-items: center;
             transition: all 0.2s;
@@ -79,10 +88,10 @@
         .menu-item i {
             width: 20px;
             margin-right: 12px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             text-align: center;
         }
-        .menu-text { font-size: 0.95rem; font-weight: 500; }
+        .menu-text { font-size: 0.9rem; font-weight: 500; }
 
         /* Conteúdo Principal */
         .main-content {
@@ -94,59 +103,61 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
         .page-title h2 {
-            font-size: 1.75rem;
+            font-size: 1.5rem;
             font-weight: 700;
             color: var(--cor-primaria);
         }
         .page-title p {
             color: var(--cor-texto-sec);
+            font-size: 0.9rem;
             margin-top: 0.25rem;
         }
 
         /* Status */
         .system-status {
             background: white;
-            padding: 1rem 1.5rem;
-            border-radius: 10px;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
             margin-bottom: 1.5rem;
             border-left: 4px solid var(--cor-secundaria);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-        .status-indicator { display: flex; align-items: center; gap: 10px; }
+        .status-indicator { display: flex; align-items: center; gap: 8px; }
         .status-dot {
-            width: 10px; height: 10px;
+            width: 8px; height: 8px;
             border-radius: 50%;
             display: inline-block;
         }
-        .online { background: #28a745; }
+        .online { background: var(--cor-pago); }
         .offline { background: #dc3545; }
         .last-update {
             color: var(--cor-texto-sec);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
         }
 
         /* Botões */
         .action-buttons {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 1.5rem;
         }
         .btn {
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
             border: none;
             font-weight: 500;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             transition: all 0.3s;
+            font-size: 0.85rem;
         }
         .btn-primary {
             background: var(--cor-secundaria);
@@ -160,106 +171,128 @@
         .btn-secondary:hover { background: #dde0e3; }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
+        /* Cards de Métricas */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid var(--cor-borda);
+            text-align: center;
+        }
+        .metric-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            background: rgba(255,107,53,0.1);
+            color: var(--cor-secundaria);
+        }
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--cor-primaria);
+            margin: 0.25rem 0;
+        }
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--cor-texto-sec);
+        }
+
         /* Cards de Resumo */
         .summary-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
         .summary-card {
             background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             border: 1px solid var(--cor-borda);
         }
         .summary-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
             border-bottom: 2px solid var(--cor-borda);
         }
         .summary-title {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
             color: var(--cor-primaria);
         }
         .summary-icon {
-            width: 40px; height: 40px;
-            border-radius: 10px;
+            width: 32px; height: 32px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: rgba(255,107,53,0.15);
+            background: rgba(255,107,53,0.1);
             color: var(--cor-secundaria);
         }
 
-        /* Tabelas de Resumo */
+        /* Tabelas */
         .summary-table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 0.85rem;
         }
         .summary-table th {
             text-align: left;
-            padding: 0.75rem;
+            padding: 0.5rem;
             font-weight: 600;
             color: var(--cor-texto-sec);
             border-bottom: 2px solid var(--cor-borda);
-            font-size: 0.9rem;
         }
         .summary-table td {
-            padding: 0.75rem;
+            padding: 0.5rem;
             border-bottom: 1px solid var(--cor-borda);
         }
         .summary-table tbody tr:hover {
             background: rgba(0,0,0,0.02);
         }
         .money { text-align: right; font-family: monospace; }
-        .positive { color: #28a745; }
-        .negative { color: #dc3545; }
+        .center { text-align: center; }
+        
+        /* Status badges */
+        .status-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .status-pago { background: rgba(40,167,69,0.15); color: var(--cor-pago); }
+        .status-pendente { background: rgba(255,193,7,0.15); color: var(--cor-pendente); }
+        .status-analise { background: rgba(23,162,184,0.15); color: var(--cor-analise); }
 
-        /* Métricas Gerais */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .metric-box {
-            background: white;
-            border-radius: 10px;
-            padding: 1.25rem;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        .metric-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--cor-primaria);
-            margin: 0.5rem 0;
-        }
-        .metric-label {
-            font-size: 0.85rem;
-            color: var(--cor-texto-sec);
-        }
-
-        /* Gráfico Simples */
+        /* Gráfico */
         .chart-container {
             background: white;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 3px 15px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
             border: 1px solid var(--cor-borda);
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
         }
         .chart-bars {
             display: flex;
             align-items: flex-end;
-            height: 200px;
-            gap: 15px;
+            height: 150px;
+            gap: 12px;
             padding: 1rem 0;
         }
         .chart-bar {
@@ -271,24 +304,24 @@
         .bar {
             width: 100%;
             background: linear-gradient(to top, var(--cor-secundaria), #ff8c5a);
-            border-radius: 4px;
+            border-radius: 3px;
             transition: height 0.5s;
         }
         .bar-label {
-            margin-top: 10px;
-            font-size: 0.85rem;
+            margin-top: 8px;
+            font-size: 0.75rem;
             color: var(--cor-texto-sec);
         }
 
-        /* Carregamento */
+        /* Loading */
         .loading {
             text-align: center;
-            padding: 3rem;
+            padding: 2rem;
             color: var(--cor-texto-sec);
         }
         .loading i {
-            font-size: 2rem;
-            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
             color: var(--cor-secundaria);
             animation: spin 1s linear infinite;
         }
@@ -297,31 +330,45 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Responsividade */
         @media (max-width: 992px) {
-            .sidebar { width: 80px; }
-            .main-content { margin-left: 80px; }
-            .menu-text, .menu-title, .logo h1 span { display: none; }
+            .sidebar { width: 70px; }
+            .main-content { margin-left: 70px; }
+            .menu-text, .menu-title, .logo small, .logo h1 span { display: none; }
             .summary-cards { grid-template-columns: 1fr; }
+            .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 576px) {
+            .main-content { padding: 1rem; }
+            .top-bar { flex-direction: column; align-items: flex-start; }
+            .action-buttons { margin-top: 1rem; width: 100%; }
+            .btn { flex: 1; justify-content: center; }
+            .metrics-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <!-- Sidebar com Resumos -->
+    <!-- Sidebar -->
     <aside class="sidebar">
         <div class="logo">
             <h1>Miner<span>amix</span></h1>
-            <p style="font-size: 0.8rem; color: rgba(255,255,255,0.7); margin-top: 5px;">
-                Análise Inteligente
-            </p>
+            <small>Logística Inteligente</small>
         </div>
         
         <div class="menu-section">
-            <div class="menu-title">Resumos por Categoria</div>
+            <div class="menu-title">Análises Financeiras</div>
             <ul class="menu-lista" id="summaryMenu">
-                <!-- Será preenchido via JavaScript -->
                 <li class="menu-item active" data-report="overview">
                     <i class="fas fa-chart-pie"></i>
                     <span class="menu-text">Visão Geral</span>
+                </li>
+                <li class="menu-item" data-report="status">
+                    <i class="fas fa-check-circle"></i>
+                    <span class="menu-text">Por Status</span>
+                </li>
+                <li class="menu-item" data-report="pagamento">
+                    <i class="fas fa-money-check-alt"></i>
+                    <span class="menu-text">Formas de PGTO</span>
                 </li>
                 <li class="menu-item" data-report="motoristas">
                     <i class="fas fa-user-tie"></i>
@@ -331,17 +378,27 @@
                     <i class="fas fa-truck"></i>
                     <span class="menu-text">Por Veículo</span>
                 </li>
+            </ul>
+        </div>
+        
+        <div class="menu-section">
+            <div class="menu-title">Análises Operacionais</div>
+            <ul class="menu-lista">
                 <li class="menu-item" data-report="clientes">
                     <i class="fas fa-users"></i>
                     <span class="menu-text">Por Cliente</span>
+                </li>
+                <li class="menu-item" data-report="rotas">
+                    <i class="fas fa-route"></i>
+                    <span class="menu-text">Rotas Frequentes</span>
                 </li>
                 <li class="menu-item" data-report="diario">
                     <i class="fas fa-calendar-day"></i>
                     <span class="menu-text">Por Dia</span>
                 </li>
-                <li class="menu-item" data-report="mensal">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span class="menu-text">Por Mês</span>
+                <li class="menu-item" data-report="km">
+                    <i class="fas fa-road"></i>
+                    <span class="menu-text">Análise de KM</span>
                 </li>
             </ul>
         </div>
@@ -353,14 +410,6 @@
                     <i class="fas fa-sync-alt"></i>
                     <span class="menu-text">Atualizar Dados</span>
                 </li>
-                <li class="menu-item" id="btn-export">
-                    <i class="fas fa-download"></i>
-                    <span class="menu-text">Exportar Relatório</span>
-                </li>
-                <li class="menu-item" id="btn-settings">
-                    <i class="fas fa-cog"></i>
-                    <span class="menu-text">Configurações</span>
-                </li>
             </ul>
         </div>
     </aside>
@@ -370,8 +419,8 @@
         <!-- Top Bar -->
         <div class="top-bar">
             <div class="page-title">
-                <h2 id="reportTitle">Análise Inteligente</h2>
-                <p id="reportSubtitle">Carregando análise dos dados...</p>
+                <h2 id="reportTitle">Dashboard Mineramix</h2>
+                <p id="reportSubtitle">Análise completa da planilha de logística</p>
             </div>
             
             <div class="action-buttons">
@@ -395,7 +444,7 @@
             </div>
         </div>
 
-        <!-- Área de Conteúdo Dinâmico -->
+        <!-- Área de Conteúdo -->
         <div id="contentArea">
             <div class="loading">
                 <i class="fas fa-spinner"></i>
@@ -412,7 +461,6 @@
 
         // Variáveis globais
         let dadosAnalisados = null;
-        let colunasDetectadas = [];
 
         // Elementos
         const elementos = {
@@ -425,47 +473,54 @@
             btnCarregar: document.getElementById('btnCarregar')
         };
 
-        // ========== FUNÇÕES DE ANÁLISE INTELIGENTE ==========
+        // ========== FUNÇÕES DE ANÁLISE ESPECÍFICA ==========
 
-        // Detectar tipos de coluna
-        function detectarColunas(cabecalhos, primeiraLinha) {
-            const colunas = [];
+        // Detectar colunas da SUA planilha
+        function detectarColunas(cabecalhos) {
+            const mapeamento = {
+                'DATA': { tipo: 'data', indice: null, nomeExato: 'DATA' },
+                'CLIENTE': { tipo: 'cliente', indice: null, nomeExato: 'CLIENTE' },
+                'MOTORISTA': { tipo: 'motorista', indice: null, nomeExato: 'MOTORISTA' },
+                'PLACA': { tipo: 'veiculo', indice: null, nomeExato: 'PLACA' },
+                'ORIGEM': { tipo: 'origem', indice: null, nomeExato: 'ORIGEM' },
+                'DESTINO': { tipo: 'destino', indice: null, nomeExato: 'DESTINO' },
+                'KM': { tipo: 'km', indice: null, nomeExato: 'KM' },
+                'VALOR': { tipo: 'valor', indice: null, nomeExato: 'VALOR' },
+                'FORMA PGTO': { tipo: 'pagamento', indice: null, nomeExato: 'FORMA PGTO' },
+                'COMPROVANTE': { tipo: 'comprovante', indice: null, nomeExato: 'COMPROVANTE' },
+                'DATA PGTO': { tipo: 'data_pgto', indice: null, nomeExato: 'DATA PGTO' },
+                'STATUS': { tipo: 'status', indice: null, nomeExato: 'STATUS' }
+            };
             
+            // Mapear índices baseado nos cabeçalhos exatos
             cabecalhos.forEach((cabecalho, index) => {
-                const valor = primeiraLinha ? primeiraLinha[index] : '';
-                const coluna = {
-                    nome: cabecalho.trim(),
-                    indice: index,
-                    tipo: 'texto'
-                };
+                const cabecalhoUpper = cabecalho.trim().toUpperCase();
                 
-                // Tentar detectar tipo
-                const cabecalhoLower = cabecalho.toLowerCase();
-                
-                if (cabecalhoLower.includes('data') || cabecalhoLower.includes('dia')) {
-                    coluna.tipo = 'data';
-                } else if (cabecalhoLower.includes('valor') || cabecalhoLower.includes('total') || 
-                          cabecalhoLower.includes('preço') || cabecalhoLower.includes('custo')) {
-                    coluna.tipo = 'valor';
-                } else if (cabecalhoLower.includes('km') || cabecalhoLower.includes('distancia') || 
-                          cabecalhoLower.includes('quilometro')) {
-                    coluna.tipo = 'numero';
-                } else if (cabecalhoLower.includes('motorista') || cabecalhoLower.includes('condutor')) {
-                    coluna.tipo = 'motorista';
-                } else if (cabecalhoLower.includes('placa') || cabecalhoLower.includes('veiculo') || 
-                          cabecalhoLower.includes('cavalo') || cabecalhoLower.includes('caminhao')) {
-                    coluna.tipo = 'veiculo';
-                } else if (cabecalhoLower.includes('cliente')) {
-                    coluna.tipo = 'cliente';
+                // Verificar mapeamento direto
+                for (const key in mapeamento) {
+                    if (cabecalhoUpper === key || cabecalhoUpper.includes(key)) {
+                        mapeamento[key].indice = index;
+                        break;
+                    }
                 }
-                
-                colunas.push(coluna);
             });
+            
+            // Converter para array
+            const colunas = [];
+            for (const key in mapeamento) {
+                if (mapeamento[key].indice !== null) {
+                    colunas.push({
+                        nome: mapeamento[key].nomeExato,
+                        indice: mapeamento[key].indice,
+                        tipo: mapeamento[key].tipo
+                    });
+                }
+            }
             
             return colunas;
         }
 
-        // Extrair valor numérico
+        // Extrair número (para valores e KM)
         function extrairNumero(texto) {
             if (!texto) return 0;
             const limpo = texto.toString()
@@ -474,53 +529,139 @@
                 .replace(',', '.')
                 .replace(/[^\d.-]/g, '')
                 .trim();
-            return parseFloat(limpo) || 0;
+            const numero = parseFloat(limpo);
+            return isNaN(numero) ? 0 : numero;
         }
 
-        // Analisar dados da planilha
-        function analisarDadosCompletos(dados) {
+        // Parsear data brasileira
+        function parsearDataBR(dataStr) {
+            if (!dataStr) return null;
+            
+            try {
+                // Formato DD/MM/AAAA
+                const partes = dataStr.split('/');
+                if (partes.length === 3) {
+                    const dia = parseInt(partes[0]);
+                    const mes = parseInt(partes[1]) - 1;
+                    const ano = parseInt(partes[2]);
+                    
+                    // Se ano tem 2 dígitos, assumir 2000+
+                    const anoCompleto = ano < 100 ? 2000 + ano : ano;
+                    
+                    return new Date(anoCompleto, mes, dia);
+                }
+                
+                // Tentar outros formatos
+                return new Date(dataStr);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Analisar dados da SUA planilha
+        function analisarDadosMineramix(dados) {
             if (!dados || dados.length < 2) return null;
             
             const cabecalhos = dados[0];
             const linhas = dados.slice(1);
-            const colunas = detectarColunas(cabecalhos, linhas[0]);
-            colunasDetectadas = colunas;
+            const colunas = detectarColunas(cabecalhos);
             
-            // Encontrar colunas chave
-            const colunaData = colunas.find(c => c.tipo === 'data');
-            const colunaValor = colunas.find(c => c.tipo === 'valor');
-            const colunaMotorista = colunas.find(c => c.tipo === 'motorista');
-            const colunaVeiculo = colunas.find(c => c.tipo === 'veiculo');
-            const colunaCliente = colunas.find(c => c.tipo === 'cliente');
+            // Encontrar índices específicos
+            const idx = {};
+            colunas.forEach(col => {
+                idx[col.tipo] = col.indice;
+            });
             
-            // Estruturas para análises
+            // Estruturas de análise
             const resumo = {
                 totalLinhas: linhas.length,
-                periodos: {},
+                totalValor: 0,
+                totalKM: 0,
+                
+                // Por categoria
+                status: {},
+                pagamentos: {},
                 motoristas: {},
                 veiculos: {},
                 clientes: {},
+                rotas: {},
                 dias: {},
                 meses: {},
-                totalValor: 0,
-                totalViagens: linhas.length
+                
+                // Detalhes
+                valores: [],
+                kms: []
             };
             
             // Processar cada linha
             linhas.forEach(linha => {
-                // Extrair dados básicos
-                const data = colunaData ? linha[colunaData.indice] : null;
-                const valor = colunaValor ? extrairNumero(linha[colunaValor.indice]) : 0;
-                const motorista = colunaMotorista ? linha[colunaMotorista.indice] : 'Não informado';
-                const veiculo = colunaVeiculo ? linha[colunaVeiculo.indice] : 'Não informado';
-                const cliente = colunaCliente ? linha[colunaCliente.indice] : 'Não informado';
+                // Extrair valores
+                const data = idx.data !== undefined ? linha[idx.data] : null;
+                const cliente = idx.cliente !== undefined ? linha[idx.cliente] : 'Não informado';
+                const motorista = idx.motorista !== undefined ? linha[idx.motorista] : 'Não informado';
+                const veiculo = idx.veiculo !== undefined ? linha[idx.veiculo] : 'Não informado';
+                const origem = idx.origem !== undefined ? linha[idx.origem] : '';
+                const destino = idx.destino !== undefined ? linha[idx.destino] : '';
+                const km = idx.km !== undefined ? extrairNumero(linha[idx.km]) : 0;
+                const valor = idx.valor !== undefined ? extrairNumero(linha[idx.valor]) : 0;
+                const pagamento = idx.pagamento !== undefined ? linha[idx.pagamento] : 'Não informado';
+                const status = idx.status !== undefined ? linha[idx.status] : 'Não informado';
                 
-                // Acumular valor total
+                // Acumular totais
                 resumo.totalValor += valor;
+                resumo.totalKM += km;
+                resumo.valores.push(valor);
+                resumo.kms.push(km);
                 
-                // Análise por período (data)
+                // Análise por status
+                if (!resumo.status[status]) {
+                    resumo.status[status] = { viagens: 0, valor: 0 };
+                }
+                resumo.status[status].viagens++;
+                resumo.status[status].valor += valor;
+                
+                // Análise por forma de pagamento
+                if (!resumo.pagamentos[pagamento]) {
+                    resumo.pagamentos[pagamento] = { viagens: 0, valor: 0 };
+                }
+                resumo.pagamentos[pagamento].viagens++;
+                resumo.pagamentos[pagamento].valor += valor;
+                
+                // Análise por motorista
+                if (!resumo.motoristas[motorista]) {
+                    resumo.motoristas[motorista] = { viagens: 0, valor: 0, km: 0 };
+                }
+                resumo.motoristas[motorista].viagens++;
+                resumo.motoristas[motorista].valor += valor;
+                resumo.motoristas[motorista].km += km;
+                
+                // Análise por veículo
+                if (!resumo.veiculos[veiculo]) {
+                    resumo.veiculos[veiculo] = { viagens: 0, valor: 0, km: 0 };
+                }
+                resumo.veiculos[veiculo].viagens++;
+                resumo.veiculos[veiculo].valor += valor;
+                resumo.veiculos[veiculo].km += km;
+                
+                // Análise por cliente
+                if (!resumo.clientes[cliente]) {
+                    resumo.clientes[cliente] = { viagens: 0, valor: 0 };
+                }
+                resumo.clientes[cliente].viagens++;
+                resumo.clientes[cliente].valor += valor;
+                
+                // Análise por rota
+                const rota = `${origem} → ${destino}`;
+                if (!resumo.rotas[rota]) {
+                    resumo.rotas[rota] = { viagens: 0, valor: 0, km: 0 };
+                }
+                resumo.rotas[rota].viagens++;
+                resumo.rotas[rota].valor += valor;
+                resumo.rotas[rota].km += km;
+                
+                // Análise por data
                 if (data) {
-                    const dataObj = parsearData(data);
+                    const dataObj = parsearDataBR(data);
                     if (dataObj) {
                         const dia = dataObj.toLocaleDateString('pt-BR');
                         const mes = `${dataObj.getMonth() + 1}/${dataObj.getFullYear()}`;
@@ -540,77 +681,49 @@
                         resumo.meses[mes].valor += valor;
                     }
                 }
-                
-                // Análise por motorista
-                if (!resumo.motoristas[motorista]) {
-                    resumo.motoristas[motorista] = { viagens: 0, valor: 0 };
-                }
-                resumo.motoristas[motorista].viagens++;
-                resumo.motoristas[motorista].valor += valor;
-                
-                // Análise por veículo
-                if (!resumo.veiculos[veiculo]) {
-                    resumo.veiculos[veiculo] = { viagens: 0, valor: 0 };
-                }
-                resumo.veiculos[veiculo].viagens++;
-                resumo.veiculos[veiculo].valor += valor;
-                
-                // Análise por cliente
-                if (!resumo.clientes[cliente]) {
-                    resumo.clientes[cliente] = { viagens: 0, valor: 0 };
-                }
-                resumo.clientes[cliente].viagens++;
-                resumo.clientes[cliente].valor += valor;
             });
             
+            // Calcular estatísticas
+            resumo.mediaValor = resumo.totalLinhas > 0 ? resumo.totalValor / resumo.totalLinhas : 0;
+            resumo.mediaKM = resumo.totalLinhas > 0 ? resumo.totalKM / resumo.totalLinhas : 0;
+            
+            // Ordenar por valor (decrescente)
+            resumo.motoristasOrdenados = Object.entries(resumo.motoristas)
+                .sort((a, b) => b[1].valor - a[1].valor);
+                
+            resumo.veiculosOrdenados = Object.entries(resumo.veiculos)
+                .sort((a, b) => b[1].valor - a[1].valor);
+                
+            resumo.clientesOrdenados = Object.entries(resumo.clientes)
+                .sort((a, b) => b[1].valor - a[1].valor);
+                
+            resumo.rotasOrdenadas = Object.entries(resumo.rotas)
+                .sort((a, b) => b[1].viagens - a[1].viagens)
+                .slice(0, 10); // Top 10 rotas
+                
+            resumo.diasOrdenados = Object.entries(resumo.dias)
+                .sort((a, b) => new Date(b[0].split('/').reverse().join('-')) - 
+                               new Date(a[0].split('/').reverse().join('-')));
+
             return resumo;
         }
 
-        // Parsear data em vários formatos
-        function parsearData(texto) {
-            if (!texto) return null;
-            
-            // Tentar diferentes formatos
-            const formatos = [
-                'DD/MM/YYYY',
-                'YYYY-MM-DD',
-                'MM/DD/YYYY',
-                'DD-MM-YYYY'
-            ];
-            
-            for (const formato of formatos) {
-                try {
-                    let partes;
-                    if (formato === 'DD/MM/YYYY') {
-                        partes = texto.split('/');
-                        if (partes.length === 3) {
-                            return new Date(partes[2], partes[1] - 1, partes[0]);
-                        }
-                    } else if (formato === 'YYYY-MM-DD') {
-                        partes = texto.split('-');
-                        if (partes.length === 3) {
-                            return new Date(partes[0], partes[1] - 1, partes[2]);
-                        }
-                    }
-                } catch (e) {
-                    continue;
-                }
-            }
-            
-            return null;
+        // ========== FUNÇÕES DE VISUALIZAÇÃO ==========
+
+        // Formatar moeda
+        function formatarMoeda(valor) {
+            return 'R$ ' + valor.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
         }
 
-        // ========== FUNÇÕES DE VISUALIZAÇÃO ==========
+        // Formatar número
+        function formatarNumero(numero) {
+            return numero.toFixed(0).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        }
 
         // Atualizar status
         function atualizarStatus(online, mensagem) {
             elementos.statusText.textContent = mensagem;
             elementos.statusDot.className = online ? 'status-dot online' : 'status-dot offline';
-        }
-
-        // Formatar moeda
-        function formatarMoeda(valor) {
-            return 'R$ ' + valor.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
         }
 
         // Mostrar relatório
@@ -619,118 +732,119 @@
                 elementos.contentArea.innerHTML = `
                     <div class="loading">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <p>Nenhum dado disponível. Atualize os dados primeiro.</p>
+                        <p>Nenhum dado disponível. Clique em "Atualizar".</p>
                     </div>`;
                 return;
             }
             
-            switch(tipo) {
-                case 'overview':
-                    mostrarVisaoGeral();
-                    break;
-                case 'motoristas':
-                    mostrarRelatorioMotoristas();
-                    break;
-                case 'veiculos':
-                    mostrarRelatorioVeiculos();
-                    break;
-                case 'clientes':
-                    mostrarRelatorioClientes();
-                    break;
-                case 'diario':
-                    mostrarRelatorioDiario();
-                    break;
-                case 'mensal':
-                    mostrarRelatorioMensal();
-                    break;
-                default:
-                    mostrarVisaoGeral();
-            }
+            const resumo = dadosAnalisados;
             
-            // Atualizar título
+            // Configurar títulos
             const titulos = {
                 overview: 'Visão Geral',
-                motoristas: 'Análise por Motorista',
-                veiculos: 'Análise por Veículo',
-                clientes: 'Análise por Cliente',
+                status: 'Análise por Status',
+                pagamento: 'Formas de Pagamento',
+                motoristas: 'Resumo por Motorista',
+                veiculos: 'Resumo por Veículo',
+                clientes: 'Resumo por Cliente',
+                rotas: 'Rotas Mais Frequentes',
                 diario: 'Análise Diária',
-                mensal: 'Análise Mensal'
+                km: 'Análise de Quilometragem'
             };
             
-            elementos.reportTitle.textContent = titulos[tipo] || 'Análise';
-            elementos.reportSubtitle.textContent = `Baseado em ${dadosAnalisados.totalLinhas} registros da planilha`;
+            elementos.reportTitle.textContent = titulos[tipo] || 'Dashboard Mineramix';
+            elementos.reportSubtitle.textContent = `${resumo.totalLinhas} viagens analisadas | ${formatarMoeda(resumo.totalValor)} total`;
+            
+            // Chamar função específica
+            switch(tipo) {
+                case 'overview': mostrarVisaoGeral(resumo); break;
+                case 'status': mostrarRelatorioStatus(resumo); break;
+                case 'pagamento': mostrarRelatorioPagamento(resumo); break;
+                case 'motoristas': mostrarRelatorioMotoristas(resumo); break;
+                case 'veiculos': mostrarRelatorioVeiculos(resumo); break;
+                case 'clientes': mostrarRelatorioClientes(resumo); break;
+                case 'rotas': mostrarRelatorioRotas(resumo); break;
+                case 'diario': mostrarRelatorioDiario(resumo); break;
+                case 'km': mostrarRelatorioKM(resumo); break;
+                default: mostrarVisaoGeral(resumo);
+            }
         }
 
         // Visão Geral
-        function mostrarVisaoGeral() {
-            const resumo = dadosAnalisados;
-            const valorMedio = resumo.totalValor / resumo.totalViagens;
-            
-            // Top 5 motoristas
-            const topMotoristas = Object.entries(resumo.motoristas)
-                .sort((a, b) => b[1].valor - a[1].valor)
-                .slice(0, 5);
-            
-            // Top 5 veículos
-            const topVeiculos = Object.entries(resumo.veiculos)
-                .sort((a, b) => b[1].valor - a[1].valor)
-                .slice(0, 5);
-            
-            // Últimos 7 dias
-            const ultimosDias = Object.entries(resumo.dias)
-                .sort((a, b) => new Date(b[0].split('/').reverse().join('-')) - 
-                               new Date(a[0].split('/').reverse().join('-')))
-                .slice(0, 7);
-            
-            elementos.contentArea.innerHTML = `
-                <!-- Métricas Gerais -->
+        function mostrarVisaoGeral(resumo) {
+            // Métricas principais
+            const metricsHTML = `
                 <div class="metrics-grid">
-                    <div class="metric-box">
+                    <div class="metric-card">
+                        <div class="metric-icon"><i class="fas fa-route"></i></div>
+                        <div class="metric-value">${resumo.totalLinhas}</div>
                         <div class="metric-label">Total de Viagens</div>
-                        <div class="metric-value">${resumo.totalViagens}</div>
                     </div>
-                    <div class="metric-box">
-                        <div class="metric-label">Faturamento Total</div>
+                    <div class="metric-card">
+                        <div class="metric-icon"><i class="fas fa-money-bill-wave"></i></div>
                         <div class="metric-value">${formatarMoeda(resumo.totalValor)}</div>
+                        <div class="metric-label">Faturamento Total</div>
                     </div>
-                    <div class="metric-box">
+                    <div class="metric-card">
+                        <div class="metric-icon"><i class="fas fa-calculator"></i></div>
+                        <div class="metric-value">${formatarMoeda(resumo.mediaValor)}</div>
                         <div class="metric-label">Média por Viagem</div>
-                        <div class="metric-value">${formatarMoeda(valorMedio)}</div>
                     </div>
-                    <div class="metric-box">
-                        <div class="metric-label">Motoristas</div>
+                    <div class="metric-card">
+                        <div class="metric-icon"><i class="fas fa-road"></i></div>
+                        <div class="metric-value">${formatarNumero(resumo.totalKM)}</div>
+                        <div class="metric-label">KM Total</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon"><i class="fas fa-user-tie"></i></div>
                         <div class="metric-value">${Object.keys(resumo.motoristas).length}</div>
+                        <div class="metric-label">Motoristas</div>
                     </div>
-                    <div class="metric-box">
-                        <div class="metric-label">Veículos</div>
+                    <div class="metric-card">
+                        <div class="metric-icon"><i class="fas fa-truck"></i></div>
                         <div class="metric-value">${Object.keys(resumo.veiculos).length}</div>
-                    </div>
-                    <div class="metric-box">
-                        <div class="metric-label">Clientes</div>
-                        <div class="metric-value">${Object.keys(resumo.clientes).length}</div>
+                        <div class="metric-label">Veículos</div>
                     </div>
                 </div>
-                
-                <!-- Gráfico dos últimos dias -->
+            `;
+            
+            // Status (gráfico)
+            const statusEntries = Object.entries(resumo.status);
+            const statusChart = statusEntries.length > 0 ? `
                 <div class="chart-container">
-                    <h3 style="margin-bottom: 1.5rem;">Faturamento dos Últimos 7 Dias</h3>
+                    <h3 style="margin-bottom: 1rem; font-size: 1rem;">Distribuição por Status</h3>
                     <div class="chart-bars">
-                        ${ultimosDias.map(([dia, dados]) => `
-                            <div class="chart-bar">
-                                <div class="bar" style="height: ${Math.max(20, (dados.valor / Math.max(...ultimosDias.map(d => d[1].valor))) * 180)}px;"></div>
-                                <div class="bar-label">${dia.split('/')[0]}/${dia.split('/')[1]}</div>
-                                <div style="font-size: 0.8rem; margin-top: 5px;">${formatarMoeda(dados.valor)}</div>
-                            </div>
-                        `).join('')}
+                        ${statusEntries.map(([status, dados]) => {
+                            const percentual = (dados.valor / resumo.totalValor * 100).toFixed(1);
+                            const altura = Math.max(20, percentual * 1.5);
+                            let cor = 'var(--cor-secundaria)';
+                            
+                            if (status.toLowerCase().includes('pago')) cor = 'var(--cor-pago)';
+                            else if (status.toLowerCase().includes('pendente')) cor = 'var(--cor-pendente)';
+                            else if (status.toLowerCase().includes('analise') || status.toLowerCase().includes('análise')) cor = 'var(--cor-analise)';
+                            
+                            return `
+                                <div class="chart-bar">
+                                    <div class="bar" style="height: ${altura}px; background: ${cor};"></div>
+                                    <div class="bar-label">${status}</div>
+                                    <div style="font-size: 0.7rem; margin-top: 2px;">${percentual}%</div>
+                                </div>
+                            `;
+                        }).join('')}
                     </div>
                 </div>
-                
-                <!-- Cards de Resumo -->
+            ` : '';
+            
+            // Top motoristas e veículos
+            const topMotoristas = resumo.motoristasOrdenados.slice(0, 5);
+            const topVeiculos = resumo.veiculosOrdenados.slice(0, 5);
+            
+            const summaryHTML = `
                 <div class="summary-cards">
                     <!-- Top Motoristas -->
                     <div class="summary-card">
                         <div class="summary-header">
-                            <div class="summary-title">Top 5 Motoristas (Faturamento)</div>
+                            <div class="summary-title">Top 5 Motoristas</div>
                             <div class="summary-icon"><i class="fas fa-user-tie"></i></div>
                         </div>
                         <table class="summary-table">
@@ -745,7 +859,7 @@
                                 ${topMotoristas.map(([nome, dados]) => `
                                     <tr>
                                         <td>${nome}</td>
-                                        <td>${dados.viagens}</td>
+                                        <td class="center">${dados.viagens}</td>
                                         <td class="money">${formatarMoeda(dados.valor)}</td>
                                     </tr>
                                 `).join('')}
@@ -756,13 +870,13 @@
                     <!-- Top Veículos -->
                     <div class="summary-card">
                         <div class="summary-header">
-                            <div class="summary-title">Top 5 Veículos (Faturamento)</div>
+                            <div class="summary-title">Top 5 Veículos</div>
                             <div class="summary-icon"><i class="fas fa-truck"></i></div>
                         </div>
                         <table class="summary-table">
                             <thead>
                                 <tr>
-                                    <th>Veículo</th>
+                                    <th>Placa</th>
                                     <th>Viagens</th>
                                     <th>Total</th>
                                 </tr>
@@ -771,7 +885,7 @@
                                 ${topVeiculos.map(([placa, dados]) => `
                                     <tr>
                                         <td>${placa}</td>
-                                        <td>${dados.viagens}</td>
+                                        <td class="center">${dados.viagens}</td>
                                         <td class="money">${formatarMoeda(dados.valor)}</td>
                                     </tr>
                                 `).join('')}
@@ -780,14 +894,115 @@
                     </div>
                 </div>
             `;
+            
+            elementos.contentArea.innerHTML = metricsHTML + statusChart + summaryHTML;
+        }
+
+        // Relatório por Status
+        function mostrarRelatorioStatus(resumo) {
+            const statusEntries = Object.entries(resumo.status)
+                .sort((a, b) => b[1].valor - a[1].valor);
+            
+            elementos.contentArea.innerHTML = `
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <div class="summary-title">Resumo Financeiro por Status</div>
+                        <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
+                    </div>
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th class="center">Viagens</th>
+                                <th class="center">% Viagens</th>
+                                <th class="money">Valor Total</th>
+                                <th class="center">% Valor</th>
+                                <th class="money">Média/Viagem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${statusEntries.map(([status, dados]) => {
+                                const percentViagens = ((dados.viagens / resumo.totalLinhas) * 100).toFixed(1);
+                                const percentValor = ((dados.valor / resumo.totalValor) * 100).toFixed(1);
+                                const media = dados.valor / dados.viagens;
+                                
+                                let statusClass = '';
+                                if (status.toLowerCase().includes('pago')) statusClass = 'status-pago';
+                                else if (status.toLowerCase().includes('pendente')) statusClass = 'status-pendente';
+                                else if (status.toLowerCase().includes('analise') || status.toLowerCase().includes('análise')) statusClass = 'status-analise';
+                                
+                                return `
+                                    <tr>
+                                        <td><span class="status-badge ${statusClass}">${status}</span></td>
+                                        <td class="center">${dados.viagens}</td>
+                                        <td class="center">${percentViagens}%</td>
+                                        <td class="money">${formatarMoeda(dados.valor)}</td>
+                                        <td class="center">${percentValor}%</td>
+                                        <td class="money">${formatarMoeda(media)}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                            <tr style="font-weight: bold; background: rgba(0,0,0,0.02);">
+                                <td>TOTAL</td>
+                                <td class="center">${resumo.totalLinhas}</td>
+                                <td class="center">100%</td>
+                                <td class="money">${formatarMoeda(resumo.totalValor)}</td>
+                                <td class="center">100%</td>
+                                <td class="money">${formatarMoeda(resumo.mediaValor)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Relatório por Forma de Pagamento
+        function mostrarRelatorioPagamento(resumo) {
+            const pagamentos = Object.entries(resumo.pagamentos)
+                .sort((a, b) => b[1].valor - a[1].valor);
+            
+            elementos.contentArea.innerHTML = `
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <div class="summary-title">Formas de Pagamento Utilizadas</div>
+                        <div class="summary-icon"><i class="fas fa-money-check-alt"></i></div>
+                    </div>
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>Forma de Pagamento</th>
+                                <th class="center">Viagens</th>
+                                <th class="center">% Viagens</th>
+                                <th class="money">Valor Total</th>
+                                <th class="center">% Valor</th>
+                                <th class="money">Média/Viagem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${pagamentos.map(([pagamento, dados]) => {
+                                const percentViagens = ((dados.viagens / resumo.totalLinhas) * 100).toFixed(1);
+                                const percentValor = ((dados.valor / resumo.totalValor) * 100).toFixed(1);
+                                const media = dados.valor / dados.viagens;
+                                
+                                return `
+                                    <tr>
+                                        <td>${pagamento}</td>
+                                        <td class="center">${dados.viagens}</td>
+                                        <td class="center">${percentViagens}%</td>
+                                        <td class="money">${formatarMoeda(dados.valor)}</td>
+                                        <td class="center">${percentValor}%</td>
+                                        <td class="money">${formatarMoeda(media)}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
         }
 
         // Relatório por Motorista
-        function mostrarRelatorioMotoristas() {
-            const resumo = dadosAnalisados;
-            const motoristas = Object.entries(resumo.motoristas)
-                .sort((a, b) => b[1].valor - a[1].valor);
-            
+        function mostrarRelatorioMotoristas(resumo) {
             elementos.contentArea.innerHTML = `
                 <div class="summary-card">
                     <div class="summary-header">
@@ -798,33 +1013,32 @@
                         <thead>
                             <tr>
                                 <th>Motorista</th>
-                                <th>Viagens</th>
-                                <th>% do Total</th>
-                                <th>Faturamento Total</th>
-                                <th>Média por Viagem</th>
+                                <th class="center">Viagens</th>
+                                <th class="center">KM Total</th>
+                                <th class="money">Faturamento Total</th>
+                                <th class="center">% do Total</th>
+                                <th class="money">Média por Viagem</th>
+                                <th class="money">Média por KM</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${motoristas.map(([nome, dados]) => {
+                            ${resumo.motoristasOrdenados.map(([nome, dados]) => {
                                 const percentual = ((dados.valor / resumo.totalValor) * 100).toFixed(1);
-                                const media = dados.valor / dados.viagens;
+                                const mediaViagem = dados.valor / dados.viagens;
+                                const mediaKM = dados.km > 0 ? dados.valor / dados.km : 0;
+                                
                                 return `
                                     <tr>
                                         <td>${nome}</td>
-                                        <td>${dados.viagens}</td>
-                                        <td>${percentual}%</td>
+                                        <td class="center">${dados.viagens}</td>
+                                        <td class="center">${formatarNumero(dados.km)}</td>
                                         <td class="money">${formatarMoeda(dados.valor)}</td>
-                                        <td class="money">${formatarMoeda(media)}</td>
+                                        <td class="center">${percentual}%</td>
+                                        <td class="money">${formatarMoeda(mediaViagem)}</td>
+                                        <td class="money">${formatarMoeda(mediaKM)}/km</td>
                                     </tr>
                                 `;
                             }).join('')}
-                            <tr style="font-weight: bold; background: rgba(0,0,0,0.02);">
-                                <td>TOTAL</td>
-                                <td>${resumo.totalViagens}</td>
-                                <td>100%</td>
-                                <td class="money">${formatarMoeda(resumo.totalValor)}</td>
-                                <td class="money">${formatarMoeda(resumo.totalValor / resumo.totalViagens)}</td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -832,38 +1046,40 @@
         }
 
         // Relatório por Veículo
-        function mostrarRelatorioVeiculos() {
-            const resumo = dadosAnalisados;
-            const veiculos = Object.entries(resumo.veiculos)
-                .sort((a, b) => b[1].valor - a[1].valor);
-            
+        function mostrarRelatorioVeiculos(resumo) {
             elementos.contentArea.innerHTML = `
                 <div class="summary-card">
                     <div class="summary-header">
-                        <div class="summary-title">Resumo Faturamento por Veículo</div>
+                        <div class="summary-title">Resumo Faturamento por Veículo (Cavalo)</div>
                         <div class="summary-icon"><i class="fas fa-truck"></i></div>
                     </div>
                     <table class="summary-table">
                         <thead>
                             <tr>
-                                <th>Veículo/Placa</th>
-                                <th>Viagens</th>
-                                <th>% do Total</th>
-                                <th>Faturamento Total</th>
-                                <th>Média por Viagem</th>
+                                <th>Placa</th>
+                                <th class="center">Viagens</th>
+                                <th class="center">KM Total</th>
+                                <th class="money">Faturamento Total</th>
+                                <th class="center">% do Total</th>
+                                <th class="money">Média por Viagem</th>
+                                <th class="money">Média por KM</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${veiculos.map(([placa, dados]) => {
+                            ${resumo.veiculosOrdenados.map(([placa, dados]) => {
                                 const percentual = ((dados.valor / resumo.totalValor) * 100).toFixed(1);
-                                const media = dados.valor / dados.viagens;
+                                const mediaViagem = dados.valor / dados.viagens;
+                                const mediaKM = dados.km > 0 ? dados.valor / dados.km : 0;
+                                
                                 return `
                                     <tr>
                                         <td>${placa}</td>
-                                        <td>${dados.viagens}</td>
-                                        <td>${percentual}%</td>
+                                        <td class="center">${dados.viagens}</td>
+                                        <td class="center">${formatarNumero(dados.km)}</td>
                                         <td class="money">${formatarMoeda(dados.valor)}</td>
-                                        <td class="money">${formatarMoeda(media)}</td>
+                                        <td class="center">${percentual}%</td>
+                                        <td class="money">${formatarMoeda(mediaViagem)}</td>
+                                        <td class="money">${formatarMoeda(mediaKM)}/km</td>
                                     </tr>
                                 `;
                             }).join('')}
@@ -874,11 +1090,7 @@
         }
 
         // Relatório por Cliente
-        function mostrarRelatorioClientes() {
-            const resumo = dadosAnalisados;
-            const clientes = Object.entries(resumo.clientes)
-                .sort((a, b) => b[1].valor - a[1].valor);
-            
+        function mostrarRelatorioClientes(resumo) {
             elementos.contentArea.innerHTML = `
                 <div class="summary-card">
                     <div class="summary-header">
@@ -889,23 +1101,69 @@
                         <thead>
                             <tr>
                                 <th>Cliente</th>
-                                <th>Viagens</th>
-                                <th>% do Total</th>
-                                <th>Faturamento Total</th>
-                                <th>Média por Viagem</th>
+                                <th class="center">Viagens</th>
+                                <th class="money">Faturamento Total</th>
+                                <th class="center">% do Total</th>
+                                <th class="money">Média por Viagem</th>
+                                <th class="center">Ticket Médio</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${clientes.map(([cliente, dados]) => {
+                            ${resumo.clientesOrdenados.map(([cliente, dados]) => {
                                 const percentual = ((dados.valor / resumo.totalValor) * 100).toFixed(1);
                                 const media = dados.valor / dados.viagens;
+                                const ticketMedio = dados.valor / dados.viagens;
+                                
                                 return `
                                     <tr>
                                         <td>${cliente}</td>
-                                        <td>${dados.viagens}</td>
-                                        <td>${percentual}%</td>
+                                        <td class="center">${dados.viagens}</td>
                                         <td class="money">${formatarMoeda(dados.valor)}</td>
+                                        <td class="center">${percentual}%</td>
                                         <td class="money">${formatarMoeda(media)}</td>
+                                        <td class="money">${formatarMoeda(ticketMedio)}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Relatório de Rotas
+        function mostrarRelatorioRotas(resumo) {
+            elementos.contentArea.innerHTML = `
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <div class="summary-title">Rotas Mais Frequentes</div>
+                        <div class="summary-icon"><i class="fas fa-route"></i></div>
+                    </div>
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>Rota (Origem → Destino)</th>
+                                <th class="center">Viagens</th>
+                                <th class="center">KM Médio</th>
+                                <th class="money">Faturamento Total</th>
+                                <th class="money">Média por Viagem</th>
+                                <th class="money">Média por KM</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${resumo.rotasOrdenadas.map(([rota, dados]) => {
+                                const kmMedio = dados.km / dados.viagens;
+                                const mediaViagem = dados.valor / dados.viagens;
+                                const mediaKM = dados.km > 0 ? dados.valor / dados.km : 0;
+                                
+                                return `
+                                    <tr>
+                                        <td>${rota}</td>
+                                        <td class="center">${dados.viagens}</td>
+                                        <td class="center">${formatarNumero(kmMedio)}</td>
+                                        <td class="money">${formatarMoeda(dados.valor)}</td>
+                                        <td class="money">${formatarMoeda(mediaViagem)}</td>
+                                        <td class="money">${formatarMoeda(mediaKM)}/km</td>
                                     </tr>
                                 `;
                             }).join('')}
@@ -916,78 +1174,102 @@
         }
 
         // Relatório Diário
-        function mostrarRelatorioDiario() {
-            const resumo = dadosAnalisados;
-            const dias = Object.entries(resumo.dias)
-                .sort((a, b) => new Date(b[0].split('/').reverse().join('-')) - 
-                               new Date(a[0].split('/').reverse().join('-')));
-
+        function mostrarRelatorioDiario(resumo) {
+            // Últimos 14 dias
+            const ultimosDias = resumo.diasOrdenados.slice(0, 14);
+            
             elementos.contentArea.innerHTML = `
                 <div class="summary-card">
                     <div class="summary-header">
-                        <div class="summary-title">Total de Viagens e Faturamento por Dia</div>
+                        <div class="summary-title">Total de Viagens e Faturamento por Dia (Últimas 2 semanas)</div>
                         <div class="summary-icon"><i class="fas fa-calendar-day"></i></div>
                     </div>
                     <table class="summary-table">
                         <thead>
                             <tr>
                                 <th>Data</th>
-                                <th>Viagens</th>
-                                <th>Faturamento Total</th>
-                                <th>Média por Viagem</th>
+                                <th class="center">Viagens</th>
+                                <th class="money">Faturamento Total</th>
+                                <th class="money">Média por Viagem</th>
+                                <th class="center">Dia da Semana</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${dias.map(([dia, dados]) => `
-                                <tr>
-                                    <td>${dia}</td>
-                                    <td>${dados.viagens}</td>
-                                    <td class="money">${formatarMoeda(dados.valor)}</td>
-                                    <td class="money">${formatarMoeda(dados.valor / dados.viagens)}</td>
-                                </tr>
-                            `).join('')}
+                            ${ultimosDias.map(([dia, dados]) => {
+                                const dataObj = parsearDataBR(dia);
+                                const diaSemana = dataObj ? 
+                                    ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][dataObj.getDay()] : '';
+                                const media = dados.valor / dados.viagens;
+                                
+                                return `
+                                    <tr>
+                                        <td>${dia}</td>
+                                        <td class="center">${dados.viagens}</td>
+                                        <td class="money">${formatarMoeda(dados.valor)}</td>
+                                        <td class="money">${formatarMoeda(media)}</td>
+                                        <td class="center">${diaSemana}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
                         </tbody>
                     </table>
                 </div>
             `;
         }
 
-        // Relatório Mensal
-        function mostrarRelatorioMensal() {
-            const resumo = dadosAnalisados;
-            const meses = Object.entries(resumo.meses)
-                .sort((a, b) => {
-                    const [mesA, anoA] = a[0].split('/');
-                    const [mesB, anoB] = b[0].split('/');
-                    return new Date(anoB, mesB - 1) - new Date(anoA, mesA - 1);
-                });
-
+        // Relatório de KM
+        function mostrarRelatorioKM(resumo) {
             elementos.contentArea.innerHTML = `
                 <div class="summary-card">
                     <div class="summary-header">
-                        <div class="summary-title">Total de Viagens e Faturamento por Mês</div>
-                        <div class="summary-icon"><i class="fas fa-calendar-alt"></i></div>
+                        <div class="summary-title">Análise de Quilometragem</div>
+                        <div class="summary-icon"><i class="fas fa-road"></i></div>
                     </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-icon"><i class="fas fa-road"></i></div>
+                                <div class="metric-value">${formatarNumero(resumo.totalKM)}</div>
+                                <div class="metric-label">KM Total Percorrido</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon"><i class="fas fa-calculator"></i></div>
+                                <div class="metric-value">${formatarNumero(resumo.mediaKM)}</div>
+                                <div class="metric-label">KM Médio por Viagem</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-icon"><i class="fas fa-money-bill-wave"></i></div>
+                                <div class="metric-value">${formatarMoeda(resumo.totalValor / resumo.totalKM)}</div>
+                                <div class="metric-label">Receita por KM</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h4 style="margin-bottom: 1rem; color: var(--cor-texto);">Veículos com Maior Quilometragem</h4>
                     <table class="summary-table">
                         <thead>
                             <tr>
-                                <th>Mês/Ano</th>
-                                <th>Viagens</th>
-                                <th>Faturamento Total</th>
-                                <th>Média por Viagem</th>
-                                <th>Média Diária</th>
+                                <th>Veículo</th>
+                                <th class="center">Viagens</th>
+                                <th class="center">KM Total</th>
+                                <th class="center">KM Médio</th>
+                                <th class="money">Faturamento Total</th>
+                                <th class="money">Receita/KM</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${meses.map(([mes, dados]) => {
-                                const mediaDiaria = dados.valor / 30; // Aproximação
+                            ${resumo.veiculosOrdenados.slice(0, 10).map(([placa, dados]) => {
+                                const kmMedio = dados.km / dados.viagens;
+                                const receitaKM = dados.km > 0 ? dados.valor / dados.km : 0;
+                                
                                 return `
                                     <tr>
-                                        <td>${mes}</td>
-                                        <td>${dados.viagens}</td>
+                                        <td>${placa}</td>
+                                        <td class="center">${dados.viagens}</td>
+                                        <td class="center">${formatarNumero(dados.km)}</td>
+                                        <td class="center">${formatarNumero(kmMedio)}</td>
                                         <td class="money">${formatarMoeda(dados.valor)}</td>
-                                        <td class="money">${formatarMoeda(dados.valor / dados.viagens)}</td>
-                                        <td class="money">${formatarMoeda(mediaDiaria)}</td>
+                                        <td class="money">${formatarMoeda(receitaKM)}</td>
                                     </tr>
                                 `;
                             }).join('')}
@@ -1019,8 +1301,8 @@
                     throw new Error(resultado.mensagem);
                 }
                 
-                // Analisar dados
-                dadosAnalisados = analisarDadosCompletos(resultado.dados);
+                // Analisar dados ESPECÍFICOS da sua planilha
+                dadosAnalisados = analisarDadosMineramix(resultado.dados);
                 
                 if (dadosAnalisados) {
                     // Mostrar visão geral inicialmente
@@ -1034,7 +1316,7 @@
                     // Notificação
                     mostrarNotificacao('✅ Análise concluída! Dados processados com sucesso.', 'success');
                 } else {
-                    throw new Error('Não foi possível analisar os dados');
+                    throw new Error('Não foi possível analisar os dados da planilha');
                 }
                 
             } catch (erro) {
@@ -1089,26 +1371,11 @@
                 z-index: 1000;
                 animation: slideIn 0.3s ease-out;
                 box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                background: ${tipo === 'success' ? '#28a745' : '#dc3545'};
             `;
             
-            notificacao.style.backgroundColor = tipo === 'success' ? '#28a745' : '#dc3545';
             notificacao.textContent = mensagem;
-            
             document.body.appendChild(notificacao);
-            
-            // Animação CSS
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideIn {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                @keyframes slideOut {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(100%); opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
             
             setTimeout(() => {
                 notificacao.style.animation = 'slideOut 0.3s ease-in';
@@ -1128,16 +1395,6 @@
                 item.addEventListener('click', function() {
                     if (this.id === 'btn-refresh') {
                         carregarDados();
-                        return;
-                    }
-                    
-                    if (this.id === 'btn-export') {
-                        mostrarNotificacao('📊 Função de exportação em desenvolvimento', 'info');
-                        return;
-                    }
-                    
-                    if (this.id === 'btn-settings') {
-                        mostrarNotificacao('⚙️ Configurações em desenvolvimento', 'info');
                         return;
                     }
                     
