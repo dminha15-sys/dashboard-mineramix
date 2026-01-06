@@ -7,30 +7,30 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root 
-        {
-            --cor-primaria: #000000;
-            --cor-secundaria: #FF6B35;
-            --cor-fundo: #F8F9FA;
-            --cor-card: #FFFFFF;
-            --cor-texto: #212529;
-            --cor-texto-sec: #6C757D;
-            --cor-borda: #E9ECEF;
-            --cor-sidebar: #1A1D21;
-            --cor-pago: #28a745;
-            --cor-pendente: #ffc107;
-            --cor-analise: #17a2b8;
-        }
-            body.dark {
-            --cor-primaria: #ffffff;
-            --cor-secundaria: #FF6B35;
-            --cor-fundo: #121212;
-            --cor-card: #1e1e1e;
-            --cor-texto: #e9ecef;
-            --cor-texto-sec: #adb5bd;
-            --cor-borda: #2c2c2c;
-            --cor-sidebar: #0d0f12;
-        }
+        :root {
+    --cor-primaria: #000000;
+    --cor-secundaria: #FF6B35;
+    --cor-fundo: #F8F9FA;
+    --cor-card: #FFFFFF;
+    --cor-texto: #212529;
+    --cor-texto-sec: #6C757D;
+    --cor-borda: #E9ECEF;
+    --cor-sidebar: #1A1D21;
+    --cor-pago: #28a745;
+    --cor-pendente: #ffc107;
+    --cor-analise: #17a2b8;
+}
+
+body.dark {
+    --cor-primaria: #ffffff;
+    --cor-secundaria: #FF6B35;
+    --cor-fundo: #121212;
+    --cor-card: #1e1e1e;
+    --cor-texto: #e9ecef;
+    --cor-texto-sec: #adb5bd;
+    --cor-borda: #2c2c2c;
+    --cor-sidebar: #0d0f12;
+}
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
@@ -344,166 +344,66 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Responsividade */
-     /* ======== RESPONSIVIDADE MOBILE AVANÇADA ======== */
+/* ======== RESPONSIVIDADE CORRETA ======== */
 
-/* geral para telas até 768px (tablets) */
+@media (max-width: 992px) {
+    .sidebar {
+        width: 240px;
+    }
+    .main-content {
+        margin-left: 240px;
+        padding: 1.5rem;
+    }
+}
+
 @media (max-width: 768px) {
     body {
-        padding: 10px;
-        font-size: 14px;
+        flex-direction: column;
     }
-    header {
-        padding: 18px 12px;
-    }
-    .cards {
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-    }
-    .card {
-        padding: 16px;
-    }
-    .valor {
-        font-size: 1.8rem;
-    }
-    button {
-        padding: 10px 15px;
-        font-size: 1rem;
-    }
-}
-
-/* telas pequenas até ~600px */
-@media (max-width: 600px) {
-    .cards {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    button {
+    .sidebar {
         width: 100%;
-        padding: 12px 0;
-        font-size: 1.1rem;
-    }
-    .container {
-        padding: 0 10px;
-    }
-    header h1 {
-        font-size: 2rem;
-        line-height: 1.2em;
-        word-break: break-word;
-    }
-}
-
-/* telas muito estreitas até ~420px */
-@media (max-width: 420px) {
-
-    header {
-        padding: 16px 8px;
-    }
-
-    /* ajuste adicional do título */
-    .titulo-mineramix {
-        font-size: 1.8rem;
-        text-align: center;
-        white-space: normal;
-    }
-    .titulo-mineramix span {
-        font-size: 1.8rem;
-    }
-
-    .cards {
-        grid-template-columns: 1fr;
-        gap: 8px;
-    }
-
-    .card h3 {
-        font-size: 1.1rem;
-    }
-
-    .valor {
-        font-size: 1.6rem;
-    }
-
-    button {
-        width: 100%;
-        padding: 10px 0;
-        font-size: 1rem;
-    }
-}
-
-/* telas extra estreitas até ~380px */
-@media (max-width: 380px) {
-
-    body {
-        font-size: 13px;
-        padding: 6px;
-    }
-
-    header {
-        padding: 14px 6px;
-    }
-
-    .titulo-mineramix {
-        font-size: 1.6rem;
-    }
-    .titulo-mineramix span {
-        font-size: 1.6rem;
-    }
-
-    .cards {
-        gap: 6px;
-    }
-
-    .card {
-        padding: 12px;
-    }
-
-    .card h3 {
-        font-size: 1rem;
-    }
-
-    .valor {
-        font-size: 1.4rem;
-    }
-
-    button {
-        font-size: 0.95rem;
-        padding: 8px;
-    }
-
-    /* Tabela responsiva ainda mais estreita */
-    table, thead, tbody, th, td, tr {
-        display: block;
-    }
-    thead tr {
-        display: none;
-    }
-    tbody tr {
-        margin-bottom: 10px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        padding: 6px;
-        background: white;
-    }
-    tbody td {
-        padding-left: 45%;
+        height: auto;
         position: relative;
-        text-align: left;
-        border: none;
-        border-bottom: 1px solid #eee;
+        padding: 1rem 0;
     }
-    tbody td::before {
-        position: absolute;
-        left: 12px;
-        width: 40%;
-        white-space: nowrap;
-        font-weight: bold;
-        content: attr(data-label);
-        color: #333;
-        font-size: 0.85rem;
+    .main-content {
+        margin-left: 0;
+        padding: 1rem;
+    }
+    .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    .action-buttons {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    .metrics-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+    .summary-cards {
+        grid-template-columns: 1fr;
     }
 }
 
-
+@media (max-width: 480px) {
+    .main-content {
+        padding: 0.75rem;
+    }
+    .action-buttons {
+        flex-direction: column;
+    }
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .system-status {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+}
     </style>
 </head>
 <body>
@@ -1059,108 +959,6 @@
 
         }
 
-        // Relatório por Status
-        function mostrarRelatorioStatus(resumo) {
-            const statusEntries = Object.entries(resumo.status)
-                .sort((a, b) => b[1].valor - a[1].valor);
-            
-            elementos.contentArea.innerHTML = `
-                <div class="summary-card">
-                    <div class="summary-header">
-                        <div class="summary-title">Resumo Financeiro por Status</div>
-                        <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
-                    </div>
-                    <table class="summary-table">
-                        <thead>
-                            <tr>
-                                <th>Status</th>
-                                <th class="center">Viagens</th>
-                                <th class="center">% Viagens</th>
-                                <th class="money">Valor Total</th>
-                                <th class="center">% Valor</th>
-                                <th class="money">Média/Viagem</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${statusEntries.map(([status, dados]) => {
-                                const percentViagens = ((dados.viagens / resumo.totalLinhas) * 100).toFixed(1);
-                                const percentValor = ((dados.valor / resumo.totalValor) * 100).toFixed(1);
-                                const media = dados.valor / dados.viagens;
-                                
-                                let statusClass = '';
-                                if (status.toLowerCase().includes('pago')) statusClass = 'status-pago';
-                                else if (status.toLowerCase().includes('pendente')) statusClass = 'status-pendente';
-                                else if (status.toLowerCase().includes('analise') || status.toLowerCase().includes('análise')) statusClass = 'status-analise';
-                                
-                                return `
-                                    <tr>
-                                        <td><span class="status-badge ${statusClass}">${status}</span></td>
-                                        <td class="center">${dados.viagens}</td>
-                                        <td class="center">${percentViagens}%</td>
-                                        <td class="money">${formatarMoeda(dados.valor)}</td>
-                                        <td class="center">${percentValor}%</td>
-                                        <td class="money">${formatarMoeda(media)}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                            <tr style="font-weight: bold; background: rgba(0,0,0,0.02);">
-                                <td>TOTAL</td>
-                                <td class="center">${resumo.totalLinhas}</td>
-                                <td class="center">100%</td>
-                                <td class="money">${formatarMoeda(resumo.totalValor)}</td>
-                                <td class="center">100%</td>
-                                <td class="money">${formatarMoeda(resumo.mediaValor)}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        }
-
-        // Relatório por Forma de Pagamento
-        function mostrarRelatorioPagamento(resumo) {
-            const pagamentos = Object.entries(resumo.pagamentos)
-                .sort((a, b) => b[1].valor - a[1].valor);
-            
-            elementos.contentArea.innerHTML = `
-                <div class="summary-card">
-                    <div class="summary-header">
-                        <div class="summary-title">Formas de Pagamento Utilizadas</div>
-                        <div class="summary-icon"><i class="fas fa-money-check-alt"></i></div>
-                    </div>
-                    <table class="summary-table">
-                        <thead>
-                            <tr>
-                                <th>Forma de Pagamento</th>
-                                <th class="center">Viagens</th>
-                                <th class="center">% Viagens</th>
-                                <th class="money">Valor Total</th>
-                                <th class="center">% Valor</th>
-                                <th class="money">Média/Viagem</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${pagamentos.map(([pagamento, dados]) => {
-                                const percentViagens = ((dados.viagens / resumo.totalLinhas) * 100).toFixed(1);
-                                const percentValor = ((dados.valor / resumo.totalValor) * 100).toFixed(1);
-                                const media = dados.valor / dados.viagens;
-                                
-                                return `
-                                    <tr>
-                                        <td>${pagamento}</td>
-                                        <td class="center">${dados.viagens}</td>
-                                        <td class="center">${percentViagens}%</td>
-                                        <td class="money">${formatarMoeda(dados.valor)}</td>
-                                        <td class="center">${percentValor}%</td>
-                                        <td class="money">${formatarMoeda(media)}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        }
 
         // Relatório por Motorista
         function mostrarRelatorioMotoristas(resumo) {
@@ -1443,134 +1241,50 @@
         // ========== FUNÇÕES PRINCIPAIS ==========
 
         // Carregar dados
-       async function carregarDados() {
-    try {
-        elementos.btnCarregar.disabled = true;
-        elementos.btnCarregar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
+        async function carregarDados() {
+            try {
+                elementos.btnCarregar.disabled = true;
+                elementos.btnCarregar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
 
-        atualizarStatus(false, '🔄 Conectando e analisando dados...');
+                atualizarStatus(false, '🔄 Conectando e analisando dados...');
 
-        const resposta = await fetch(CONFIG.API_URL);
-        if (!resposta.ok) {
-            throw new Error(`Erro ${resposta.status}: ${resposta.statusText}`);
-        }
-
-        const resultado = await resposta.json();
-
-        if (resultado.status === 'erro') {
-            throw new Error(resultado.mensagem);
-        }
-
-        // Salvar dados originais
-        dadosOriginais = resultado.dados;
-
-        // Detectar coluna de data
-        const cabecalhos = dadosOriginais[0];
-        const colunasDetectadas = detectarColunas(cabecalhos);
-        const colunaData = colunasDetectadas.find(c => c.tipo === 'data');
-        indiceColunaData = colunaData ? colunaData.indice : null;
-
-        console.log('📅 Índice da coluna de data:', indiceColunaData);
-
-        // Analisar dados completos
-        dadosAnalisados = analisarDadosMineramix(dadosOriginais);
-
-        mostrarRelatorio('overview');
-
-        const agora = new Date().toLocaleTimeString('pt-BR');
-        elementos.lastUpdate.textContent = `Última atualização: ${agora}`;
-        atualizarStatus(true, `✅ ${dadosAnalisados.totalLinhas} registros analisados`);
-
-        mostrarNotificacao('✅ Dados carregados com sucesso', 'success');
-
-    } catch (erro) {
-        console.error(erro);
-        atualizarStatus(false, `❌ ${erro.message}`);
-        mostrarNotificacao(`❌ Erro: ${erro.message}`, 'error');
-        
-        elementos.contentArea.innerHTML = `
-            <div class="loading">
-                <i class="fas fa-exclamation-triangle"></i>
-                <p>Erro ao analisar dados: ${erro.message}</p>
-                <button class="btn btn-primary" onclick="carregarDados()" style="margin-top: 1rem;">
-                    Tentar Novamente
-                </button>
-            </div>`;
-    } finally {
-        elementos.btnCarregar.disabled = false;
-        elementos.btnCarregar.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar';
-    }
-}
-
-        
-function aplicarFiltroData() {
-    if (!dadosOriginais) {
-        mostrarNotificacao('❌ Dados ainda não carregados', 'error');
-        return;
-    }
-
-    if (indiceColunaData === null) {
-        mostrarNotificacao('❌ Coluna de data não encontrada', 'error');
-        return;
-    }
-
-    const inicio = document.getElementById('dataInicio').value;
-    const fim = document.getElementById('dataFim').value;
-
-    if (!inicio || !fim) {
-        mostrarNotificacao('⚠️ Selecione as duas datas', 'error');
-        return;
-    }
-
-    const dataInicio = new Date(inicio);
-    const dataFim = new Date(fim);
-    dataFim.setHours(23, 59, 59, 999);
-
-    const cabecalho = dadosOriginais[0];
-    const linhas = dadosOriginais.slice(1);
-
-    const linhasFiltradas = linhas.filter(linha => {
-        const data = parsearDataBR(linha[indiceColunaData]);
-        return data && data >= dataInicio && data <= dataFim;
-    });
-
-    if (!linhasFiltradas.length) {
-        mostrarNotificacao('⚠️ Nenhum registro no período', 'error');
-        return;
-    }
-
-    dadosAnalisados = analisarDadosMineramix([cabecalho, ...linhasFiltradas]);
-    mostrarRelatorio('overview');
-
-    mostrarNotificacao(
-        `📅 Período aplicado: ${linhasFiltradas.length} registros`,
-        'success'
-    );
-}
-                
-                
-                // Analisar dados ESPECÍFICOS da sua planilha
-                dadosAnalisados = analisarDadosMineramix(resultado.dados);
-                
-                if (dadosAnalisados) {
-                    // Mostrar visão geral inicialmente
-                    mostrarRelatorio('overview');
-                    
-                    // Atualizar status
-                    const agora = new Date().toLocaleTimeString('pt-BR');
-                    elementos.lastUpdate.textContent = `Última atualização: ${agora}`;
-                    atualizarStatus(true, `✅ ${dadosAnalisados.totalLinhas} registros analisados`);
-                    
-                    // Notificação
-                    mostrarNotificacao('✅ Análise concluída! Dados processados com sucesso.', 'success');
-                } else {
-                    throw new Error('Não foi possível analisar os dados da planilha');
+                const resposta = await fetch(CONFIG.API_URL);
+                if (!resposta.ok) {
+                    throw new Error(`Erro ${resposta.status}: ${resposta.statusText}`);
                 }
-                
+
+                const resultado = await resposta.json();
+
+                if (resultado.status === 'erro') {
+                    throw new Error(resultado.mensagem);
+                }
+
+                // Salvar dados originais
+                dadosOriginais = resultado.dados;
+
+                // Detectar coluna de data
+                const cabecalhos = dadosOriginais[0];
+                const colunasDetectadas = detectarColunas(cabecalhos);
+                const colunaData = colunasDetectadas.find(c => c.tipo === 'data');
+                indiceColunaData = colunaData ? colunaData.indice : null;
+
+                console.log('📅 Índice da coluna de data:', indiceColunaData);
+
+                // Analisar dados completos
+                dadosAnalisados = analisarDadosMineramix(dadosOriginais);
+
+                mostrarRelatorio('overview');
+
+                const agora = new Date().toLocaleTimeString('pt-BR');
+                elementos.lastUpdate.textContent = `Última atualização: ${agora}`;
+                atualizarStatus(true, `✅ ${dadosAnalisados.totalLinhas} registros analisados`);
+
+                mostrarNotificacao('✅ Dados carregados com sucesso', 'success');
+
             } catch (erro) {
-                console.error('Erro:', erro);
-                atualizarStatus(false, `❌ Erro: ${erro.message}`);
-                mostrarNotificacao(`❌ Erro na análise: ${erro.message}`, 'error');
+                console.error(erro);
+                atualizarStatus(false, `❌ ${erro.message}`);
+                mostrarNotificacao(`❌ Erro: ${erro.message}`, 'error');
                 
                 elementos.contentArea.innerHTML = `
                     <div class="loading">
@@ -1580,11 +1294,56 @@ function aplicarFiltroData() {
                             Tentar Novamente
                         </button>
                     </div>`;
-                
             } finally {
                 elementos.btnCarregar.disabled = false;
                 elementos.btnCarregar.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar';
             }
+        }
+
+        // Aplicar filtro de data
+        function aplicarFiltroData() {
+            if (!dadosOriginais) {
+                mostrarNotificacao('❌ Dados ainda não carregados', 'error');
+                return;
+            }
+
+            if (indiceColunaData === null) {
+                mostrarNotificacao('❌ Coluna de data não encontrada', 'error');
+                return;
+            }
+
+            const inicio = document.getElementById('dataInicio').value;
+            const fim = document.getElementById('dataFim').value;
+
+            if (!inicio || !fim) {
+                mostrarNotificacao('⚠️ Selecione as duas datas', 'error');
+                return;
+            }
+
+            const dataInicio = new Date(inicio);
+            const dataFim = new Date(fim);
+            dataFim.setHours(23, 59, 59, 999);
+
+            const cabecalho = dadosOriginais[0];
+            const linhas = dadosOriginais.slice(1);
+
+            const linhasFiltradas = linhas.filter(linha => {
+                const data = parsearDataBR(linha[indiceColunaData]);
+                return data && data >= dataInicio && data <= dataFim;
+            });
+
+            if (!linhasFiltradas.length) {
+                mostrarNotificacao('⚠️ Nenhum registro no período', 'error');
+                return;
+            }
+
+            dadosAnalisados = analisarDadosMineramix([cabecalho, ...linhasFiltradas]);
+            mostrarRelatorio('overview');
+
+            mostrarNotificacao(
+                `📅 Período aplicado: ${linhasFiltradas.length} registros`,
+                'success'
+            );
         }
 
         // Testar conexão
