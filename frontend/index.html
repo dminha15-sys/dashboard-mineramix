@@ -823,7 +823,81 @@
 }
 
 
-            
+            /* =========================
+   MOBILE – MENU INFERIOR
+   ========================= */
+@media (max-width: 768px) {
+
+    .sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 56px;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 0;
+        z-index: 1000;
+    }
+
+    .menu-item {
+        flex: 1;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .menu-text,
+    .menu-title,
+    .logo {
+        display: none !important;
+    }
+
+    .menu-item i {
+        font-size: 1.3rem;
+    }
+
+    .main-content {
+        margin-left: 0;
+        margin-bottom: 56px;
+    }
+}
+
+
+            @media (max-width: 768px) {
+    .summary-table {
+        display: none;
+    }
+}
+@media (max-width: 768px) {
+    .summary-table {
+        display: none;
+    }
+}
+
+
+            .mobile-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.mobile-card {
+    background: #1e1e1e;
+    padding: 0.75rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.mobile-card strong {
+    font-size: 0.9rem;
+}
+
+.mobile-card span {
+    font-size: 0.8rem;
+}
+
             
         </style>
 </head>
@@ -1532,6 +1606,28 @@
 
         // Relatório por Veículo
         function mostrarRelatorioVeiculos(resumo) {
+                                
+    /* ========= MOBILE FIRST ========= */
+    if (window.innerWidth < 768) {
+
+        let cards = resumo.veiculos.map(v => `
+            <div class="mobile-card">
+                <strong>${v.placa}</strong>
+                <span>Viagens: ${v.viagens}</span>
+                <span>KM: ${v.km}</span>
+                <span class="money">${formatarMoeda(v.faturamento)}</span>
+            </div>
+        `).join('');
+
+        elementos.contentArea.innerHTML = `
+            <h3 class="mobile-title">Veículos</h3>
+            <div class="mobile-card-list">
+                ${cards}
+            </div>
+        `;
+
+        return; // 🔴 MUITO IMPORTANTE
+    }
             const titulo = window.innerWidth < 480
             ? 'Faturamento por Veículo'
             : 'Resumo Faturamento por Veículo (Cavalo)';
