@@ -1903,24 +1903,7 @@
         });
     });
 });
-        document.addEventListener('DOMContentLoaded', function() {
-            // Menu interativo
-            const menuItems = document.querySelectorAll('.menu-item');
-            menuItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    if (this.id === 'btn-refresh') {
-                        carregarDados();
-                        return;
-                    }
-                    
-                    const report = this.getAttribute('data-report');
-                    if (report) {
-                        menuItems.forEach(i => i.classList.remove('active'));
-                        this.classList.add('active');
-                        mostrarRelatorio(report);
-                    }
-                });
-            });
+       
             
             // Verificar modo escuro salvo
             if (localStorage.getItem('darkMode') === 'on') {
