@@ -737,6 +737,94 @@
     }
 }
 
+            /* =========================
+   MOBILE – SIDEBAR LATERAL
+   ========================= */
+@media (max-width: 768px) {
+
+    .sidebar {
+        width: 56px;
+        min-width: 56px;
+        padding: 0.5rem 0;
+    }
+
+    .menu-item {
+        justify-content: center;
+        padding: 0.75rem 0;
+    }
+
+    .menu-item i {
+        margin-right: 0;
+        font-size: 1.1rem;
+    }
+
+    .menu-text,
+    .menu-title,
+    .logo small {
+        display: none;
+    }
+}
+
+            /* =========================
+   MOBILE – TOPO LIMPO
+   ========================= */
+@media (max-width: 768px) {
+
+    .logo h1 {
+        font-size: 1.1rem;
+        text-align: center;
+        width: 100%;
+    }
+
+    .top-bar {
+        justify-content: center;
+    }
+}
+
+
+            /* =========================
+   MOBILE – ESCONDER %
+   ========================= */
+@media (max-width: 480px) {
+    .summary-table th:nth-child(4),
+    .summary-table td:nth-child(4),
+    .summary-table th:nth-child(5),
+    .summary-table td:nth-child(5) {
+        display: none;
+    }
+}
+
+
+            @media (max-width: 480px) {
+    .summary-table {
+        font-size: 0.75rem;
+    }
+
+    .summary-table th,
+    .summary-table td {
+        padding: 0.4rem;
+    }
+}
+
+
+            @media (max-width: 420px) {
+    .metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .metrics-card h3 {
+        font-size: 0.7rem;
+    }
+
+    .metrics-card p {
+        font-size: 1rem;
+    }
+}
+
+
+            
+            
         </style>
 </head>
 <body>
@@ -1444,10 +1532,13 @@
 
         // Relatório por Veículo
         function mostrarRelatorioVeiculos(resumo) {
-            elementos.contentArea.innerHTML = `
+            const titulo = window.innerWidth < 480
+            ? 'Faturamento por Veículo'
+            : 'Resumo Faturamento por Veículo (Cavalo)';
+                elementos.contentArea.innerHTML = `
                 <div class="summary-card">
                     <div class="summary-header">
-                        <div class="summary-title">Resumo Faturamento por Veículo (Cavalo)</div>
+                       <div class="summary-title">${titulo}</div>
                         <div class="summary-icon"><i class="fas fa-truck"></i></div>
                     </div>
                     <table class="summary-table">
