@@ -539,163 +539,183 @@
 }
 
 
-            /* =========================
-   MOBILE – MENU SÓ ÍCONES
-   ========================= */
+/* ============================
+   MOBILE RESPONSIVO DEFINITIVO
+   ============================ */
 @media (max-width: 768px) {
-    .menu-text {
-        display: none;
-    }
 
-    .menu-item {
-        justify-content: center;
-        padding: 0.75rem;
-    }
-
-    .menu-item i {
-        margin-right: 0;
-        font-size: 1rem;
-    }
-
-    .menu-title {
-        display: none;
-    }
-
-    .logo small {
-        display: none;
-    }
-
-    .logo h1 {
-        font-size: 1.2rem;
-        text-align: center;
-    }
-}
-
-            /* =========================
-   MOBILE – TABELAS RESPONSIVAS
-   ========================= */
-@media (max-width: 768px) {
-    .summary-card {
-        overflow-x: auto;
-    }
-
-    .summary-table {
-        min-width: 650px;
-    }
-}
-
-            /* =========================
-   QUEBRA DE TEXTO SEGURA
-   ========================= */
-.summary-table td,
-.summary-table th {
-    white-space: nowrap;
-}
-
-.summary-card,
-.metrics-card {
-    max-width: 100%;
-    overflow: hidden;
-}
-
-/* ============================================
-   REPLACE ALL EXISTING MOBILE CSS WITH THIS
-   ============================================ */
-@media (max-width: 768px) {
-  /* 1. Reset Geral para Mobile */
   body {
     flex-direction: column;
-    padding-top: 60px !important;    /* Espaço para Header Fixo */
-    padding-bottom: 60px !important; /* Espaço para Menu Inferior Fixo */
+    padding-top: 64px;
+    padding-bottom: 64px;
     overflow-x: hidden;
   }
 
-  /* 2. Header Fixo no Topo */
+  /* ===== HEADER FIXO COM LOGO ===== */
   .top-bar {
-    position: fixed !important;
+    position: fixed;
     top: 0;
     left: 0;
+    height: 64px;
     width: 100%;
-    height: 60px;
     background: var(--cor-sidebar);
-    z-index: 1000;
+    z-index: 2000;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 0;
-    padding: 0 1rem;
   }
-  .top-bar .logo { padding: 0; border: none; margin: 0; }
-  .top-bar .logo h1 { font-size: 1.3rem; margin: 0; color: white; }
-  .top-bar .logo small,
-  .top-bar .date-filter-top,
-  .top-bar .top-actions { display: none !important; }
 
-  /* 3. Menu de Navegação Fixo no Rodapé */
-  .sidebar {
-    position: fixed !important;
-    bottom: 0;
+  /* LOGO CENTRALIZADA */
+  .top-bar::after {
+    content: "MINERA\u00A0MIX";
+    color: white;
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+  }
+
+  /* ESCONDE BOTÕES DO TOPO */
+  .top-actions {
+    display: none !important;
+  }
+
+  /* FILTRO DE DATA VISÍVEL NO MOBILE */
+  .date-filter-top {
+    position: fixed;
+    top: 64px;
     left: 0;
     width: 100%;
-    height: 60px;
-    background: var(--cor-sidebar);
-    z-index: 1000;
+    background: var(--cor-card);
+    padding: 0.75rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    z-index: 1500;
+    border-bottom: 1px solid var(--cor-borda);
+  }
+
+  .date-input {
+    width: 130px;
+  }
+
+  /* ===== SIDEBAR → MENU INFERIOR ===== */
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    height: 64px;
+    width: 100%;
     padding: 0;
-    margin: 0;
+    background: var(--cor-sidebar);
     display: flex;
     justify-content: space-around;
     align-items: center;
-    overflow-x: auto;
+    z-index: 2000;
   }
-  .menu-section { margin: 0; width: 100%; }
+
+  .logo {
+    display: none; /* REMOVE LOGO DO RODAPÉ */
+  }
+
+  .menu-section {
+    margin: 0;
+  }
+
+  .menu-title {
+    display: none;
+  }
+
   .menu-lista {
     display: flex;
-    justify-content: space-around;
     width: 100%;
-    padding: 0;
-    margin: 0;
+    justify-content: space-around;
   }
+
   .menu-item {
     flex-direction: column;
-    align-items: center;
     justify-content: center;
-    padding: 8px 5px !important;
-    min-height: 44px; /* Tamanho mínimo para toque */
-    min-width: 70px;
-    border-left: none !important;
-    border-top: 3px solid transparent;
+    align-items: center;
+    border: none;
+    padding: 6px;
+    min-width: 64px;
   }
-  .menu-item.active { border-top-color: var(--cor-secundaria); }
-  .menu-item i { margin: 0 0 4px 0; font-size: 1rem; }
-  .menu-text { font-size: 0.7rem; display: block !important; }
-  .menu-title { display: none; }
 
-  /* 4. Ajustar Área de Conteúdo Principal */
+  .menu-item i {
+    font-size: 1.2rem;
+    margin: 0;
+  }
+
+  .menu-text {
+    display: none !important;
+  }
+
+  .menu-item.active {
+    color: var(--cor-secundaria);
+  }
+
+  /* ===== CONTEÚDO ===== */
   .main-content {
-    margin: 0 !important;
+    margin: 0;
     padding: 1rem;
     width: 100%;
-    min-height: calc(100vh - 120px); /* Desconta altura do header+footer */
+    min-height: calc(100vh - 128px);
   }
 
-  /* 5. Tornar Tabelas Roláveis */
-  .summary-card {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
-  }
-  .summary-table {
-    min-width: 650px; /* Força a rolagem horizontal se necessário */
-    font-size: 0.8rem;
-  }
-
-  /* 6. Ajustar Grid de Métricas */
+  /* ===== CARDS ===== */
   .metrics-grid {
-    grid-template-columns: repeat(2, 1fr) !important; /* 2 colunas em mobile */
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
   }
-  .metric-card { padding: 0.75rem; }
+
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  /* ===== TABELAS ===== */
+  .summary-card {
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  .summary-table {
+    min-width: 640px;
+  }
+
+  .summary-table th,
+  .summary-table td {
+    white-space: nowrap;
+  }
 }
-        </style>
+
+            /* ===== CARDS MOBILE ===== */
+.mobile-card-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.mobile-card {
+  background: var(--cor-card);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  border: 1px solid var(--cor-borda);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.mobile-card strong {
+  font-size: 0.95rem;
+}
+
+.mobile-title {
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+</style>
 </head>
 <body>
     <!-- Sidebar -->
@@ -1361,28 +1381,25 @@
 
             /* ========= MOBILE FIRST ========= */
             
-    if (window.innerWidth < 768) {
+   if (window.innerWidth < 768) {
 
-    const lista = resumo.porMotorista.slice(0, 5);
+  const lista = resumo.motoristasOrdenados.slice(0, 10);
 
-    const cards = lista.map(m => `
-        <div class="mobile-card">
-            <strong>${m.nome}</strong>
-            <span>Viagens: ${m.viagens}</span>
-            <span class="money">${formatarMoeda(m.faturamento)}</span>
-        </div>
-    `).join('');
+  const cards = lista.map(([nome, dados]) => `
+    <div class="mobile-card">
+      <strong>${nome}</strong>
+      <span>Viagens: ${dados.viagens}</span>
+      <span>KM: ${formatarNumero(dados.km)}</span>
+      <span class="money">${formatarMoeda(dados.valor)}</span>
+    </div>
+  `).join('');
 
-    elementos.contentArea.innerHTML = `
-        <h3 class="mobile-title">Top Motoristas</h3>
-        <div class="mobile-card-list">
-            ${cards}
-        </div>
-    `;
-
-    return;
+  elementos.contentArea.innerHTML = `
+    <h3 class="mobile-title">Motoristas</h3>
+    <div class="mobile-card-list">${cards}</div>
+  `;
+  return;
 }
-
             elementos.contentArea.innerHTML = `
                 <div class="summary-card">
                     <div class="summary-header">
@@ -1432,24 +1449,24 @@
     // MOBILE
     if (window.innerWidth < 768) {
 
-        const lista = resumo.porVeiculo.slice(0, 5);
+  const lista = resumo.veiculosOrdenados.slice(0, 10);
 
-        const cards = lista.map(v => `
-            <div class="mobile-card">
-                <strong>${v.nome || v.placa}</strong>
-                <span>Viagens: ${v.viagens}</span>
-                <span>KM: ${v.km}</span>
-                <span class="money">${formatarMoeda(v.faturamento)}</span>
-            </div>
-        `).join('');
+  const cards = lista.map(([placa, dados]) => `
+    <div class="mobile-card">
+      <strong>${placa}</strong>
+      <span>Viagens: ${dados.viagens}</span>
+      <span>KM: ${formatarNumero(dados.km)}</span>
+      <span class="money">${formatarMoeda(dados.valor)}</span>
+    </div>
+  `).join('');
 
-        elementos.contentArea.innerHTML = `
-            <h3 class="mobile-title">Top Veículos</h3>
-            <div class="mobile-card-list">${cards}</div>
-        `;
+  elementos.contentArea.innerHTML = `
+    <h3 class="mobile-title">Veículos</h3>
+    <div class="mobile-card-list">${cards}</div>
+  `;
+  return;
+}
 
-        return; // 🔴 OBRIGATÓRIO
-    }
             const titulo = window.innerWidth < 480
             ? 'Faturamento por Veículo'
             : 'Resumo Faturamento por Veículo (Cavalo)';
