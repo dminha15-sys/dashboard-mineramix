@@ -540,181 +540,226 @@
 
 
 /* ============================
-   MOBILE RESPONSIVO DEFINITIVO
+   MOBILE RESPONSIVO CORRIGIDO E PROFISSIONAL
    ============================ */
 @media (max-width: 768px) {
 
-  body {
-    flex-direction: column;
-    padding-top: 64px;
-    padding-bottom: 64px;
-    overflow-x: hidden;
-  }
+    body {
+        /* Compensa: Header (60px) + Filtro (60px) + Espaço extra */
+        padding-top: 130px; 
+        padding-bottom: 80px; /* Espaço para o menu inferior não cobrir conteúdo */
+    }
 
-  /* ===== HEADER FIXO COM LOGO ===== */
-  .top-bar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 64px;
-    width: 100%;
-    background: var(--cor-sidebar);
-    z-index: 2000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
+    /* --- HEADER / TOP BAR --- */
+    .top-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 60px;
+        width: 100%;
+        background: var(--cor-sidebar);
+        z-index: 2000;
+        display: flex;
+        justify-content: space-between; /* Espalha itens */
+        align-items: center;
+        padding: 0 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
 
-  /* LOGO CENTRALIZADA */
-  .top-bar::after {
-    content: "MINERA\u00A0MIX";
-    color: white;
-    font-weight: 700;
-    font-size: 1.2rem;
-    letter-spacing: 1px;
-  }
+    /* Logo no Header */
+    .top-bar::before {
+        content: "MINERA MIX";
+        color: white;
+        font-weight: 700;
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+    }
+    .top-bar::after { content: none; } /* Remove o antigo after */
 
-  /* ESCONDE BOTÕES DO TOPO */
-  .top-actions {
-    display: none !important;
-  }
+    /* Botões do Topo (Dark Mode volta a aparecer!) */
+    .top-actions {
+        display: flex !important;
+        gap: 10px;
+    }
 
-  /* FILTRO DE DATA VISÍVEL NO MOBILE */
-  .date-filter-top {
-    position: fixed;
-    top: 64px;
-    left: 0;
-    width: 100%;
-    background: var(--cor-card);
-    padding: 0.75rem;
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    z-index: 1500;
-    border-bottom: 1px solid var(--cor-borda);
-  }
+    .top-actions button {
+        background: rgba(255,255,255,0.1);
+        border: none;
+        color: white;
+        width: 36px; 
+        height: 36px;
+    }
 
-  .date-input {
-    width: 130px;
-  }
+    /* Esconde botões menos úteis no mobile para limpar visual */
+    .top-actions button[onclick="testarConexao()"],
+    .top-actions button[onclick="carregarDados()"] {
+        display: none; /* Já tem atualizar no menu inferior */
+    }
 
-  /* ===== SIDEBAR → MENU INFERIOR ===== */
-  .sidebar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    height: 64px;
-    width: 100%;
-    padding: 0;
-    background: var(--cor-sidebar);
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    z-index: 2000;
-  }
+    /* --- FILTRO DE DATA --- */
+    .date-filter-top {
+        position: fixed;
+        top: 60px; /* Logo abaixo do header */
+        left: 0;
+        width: 100%;
+        background: var(--cor-card);
+        padding: 0.5rem 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+        z-index: 1900;
+        border-bottom: 1px solid var(--cor-borda);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
 
-  .logo {
-    display: none; /* REMOVE LOGO DO RODAPÉ */
-  }
+    .date-input-group {
+        flex: 1; /* Ocupa espaço igual */
+    }
 
-  .menu-section {
-    margin: 0;
-  }
+    .date-input-group label {
+        display: none; /* Remove label "Inicio/Fim" para economizar espaço */
+    }
 
-  .menu-title {
-    display: none;
-  }
+    .date-input {
+        width: 100%;
+        height: 40px; /* Maior para o dedo */
+        font-size: 0.9rem;
+    }
 
-  .menu-lista {
-    display: flex;
-    width: 100%;
-    justify-content: space-around;
-  }
+    /* --- MENU INFERIOR (TAB BAR) --- */
+    .sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        height: 65px;
+        width: 100%;
+        padding: 0;
+        background: var(--cor-sidebar);
+        display: flex;
+        flex-direction: row; /* Força linha */
+        justify-content: space-between;
+        align-items: center;
+        z-index: 2000;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+        overflow-x: auto; /* Permite rolagem lateral se tiver muitos itens */
+    }
 
-  .menu-item {
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    border: none;
-    padding: 6px;
-    min-width: 64px;
-  }
+    /* Esconde logo e títulos dentro da sidebar */
+    .sidebar .logo, 
+    .sidebar .menu-title {
+        display: none;
+    }
 
-  .menu-item i {
-    font-size: 1.2rem;
-    margin: 0;
-  }
+    /* O Pulo do Gato: Faz as seções (divs) se comportarem como parte da linha */
+    .menu-section {
+        display: contents; /* Ignora a div container e foca nos filhos */
+        margin: 0;
+    }
 
-  .menu-text {
-    display: none !important;
-  }
+    .menu-lista {
+        display: contents; /* Ignora a UL e foca nos LI */
+    }
 
-  .menu-item.active {
-    color: var(--cor-secundaria);
-  }
+    /* Estilo dos Ícones */
+    .menu-item {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        padding: 0 10px;
+        flex: 1; /* Distribui espaço igual */
+        min-width: 60px; /* Largura mínima para o dedo */
+        color: rgba(255,255,255,0.6);
+        border: none;
+        background: transparent;
+    }
 
-  /* ===== CONTEÚDO ===== */
-  .main-content {
-    margin: 0;
-    padding: 1rem;
-    width: 100%;
-    min-height: calc(100vh - 128px);
-  }
+    /* Ícone ativo */
+    .menu-item.active {
+        background: transparent;
+        color: var(--cor-secundaria);
+        border-top: 3px solid var(--cor-secundaria); /* Indicador no topo */
+        border-left: none;
+    }
 
-  /* ===== CARDS ===== */
-  .metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-  }
+    .menu-item i {
+        font-size: 1.2rem;
+        margin: 0 0 4px 0;
+    }
 
-  .summary-cards {
-    grid-template-columns: 1fr;
-  }
+    .menu-item .menu-text {
+        font-size: 0.6rem;
+        display: block !important; /* Mostra texto pequeno embaixo */
+        font-weight: 400;
+    }
 
-  /* ===== TABELAS ===== */
-  .summary-card {
-    overflow-x: auto;
-    max-width: 100%;
-  }
+    /* Esconde itens menos importantes no menu inferior se ficar cheio */
+    .menu-item[data-report="rotas"],
+    .menu-item[data-report="km"] {
+        /* Opcional: display: none; se achar que tem icone demais */
+    }
 
-  .summary-table {
-    min-width: 640px;
-  }
+    /* --- CONTEÚDO E CARDS --- */
+    .main-content {
+        margin: 0;
+        padding: 1rem;
+        width: 100%;
+    }
 
-  .summary-table th,
-  .summary-table td {
-    white-space: nowrap;
-  }
+    .mobile-card-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .mobile-card {
+        background: var(--cor-card);
+        border-radius: 12px; /* Mais arredondado */
+        padding: 1.2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Sombra mais bonita */
+        border: 1px solid var(--cor-borda);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Detalhe colorido lateral no card */
+    .mobile-card::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 5px;
+        background: var(--cor-secundaria);
+    }
+
+    .mobile-card strong {
+        font-size: 1.1rem;
+        color: var(--cor-primaria);
+        margin-bottom: 0.2rem;
+    }
+
+    .mobile-card span {
+        font-size: 0.9rem;
+        color: var(--cor-texto-sec);
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* Destaque para o dinheiro */
+    .mobile-card .money {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--cor-pago); /* Verde se for positivo/pago */
+        margin-top: 0.5rem;
+        align-self: flex-end; /* Alinha à direita */
+    }
 }
-
-            /* ===== CARDS MOBILE ===== */
-.mobile-card-list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
-}
-
-.mobile-card {
-  background: var(--cor-card);
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  border: 1px solid var(--cor-borda);
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.mobile-card strong {
-  font-size: 0.95rem;
-}
-
-.mobile-title {
-  margin-bottom: 0.75rem;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
 </style>
 </head>
 <body>
