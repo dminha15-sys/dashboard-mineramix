@@ -598,247 +598,102 @@
     overflow: hidden;
 }
 
-/* =========================
-   MOBILE LAYOUT CORRIGIDO
-   ========================= */
-
+/* ============================================
+   REPLACE ALL EXISTING MOBILE CSS WITH THIS
+   ============================================ */
 @media (max-width: 768px) {
-    /* Layout principal corrigido */
-    body {
-        flex-direction: column !important;
-        padding-top: 56px !important; /* Espaço para o header fixo */
-        padding-bottom: 60px !important; /* Espaço para o menu fixo */
-        overflow-x: hidden;
-    }
+  /* 1. Reset Geral para Mobile */
+  body {
+    flex-direction: column;
+    padding-top: 60px !important;    /* Espaço para Header Fixo */
+    padding-bottom: 60px !important; /* Espaço para Menu Inferior Fixo */
+    overflow-x: hidden;
+  }
 
-    /* ===== HEADER FIXO NO TOPO ===== */
-    .top-bar {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        width: 100% !important;
-        height: 56px !important;
-        background: var(--cor-sidebar) !important;
-        z-index: 2000 !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-    }
+  /* 2. Header Fixo no Topo */
+  .top-bar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: var(--cor-sidebar);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 0 1rem;
+  }
+  .top-bar .logo { padding: 0; border: none; margin: 0; }
+  .top-bar .logo h1 { font-size: 1.3rem; margin: 0; color: white; }
+  .top-bar .logo small,
+  .top-bar .date-filter-top,
+  .top-bar .top-actions { display: none !important; }
 
-    /* Logo no header fixo */
-    .top-bar .logo {
-        padding: 0 !important;
-        margin: 0 !important;
-        border: none !important;
-        display: flex !important;
-        justify-content: center !important;
-        align-items: center !important;
-        width: 100% !important;
-        height: 100% !important;
-    }
+  /* 3. Menu de Navegação Fixo no Rodapé */
+  .sidebar {
+    position: fixed !important;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: var(--cor-sidebar);
+    z-index: 1000;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    overflow-x: auto;
+  }
+  .menu-section { margin: 0; width: 100%; }
+  .menu-lista {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+  .menu-item {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 5px !important;
+    min-height: 44px; /* Tamanho mínimo para toque */
+    min-width: 70px;
+    border-left: none !important;
+    border-top: 3px solid transparent;
+  }
+  .menu-item.active { border-top-color: var(--cor-secundaria); }
+  .menu-item i { margin: 0 0 4px 0; font-size: 1rem; }
+  .menu-text { font-size: 0.7rem; display: block !important; }
+  .menu-title { display: none; }
 
-    .top-bar .logo h1 {
-        font-size: 1.3rem !important;
-        color: white !important;
-        margin: 0 !important;
-        font-weight: 700 !important;
-    }
+  /* 4. Ajustar Área de Conteúdo Principal */
+  .main-content {
+    margin: 0 !important;
+    padding: 1rem;
+    width: 100%;
+    min-height: calc(100vh - 120px); /* Desconta altura do header+footer */
+  }
 
-    .top-bar .logo h1 span {
-        color: var(--cor-secundaria) !important;
-    }
+  /* 5. Tornar Tabelas Roláveis */
+  .summary-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Rolagem suave no iOS */
+  }
+  .summary-table {
+    min-width: 650px; /* Força a rolagem horizontal se necessário */
+    font-size: 0.8rem;
+  }
 
-    /* Esconder elementos desnecessários no mobile */
-    .top-bar .logo small,
-    .top-bar .logo i,
-    .date-filter-top,
-    .top-actions {
-        display: none !important;
-    }
-
-    /* ===== MENU DE NAVEGAÇÃO FIXO NO BOTTOM ===== */
-    .sidebar {
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        height: 60px !important;
-        width: 100% !important;
-        background: var(--cor-sidebar) !important;
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: space-around !important;
-        align-items: center !important;
-        z-index: 1500 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
-        overflow-x: auto !important;
-        overflow-y: hidden !important;
-    }
-
-    /* Reorganizar o menu */
-    .menu-section {
-        display: flex !important;
-        margin: 0 !important;
-        width: 100% !important;
-        height: 100% !important;
-    }
-
-    .menu-lista {
-        display: flex !important;
-        flex-direction: row !important;
-        width: 100% !important;
-        height: 100% !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        list-style: none !important;
-        justify-content: space-around !important;
-        align-items: center !important;
-    }
-
-    /* Items do menu */
-    .menu-item {
-        flex: 1 !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        padding: 4px 0 !important;
-        margin: 0 !important;
-        height: 100% !important;
-        min-width: 70px !important;
-        border-left: none !important;
-        border-top: 3px solid transparent !important;
-        transition: all 0.2s !important;
-        cursor: pointer !important;
-    }
-
-    .menu-item:hover {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border-top-color: rgba(255, 255, 255, 0.2) !important;
-    }
-
-    .menu-item.active {
-        background: rgba(255, 107, 53, 0.1) !important;
-        border-top-color: var(--cor-secundaria) !important;
-        color: var(--cor-secundaria) !important;
-    }
-
-    .menu-item i {
-        margin: 0 0 3px 0 !important;
-        font-size: 1rem !important;
-        width: auto !important;
-        text-align: center !important;
-    }
-
-    .menu-text {
-        font-size: 0.65rem !important;
-        font-weight: 500 !important;
-        display: block !important;
-        text-align: center !important;
-        line-height: 1 !important;
-        white-space: nowrap !important;
-    }
-
-    /* Esconder títulos das seções */
-    .menu-title {
-        display: none !important;
-    }
-
-    /* ===== CONTEÚDO PRINCIPAL ===== */
-    .main-content {
-        margin-left: 0 !important;
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        padding: 1rem !important;
-        width: 100% !important;
-        min-height: calc(100vh - 116px) !important; /* 56px top + 60px bottom */
-        overflow-y: auto !important;
-        position: relative !important;
-    }
-
-    /* Ajustar status para mobile */
-    .system-status {
-        margin-top: 0 !important;
-        margin-bottom: 1rem !important;
-    }
-
-    /* ===== CORREÇÃO PARA OS BOTÕES DE NAVEGAÇÃO ===== */
-    /* Remover qualquer display: none que possa estar escondendo os itens */
-    .menu-item[data-report] {
-        display: flex !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-    }
-
-    /* Garantir que todos os relatórios estejam acessíveis */
-    .menu-item[data-report="motoristas"],
-    .menu-item[data-report="veiculos"] {
-        display: flex !important;
-    }
-}
-
-/* ===== AJUSTES ESPECÍFICOS PARA MOBILE PEQUENO ===== */
-@media (max-width: 480px) {
-    .menu-text {
-        font-size: 0.6rem !important;
-    }
-
-    .menu-item i {
-        font-size: 0.9rem !important;
-    }
-
-    .menu-item {
-        min-width: 65px !important;
-        padding: 3px 0 !important;
-    }
-
-    .top-bar .logo h1 {
-        font-size: 1.2rem !important;
-    }
-
-    .sidebar {
-        height: 58px !important;
-    }
-
-    .main-content {
-        min-height: calc(100vh - 114px) !important; /* Ajuste de altura */
-    }
-}
-
-@media (max-width: 360px) {
-    .menu-text {
-        font-size: 0.55rem !important;
-    }
-
-    .menu-item i {
-        font-size: 0.85rem !important;
-    }
-
-    .menu-item {
-        min-width: 60px !important;
-    }
-
-    .top-bar .logo h1 {
-        font-size: 1.1rem !important;
-    }
-}
-
-/* ===== GARANTIR QUE O JAVASCRIPT CONTINUE FUNCIONANDO ===== */
-/* Estilo para garantir que os cliques funcionem */
-.menu-item {
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-}
-
-.menu-item:active {
-    transform: scale(0.95);
-    transition: transform 0.1s;
+  /* 6. Ajustar Grid de Métricas */
+  .metrics-grid {
+    grid-template-columns: repeat(2, 1fr) !important; /* 2 colunas em mobile */
+    gap: 0.75rem;
+  }
+  .metric-card { padding: 0.75rem; }
 }
         </style>
 </head>
