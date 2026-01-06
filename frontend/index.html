@@ -738,32 +738,7 @@
 }
 
             /* =========================
-   MOBILE – SIDEBAR LATERAL
-   ========================= */
-@media (max-width: 768px) {
-
-    .sidebar {
-        width: 56px;
-        min-width: 56px;
-        padding: 0.5rem 0;
-    }
-
-    .menu-item {
-        justify-content: center;
-        padding: 0.75rem 0;
-    }
-
-    .menu-item i {
-        margin-right: 0;
-        font-size: 1.1rem;
-    }
-
-    .menu-text,
-    .menu-title,
-    .logo small {
-        display: none;
-    }
-}
+  
 
             /* =========================
    MOBILE – TOPO LIMPO
@@ -823,21 +798,24 @@
 }
 
 
-            /* =========================
-   MOBILE – MENU INFERIOR
+  /* =========================
+   MOBILE – MENU HORIZONTAL
    ========================= */
 @media (max-width: 768px) {
 
     .sidebar {
         position: fixed;
-        bottom: 0;
+        top: 56px; /* abaixo do header */
         left: 0;
         width: 100%;
         height: 56px;
+        display: flex;
         flex-direction: row;
         justify-content: space-around;
+        align-items: center;
         padding: 0;
         z-index: 1000;
+        overflow: hidden;
     }
 
     .menu-item {
@@ -846,19 +824,19 @@
         padding: 0;
     }
 
-    .menu-text,
-    .menu-title,
-    .logo {
-        display: none !important;
+    .menu-item i {
+        font-size: 1.2rem;
     }
 
-    .menu-item i {
-        font-size: 1.3rem;
+    .menu-text,
+    .menu-title,
+    .logo small {
+        display: none !important;
     }
 
     .main-content {
         margin-left: 0;
-        margin-bottom: 56px;
+        margin-top: 112px; /* header + menu */
     }
 }
 
@@ -896,6 +874,33 @@
 
 .mobile-card span {
     font-size: 0.8rem;
+}
+            .mobile-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+}
+
+.mobile-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.mobile-card {
+    background: #1e1e1e;
+    padding: 0.7rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.mobile-card strong {
+    font-size: 0.85rem;
+}
+
+.mobile-card span {
+    font-size: 0.75rem;
 }
 
             
@@ -1562,6 +1567,31 @@
 
         // Relatório por Motorista
         function mostrarRelatorioMotoristas(resumo) {
+
+            /* ========= MOBILE FIRST ========= */
+            
+    if (window.innerWidth < 768) {
+
+    const lista = resumo.porMotorista.slice(0, 5);
+
+    const cards = lista.map(m => `
+        <div class="mobile-card">
+            <strong>${m.nome}</strong>
+            <span>Viagens: ${m.viagens}</span>
+            <span class="money">${formatarMoeda(m.faturamento)}</span>
+        </div>
+    `).join('');
+
+    elementos.contentArea.innerHTML = `
+        <h3 class="mobile-title">Top Motoristas</h3>
+        <div class="mobile-card-list">
+            ${cards}
+        </div>
+    `;
+
+    return;
+}
+
             elementos.contentArea.innerHTML = `
                 <div class="summary-card">
                     <div class="summary-header">
@@ -1608,26 +1638,28 @@
         function mostrarRelatorioVeiculos(resumo) {
                                 
     /* ========= MOBILE FIRST ========= */
-    if (window.innerWidth < 768) {
+   if (window.innerWidth < 768) {
 
-        let cards = resumo.veiculos.map(v => `
-            <div class="mobile-card">
-                <strong>${v.placa}</strong>
-                <span>Viagens: ${v.viagens}</span>
-                <span>KM: ${v.km}</span>
-                <span class="money">${formatarMoeda(v.faturamento)}</span>
-            </div>
-        `).join('');
+    const lista = resumo.porVeiculo.slice(0, 5);
 
-        elementos.contentArea.innerHTML = `
-            <h3 class="mobile-title">Veículos</h3>
-            <div class="mobile-card-list">
-                ${cards}
-            </div>
-        `;
+    const cards = lista.map(v => `
+        <div class="mobile-card">
+            <strong>${v.nome || v.placa}</strong>
+            <span>Viagens: ${v.viagens}</span>
+            <span>KM: ${v.km}</span>
+            <span class="money">${formatarMoeda(v.faturamento)}</span>
+        </div>
+    `).join('');
 
-        return; // 🔴 MUITO IMPORTANTE
-    }
+    elementos.contentArea.innerHTML = `
+        <h3 class="mobile-title">Top Veículos</h3>
+        <div class="mobile-card-list">
+            ${cards}
+        </div>
+    `;
+
+    return;
+}
             const titulo = window.innerWidth < 480
             ? 'Faturamento por Veículo'
             : 'Resumo Faturamento por Veículo (Cavalo)';
