@@ -811,195 +811,242 @@
    ========================= */
 
 @media (max-width: 768px) {
-    /* Layout principal */
+    /* Layout principal corrigido */
     body {
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
+        flex-direction: column !important;
+        padding-top: 56px !important; /* Espaço para o header fixo */
+        padding-bottom: 60px !important; /* Espaço para o menu fixo */
+        overflow-x: hidden;
     }
 
-    /* TOPO FIXO - LOGO */
+    /* ===== HEADER FIXO NO TOPO ===== */
     .top-bar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 56px;
-        width: 100%;
-        background: var(--cor-sidebar);
-        z-index: 2000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        padding: 0;
-        margin: 0;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        height: 56px !important;
+        background: var(--cor-sidebar) !important;
+        z-index: 2000 !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
 
+    /* Logo no header fixo */
     .top-bar .logo {
-        padding: 0;
-        margin: 0;
-        border: none;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        height: 100%;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important;
+        height: 100% !important;
     }
 
-    .logo h1 {
-        font-size: 1.2rem;
-        color: white;
-        text-align: center;
-        margin: 0;
-        font-weight: 600;
+    .top-bar .logo h1 {
+        font-size: 1.3rem !important;
+        color: white !important;
+        margin: 0 !important;
+        font-weight: 700 !important;
     }
 
-    .logo h1 span {
-        color: var(--cor-secundaria);
+    .top-bar .logo h1 span {
+        color: var(--cor-secundaria) !important;
     }
 
-    .logo small,
-    .logo i,
-    .top-actions,
-    .date-filter-top {
+    /* Esconder elementos desnecessários no mobile */
+    .top-bar .logo small,
+    .top-bar .logo i,
+    .date-filter-top,
+    .top-actions {
         display: none !important;
     }
 
-    /* SIDEBAR NO BOTTOM - MENU DE NAVEGAÇÃO */
+    /* ===== MENU DE NAVEGAÇÃO FIXO NO BOTTOM ===== */
     .sidebar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 60px;
-        width: 100%;
-        background: var(--cor-sidebar);
-        display: flex;
-        flex-direction: row;
-        justify-content: space-around;
-        align-items: center;
-        z-index: 1500;
-        padding: 0;
-        margin: 0;
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
-        overflow-x: auto;
-        overflow-y: hidden;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        height: 60px !important;
+        width: 100% !important;
+        background: var(--cor-sidebar) !important;
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-around !important;
+        align-items: center !important;
+        z-index: 1500 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
     }
 
+    /* Reorganizar o menu */
     .menu-section {
-        display: flex;
-        margin: 0;
-        width: 100%;
-        height: 100%;
+        display: flex !important;
+        margin: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
     }
 
     .menu-lista {
-        display: flex;
-        flex-direction: row;
-        width: 100%;
-        height: 100%;
-        padding: 0;
-        margin: 0;
-        justify-content: space-around;
-        align-items: center;
-        list-style: none;
+        display: flex !important;
+        flex-direction: row !important;
+        width: 100% !important;
+        height: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        list-style: none !important;
+        justify-content: space-around !important;
+        align-items: center !important;
     }
 
+    /* Items do menu */
     .menu-item {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-        margin: 0;
-        height: 100%;
-        min-width: 60px;
+        flex: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 4px 0 !important;
+        margin: 0 !important;
+        height: 100% !important;
+        min-width: 70px !important;
         border-left: none !important;
-        border-top: 3px solid transparent;
-        transition: all 0.2s;
+        border-top: 3px solid transparent !important;
+        transition: all 0.2s !important;
+        cursor: pointer !important;
     }
 
     .menu-item:hover {
-        background: rgba(255, 255, 255, 0.05);
-        border-top-color: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-top-color: rgba(255, 255, 255, 0.2) !important;
     }
 
     .menu-item.active {
-        background: rgba(255, 107, 53, 0.1);
-        border-top-color: var(--cor-secundaria);
+        background: rgba(255, 107, 53, 0.1) !important;
+        border-top-color: var(--cor-secundaria) !important;
+        color: var(--cor-secundaria) !important;
     }
 
     .menu-item i {
-        margin: 0 0 4px 0;
-        font-size: 1rem;
-        width: auto;
+        margin: 0 0 3px 0 !important;
+        font-size: 1rem !important;
+        width: auto !important;
+        text-align: center !important;
     }
 
     .menu-text {
-        font-size: 0.6rem !important;
-        font-weight: 500;
+        font-size: 0.65rem !important;
+        font-weight: 500 !important;
         display: block !important;
-        text-align: center;
-        line-height: 1;
+        text-align: center !important;
+        line-height: 1 !important;
+        white-space: nowrap !important;
     }
 
+    /* Esconder títulos das seções */
     .menu-title {
-        display: none;
+        display: none !important;
     }
 
-    /* CONTEÚDO PRINCIPAL */
+    /* ===== CONTEÚDO PRINCIPAL ===== */
     .main-content {
-        margin: 56px 0 60px 0 !important;
-        padding: 1rem;
-        width: 100%;
-        overflow-y: auto;
+        margin-left: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding: 1rem !important;
+        width: 100% !important;
+        min-height: calc(100vh - 116px) !important; /* 56px top + 60px bottom */
+        overflow-y: auto !important;
+        position: relative !important;
     }
 
-    /* Ajustes para o conteúdo */
+    /* Ajustar status para mobile */
     .system-status {
-        margin-top: 0.5rem;
-        margin-bottom: 1rem;
+        margin-top: 0 !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* ===== CORREÇÃO PARA OS BOTÕES DE NAVEGAÇÃO ===== */
+    /* Remover qualquer display: none que possa estar escondendo os itens */
+    .menu-item[data-report] {
+        display: flex !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+
+    /* Garantir que todos os relatórios estejam acessíveis */
+    .menu-item[data-report="motoristas"],
+    .menu-item[data-report="veiculos"] {
+        display: flex !important;
     }
 }
 
-/* Ajustes para telas muito pequenas */
+/* ===== AJUSTES ESPECÍFICOS PARA MOBILE PEQUENO ===== */
 @media (max-width: 480px) {
+    .menu-text {
+        font-size: 0.6rem !important;
+    }
+
+    .menu-item i {
+        font-size: 0.9rem !important;
+    }
+
+    .menu-item {
+        min-width: 65px !important;
+        padding: 3px 0 !important;
+    }
+
+    .top-bar .logo h1 {
+        font-size: 1.2rem !important;
+    }
+
+    .sidebar {
+        height: 58px !important;
+    }
+
+    .main-content {
+        min-height: calc(100vh - 114px) !important; /* Ajuste de altura */
+    }
+}
+
+@media (max-width: 360px) {
     .menu-text {
         font-size: 0.55rem !important;
     }
 
     .menu-item i {
-        font-size: 0.9rem;
+        font-size: 0.85rem !important;
     }
 
-    .logo h1 {
-        font-size: 1.1rem;
+    .menu-item {
+        min-width: 60px !important;
     }
 
-    .sidebar {
-        height: 58px;
-    }
-
-    .main-content {
-        margin: 56px 0 58px 0 !important;
+    .top-bar .logo h1 {
+        font-size: 1.1rem !important;
     }
 }
 
-/* Ajustes para telas ainda menores */
-@media (max-width: 360px) {
-    .menu-text {
-        font-size: 0.5rem !important;
-    }
+/* ===== GARANTIR QUE O JAVASCRIPT CONTINUE FUNCIONANDO ===== */
+/* Estilo para garantir que os cliques funcionem */
+.menu-item {
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
 
-    .menu-item i {
-        font-size: 0.85rem;
-    }
-
-    .logo h1 {
-        font-size: 1rem;
-    }
+.menu-item:active {
+    transform: scale(0.95);
+    transition: transform 0.1s;
 }
         </style>
 </head>
@@ -2160,6 +2207,38 @@
         }
 
         // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+    // Garantir que todos os itens de menu estejam visíveis
+    const menuItems = document.querySelectorAll('.menu-item[data-report]');
+    menuItems.forEach(item => {
+        item.style.display = 'flex';
+        item.style.visibility = 'visible';
+        item.style.opacity = '1';
+    });
+
+    // Configurar evento de clique para todos os itens de menu
+    const menuItemsAll = document.querySelectorAll('.menu-item');
+    menuItemsAll.forEach(item => {
+        item.addEventListener('click', function() {
+            // Remover active de todos
+            menuItemsAll.forEach(i => i.classList.remove('active'));
+            
+            // Adicionar active ao clicado
+            this.classList.add('active');
+            
+            // Se for um relatório, mostrar
+            const report = this.getAttribute('data-report');
+            if (report) {
+                mostrarRelatorio(report);
+            }
+            
+            // Se for o botão de atualizar
+            if (this.id === 'btn-refresh') {
+                carregarDados();
+            }
+        });
+    });
+});
         document.addEventListener('DOMContentLoaded', function() {
             // Menu interativo
             const menuItems = document.querySelectorAll('.menu-item');
