@@ -1919,6 +1919,16 @@
                 testarConexao();
             }, 1000);
       });    
+
+        // Adicione isso antes do fechamento da tag
+window.addEventListener('resize', function() {
+    // Recarrega o relatório atual para ajustar entre Tabela/Card
+    const itemAtivo = document.querySelector('.menu-item.active');
+    if (itemAtivo && dadosAnalisados) {
+        const report = itemAtivo.getAttribute('data-report');
+        mostrarRelatorio(report); 
+    }
+});
     </script>
 </body>
 </html>
