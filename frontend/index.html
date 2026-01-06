@@ -551,61 +551,62 @@ body.dark {
         // ========== FUNÇÕES DE ANÁLISE ESPECÍFICA ==========
 
         // Detectar colunas da SUA planilha
-      function detectarColunas(cabecalhos) {
-    console.log("🔍 Cabeçalhos recebidos:", cabecalhos); // Para debug
-    
-    const mapeamento = {};
-    
-    cabecalhos.forEach((cabecalho, index) => {
-        const cabecalhoLower = cabecalho.toString().toLowerCase().trim();
-        
-        // Mapeamento FLEXÍVEL dos cabeçalhos
-        if (cabecalhoLower.includes('data') && !cabecalhoLower.includes('pgto')) {
-            mapeamento['DATA'] = { indice: index, tipo: 'data' };
+        function detectarColunas(cabecalhos) {
+            console.log("🔍 Cabeçalhos recebidos:", cabecalhos);
+            
+            const mapeamento = {};
+            
+            cabecalhos.forEach((cabecalho, index) => {
+                const cabecalhoLower = cabecalho.toString().toLowerCase().trim();
+                
+                // Mapeamento FLEXÍVEL dos cabeçalhos
+                if (cabecalhoLower.includes('data') && !cabecalhoLower.includes('pgto')) {
+                    mapeamento['DATA'] = { indice: index, tipo: 'data' };
+                }
+                else if (cabecalhoLower.includes('cliente')) {
+                    mapeamento['CLIENTE'] = { indice: index, tipo: 'cliente' };
+                }
+                else if (cabecalhoLower.includes('motorista')) {
+                    mapeamento['MOTORISTA'] = { indice: index, tipo: 'motorista' };
+                }
+                else if (cabecalhoLower.includes('placa') || cabecalhoLower.includes('veículo') || cabecalhoLower.includes('cavalo')) {
+                    mapeamento['PLACA'] = { indice: index, tipo: 'veiculo' };
+                }
+                else if (cabecalhoLower.includes('origem')) {
+                    mapeamento['ORIGEM'] = { indice: index, tipo: 'origem' };
+                }
+                else if (cabecalhoLower.includes('destino')) {
+                    mapeamento['DESTINO'] = { indice: index, tipo: 'destino' };
+                }
+                else if (cabecalhoLower.includes('km') || cabecalhoLower.includes('quilometragem')) {
+                    mapeamento['KM'] = { indice: index, tipo: 'km' };
+                }
+                else if (cabecalhoLower.includes('valor') || cabecalhoLower.includes('total') || cabecalhoLower.includes('preço')) {
+                    mapeamento['VALOR'] = { indice: index, tipo: 'valor' };
+                }
+                else if (cabecalhoLower.includes('forma') && cabecalhoLower.includes('pgto')) {
+                    mapeamento['FORMA_PGTO'] = { indice: index, tipo: 'pagamento' };
+                }
+                else if (cabecalhoLower.includes('status')) {
+                    mapeamento['STATUS'] = { indice: index, tipo: 'status' };
+                }
+            });
+            
+            console.log("📊 Colunas detectadas:", mapeamento);
+            
+            // Converter para array
+            const colunas = [];
+            Object.keys(mapeamento).forEach(nome => {
+                colunas.push({
+                    nome: nome,
+                    indice: mapeamento[nome].indice,
+                    tipo: mapeamento[nome].tipo
+                });
+            });
+            
+            return colunas;
         }
-        else if (cabecalhoLower.includes('cliente')) {
-            mapeamento['CLIENTE'] = { indice: index, tipo: 'cliente' };
-        }
-        else if (cabecalhoLower.includes('motorista')) {
-            mapeamento['MOTORISTA'] = { indice: index, tipo: 'motorista' };
-        }
-        else if (cabecalhoLower.includes('placa') || cabecalhoLower.includes('veículo') || cabecalhoLower.includes('cavalo')) {
-            mapeamento['PLACA'] = { indice: index, tipo: 'veiculo' };
-        }
-        else if (cabecalhoLower.includes('origem')) {
-            mapeamento['ORIGEM'] = { indice: index, tipo: 'origem' };
-        }
-        else if (cabecalhoLower.includes('destino')) {
-            mapeamento['DESTINO'] = { indice: index, tipo: 'destino' };
-        }
-        else if (cabecalhoLower.includes('km') || cabecalhoLower.includes('quilometragem')) {
-            mapeamento['KM'] = { indice: index, tipo: 'km' };
-        }
-        else if (cabecalhoLower.includes('valor') || cabecalhoLower.includes('total') || cabecalhoLower.includes('preço')) {
-            mapeamento['VALOR'] = { indice: index, tipo: 'valor' };
-        }
-        else if (cabecalhoLower.includes('forma') && cabecalhoLower.includes('pgto')) {
-            mapeamento['FORMA_PGTO'] = { indice: index, tipo: 'pagamento' };
-        }
-        else if (cabecalhoLower.includes('status')) {
-            mapeamento['STATUS'] = { indice: index, tipo: 'status' };
-        }
-    });
-    
-    console.log("📊 Colunas detectadas:", mapeamento); // Para debug
-    
-    // Converter para array
-    const colunas = [];
-    Object.keys(mapeamento).forEach(nome => {
-        colunas.push({
-            nome: nome,
-            indice: mapeamento[nome].indice,
-            tipo: mapeamento[nome].tipo
-        });
-    });
-    
-    return colunas;
-}
+
         // Extrair número (para valores e KM)
         function extrairNumero(texto) {
             if (!texto) return 0;
@@ -894,7 +895,6 @@ body.dark {
                 </div>
             `;
             
-            
             // Top motoristas e veículos
             const topMotoristas = resumo.motoristasOrdenados.slice(0, 5);
             const topVeiculos = resumo.veiculosOrdenados.slice(0, 5);
@@ -955,10 +955,111 @@ body.dark {
                 </div>
             `;
             
-                elementos.contentArea.innerHTML = metricsHTML + summaryHTML;
-
+            elementos.contentArea.innerHTML = metricsHTML + summaryHTML;
         }
 
+        // Relatório por Status
+        function mostrarRelatorioStatus(resumo) {
+            const statusEntries = Object.entries(resumo.status)
+                .sort((a, b) => b[1].valor - a[1].valor);
+            
+            elementos.contentArea.innerHTML = `
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <div class="summary-title">Resumo Financeiro por Status</div>
+                        <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
+                    </div>
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th class="center">Viagens</th>
+                                <th class="center">% Viagens</th>
+                                <th class="money">Valor Total</th>
+                                <th class="center">% Valor</th>
+                                <th class="money">Média/Viagem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${statusEntries.map(([status, dados]) => {
+                                const percentViagens = ((dados.viagens / resumo.totalLinhas) * 100).toFixed(1);
+                                const percentValor = ((dados.valor / resumo.totalValor) * 100).toFixed(1);
+                                const media = dados.valor / dados.viagens;
+                                
+                                let statusClass = '';
+                                if (status.toLowerCase().includes('pago')) statusClass = 'status-pago';
+                                else if (status.toLowerCase().includes('pendente')) statusClass = 'status-pendente';
+                                else if (status.toLowerCase().includes('analise') || status.toLowerCase().includes('análise')) statusClass = 'status-analise';
+                                
+                                return `
+                                    <tr>
+                                        <td><span class="status-badge ${statusClass}">${status}</span></td>
+                                        <td class="center">${dados.viagens}</td>
+                                        <td class="center">${percentViagens}%</td>
+                                        <td class="money">${formatarMoeda(dados.valor)}</td>
+                                        <td class="center">${percentValor}%</td>
+                                        <td class="money">${formatarMoeda(media)}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                            <tr style="font-weight: bold; background: rgba(0,0,0,0.02);">
+                                <td>TOTAL</td>
+                                <td class="center">${resumo.totalLinhas}</td>
+                                <td class="center">100%</td>
+                                <td class="money">${formatarMoeda(resumo.totalValor)}</td>
+                                <td class="center">100%</td>
+                                <td class="money">${formatarMoeda(resumo.mediaValor)}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // Relatório por Forma de Pagamento
+        function mostrarRelatorioPagamento(resumo) {
+            const pagamentos = Object.entries(resumo.pagamentos)
+                .sort((a, b) => b[1].valor - a[1].valor);
+            
+            elementos.contentArea.innerHTML = `
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <div class="summary-title">Formas de Pagamento Utilizadas</div>
+                        <div class="summary-icon"><i class="fas fa-money-check-alt"></i></div>
+                    </div>
+                    <table class="summary-table">
+                        <thead>
+                            <tr>
+                                <th>Forma de Pagamento</th>
+                                <th class="center">Viagens</th>
+                                <th class="center">% Viagens</th>
+                                <th class="money">Valor Total</th>
+                                <th class="center">% Valor</th>
+                                <th class="money">Média/Viagem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${pagamentos.map(([pagamento, dados]) => {
+                                const percentViagens = ((dados.viagens / resumo.totalLinhas) * 100).toFixed(1);
+                                const percentValor = ((dados.valor / resumo.totalValor) * 100).toFixed(1);
+                                const media = dados.valor / dados.viagens;
+                                
+                                return `
+                                    <tr>
+                                        <td>${pagamento}</td>
+                                        <td class="center">${dados.viagens}</td>
+                                        <td class="center">${percentViagens}%</td>
+                                        <td class="money">${formatarMoeda(dados.valor)}</td>
+                                        <td class="center">${percentValor}%</td>
+                                        <td class="money">${formatarMoeda(media)}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
 
         // Relatório por Motorista
         function mostrarRelatorioMotoristas(resumo) {
@@ -1394,6 +1495,24 @@ body.dark {
             }, 5000);
         }
 
+        // Alternar modo escuro
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark');
+        
+            const btn = document.getElementById('btnDark');
+            const icon = btn.querySelector('i');
+        
+            if (document.body.classList.contains('dark')) {
+                icon.className = 'fas fa-sun';
+                btn.innerHTML = '<i class="fas fa-sun"></i> Modo Claro';
+                localStorage.setItem('darkMode', 'on');
+            } else {
+                icon.className = 'fas fa-moon';
+                btn.innerHTML = '<i class="fas fa-moon"></i> Modo Noturno';
+                localStorage.setItem('darkMode', 'off');
+            }
+        }
+
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
             // Menu interativo
@@ -1414,35 +1533,19 @@ body.dark {
                 });
             });
             
+            // Verificar modo escuro salvo
+            if (localStorage.getItem('darkMode') === 'on') {
+                document.body.classList.add('dark');
+                const btn = document.getElementById('btnDark');
+                btn.innerHTML = '<i class="fas fa-sun"></i> Modo Claro';
+            }
+            
             // Carregar dados automaticamente
             setTimeout(() => {
                 carregarDados();
                 testarConexao();
             }, 1000);
         });
-
-
-                                            function toggleDarkMode() 
-                                        {
-                                        document.body.classList.toggle('dark');
-                                    
-                                        const btn = document.getElementById('btnDark');
-                                        const icon = btn.querySelector('i');
-                                    
-                                        if (document.body.classList.contains('dark')) {
-                                            icon.className = 'fas fa-sun';
-                                            btn.innerHTML = '<i class="fas fa-sun"></i> Modo Claro';
-                                            localStorage.setItem('darkMode', 'on');
-                                        } else {
-                                            icon.className = 'fas fa-moon';
-                                            btn.innerHTML = '<i class="fas fa-moon"></i> Modo Noturno';
-                                            localStorage.setItem('darkMode', 'off');
-                                        }
-                                        }
-
-
-
-        
     </script>
 </body>
 </html>
