@@ -806,13 +806,22 @@
 }
 
 /* =========================
-   MOBILE – TOPO LIMPO
+   MOBILE – LAYOUT DEFINITIVO
    ========================= */
 @media (max-width: 768px) {
 
+    /* TOPO */
     .top-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 56px;
+        width: 100%;
+        background: #111;
+        z-index: 2000;
+        display: flex;
         justify-content: center;
-        padding: 0.5rem;
+        align-items: center;
     }
 
     .logo {
@@ -826,103 +835,24 @@
         text-align: center;
     }
 
-    /* Remove qualquer ícone ao lado do nome */
     .logo i,
     .logo small {
         display: none !important;
     }
-}
 
-
-            /* =========================
-   MOBILE – BARRA DE AÇÕES
-   ========================= */
-@media (max-width: 768px) {
-
-    .filters {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 0.4rem;
-        flex-wrap: nowrap;
-    }
-
-    .filters input[type="date"] {
-        height: 36px;
-        font-size: 0.75rem;
-        padding: 0 0.3rem;
-        flex: 1;
-    }
-
-    .filters .btn,
-    .filters button {
-        width: 36px;
-        height: 36px;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.85rem;
-    }
-}
-
-
-            @media (max-width: 768px) {
-
-    .btn-search {
-        background: #f57c00;
-        color: #fff;
-    }
-
-    /* Remove texto dos botões no mobile */
-    .filters .btn span,
-    .filters button span {
-        display: none;
-    }
-}
-
-
-            @media (max-width: 768px) {
-
-    .filter-date {
-        order: 1;
-    }
-
-    .btn-search {
-        order: 2;
-    }
-
-    .btn-theme {
-        order: 3;
-    }
-
-    .btn-refresh {
-        order: 4;
-    }
-
-    .btn-connection {
-        order: 5;
-    }
-}
-
-            /* =========================
-   MOBILE – MENU INFERIOR (CORRETO)
-   ========================= */
-@media (max-width: 768px) {
-
+    /* MENU INFERIOR */
     .sidebar {
         position: fixed;
-        bottom: 0;        /* 👈 PARTE DE BAIXO */
+        bottom: 0;
         left: 0;
-        width: 100%;
         height: 56px;
+        width: 100%;
+        background: #111;
         display: flex;
         flex-direction: row;
         justify-content: space-around;
         align-items: center;
-        padding: 0;
-        z-index: 1000;
-        background: #111;
+        z-index: 1500;
     }
 
     .menu-item {
@@ -931,79 +861,18 @@
         padding: 0;
     }
 
-    .menu-item i {
-        font-size: 1.2rem;
-    }
-
-    .menu-text,
-    .menu-title,
-    .logo small {
+    .menu-text {
         display: none !important;
     }
 
+    /* CONTEÚDO */
     .main-content {
+        margin-top: 56px;
+        margin-bottom: 56px;
         margin-left: 0;
-        margin-bottom: 56px; /* espaço para o menu */
-        margin-top: 56px;    /* header */
     }
 }
 
-/* =========================
-   MOBILE – TOPO FIXO CORRETO
-   ========================= */
-@media (max-width: 768px) {
-
-    .top-bar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 56px;
-        z-index: 1100;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: #111;
-    }
-
-    .logo {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
-
-    .logo h1 {
-        font-size: 1.1rem;
-        text-align: center;
-    }
-
-    .logo i,
-    .logo small {
-        display: none !important;
-    }
-}
-
-            @media (max-width: 768px) {
-
-    .main-content {
-        margin-top: 56px;   /* espaço do topo */
-        margin-bottom: 56px; /* espaço do menu inferior */
-    }
-}
-
-            @media (max-width: 768px) {
-
-    .sidebar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 56px;
-        z-index: 1000;
-    }
-}
-
-            
         </style>
 </head>
 <body>
