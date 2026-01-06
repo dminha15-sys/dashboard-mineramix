@@ -1088,8 +1088,15 @@
                 km: 'Análise de Quilometragem'
             };
             
-            elementos.reportTitle.textContent = titulos[tipo] || 'Dashboard Mineramix';
-            elementos.reportSubtitle.textContent = `${resumo.totalLinhas} viagens analisadas | ${formatarMoeda(resumo.totalValor)} total`;
+                if (elementos.reportTitle) {
+                    elementos.reportTitle.textContent = titulos[tipo] || 'Dashboard Mineramix';
+                }
+                
+                if (elementos.reportSubtitle) {
+                    elementos.reportSubtitle.textContent =
+                        `${resumo.totalLinhas} viagens analisadas | ${formatarMoeda(resumo.totalValor)} total`;
+                }
+
             
             // Chamar função específica
             switch(tipo) {
