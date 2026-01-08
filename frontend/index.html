@@ -1160,8 +1160,7 @@
             }
         }
 
-        // Analisar dados da SUA planilha
-// Analisar dados da SUA planilha (VERSÃO CORRIGIDA "UNDEFINED")
+// Analisar dados da SUA planilha (VERSÃO CORRIGIDA E SEGURA)
         function analisarDadosMineramix(dados) {
             if (!dados || dados.length < 2) return null;
             
@@ -1175,59 +1174,44 @@
                 idx[col.tipo] = col.indice;
             });
             
-            // Estruturas de análise
             const resumo = {
-                totalLinhas: 0, // Ajustado para contar apenas linhas válidas
+                totalLinhas: 0,
                 totalValor: 0,
                 totalKM: 0,
-                
-                // Por categoria
-                status: {},
-                pagamentos: {},
-                motoristas: {},
-                veiculos: {},
-                clientes: {},
-                rotas: {},
-                dias: {},
-                meses: {},
-                
-                // Detalhes
-                valores: [],
-                kms: []
+                status: {}, pagamentos: {}, motoristas: {}, 
+                veiculos: {}, clientes: {}, rotas: {}, dias: {}, meses: {},
+                valores: [], kms: []
             };
             
-            // Processar cada linha
             linhas.forEach(linha => {
-                // 1. Extrair valores numéricos primeiro para validação
+                // 1. Extração de dados
                 const km = idx.km !== undefined ? extrairNumero(linha[idx.km]) : 0;
                 const valor = idx.valor !== undefined ? extrairNumero(linha[idx.valor]) : 0;
-                
-                // 2. Extrair e limpar o nome do Motorista
                 let motoristaRaw = idx.motorista !== undefined ? linha[idx.motorista] : null;
-                
-                // Converte para string e remove espaços, ou define como nulo se for inválido
+                const dataRaw = idx.data !== undefined ? linha[idx.data] : null; // <--- Importante
+
+                // 2. Limpeza do nome do Motorista
                 if (!motoristaRaw || String(motoristaRaw).trim() === '' || String(motoristaRaw).toLowerCase().includes('undefined')) {
                     motoristaRaw = null;
                 }
 
                 // === AQUI ESTÁ A CORREÇÃO ===
-                // Se não tem Motorista, nem Valor, nem KM -> É LINHA SUJA -> IGNORA
-                if (motoristaRaw === null && valor === 0 && km === 0) {
-                    return; // Pula para a próxima linha
+                // Só ignora a linha se for COMPLETAMENTE vazia ou lixo (Sem Data, Sem Motorista, Sem Valor, Sem KM)
+                // Se tiver pelo menos uma DATA, consideramos que é uma viagem válida.
+                if (!dataRaw && motoristaRaw === null && valor === 0 && km === 0) {
+                    return; // Pula linha vazia/lixo
                 }
 
-                // Se tem valor/km mas não tem nome, define um padrão para não quebrar
                 const motorista = motoristaRaw || 'NÃO IDENTIFICADO';
 
-                // Se chegou aqui, a linha é válida. Incrementa contadores.
+                // Incrementa contadores
                 resumo.totalLinhas++;
                 resumo.totalValor += valor;
                 resumo.totalKM += km;
                 resumo.valores.push(valor);
                 resumo.kms.push(km);
 
-                // Restante das extrações de texto
-                const data = idx.data !== undefined ? linha[idx.data] : null;
+                // Restante dos campos
                 const cliente = idx.cliente !== undefined ? linha[idx.cliente] : 'Não informado';
                 const veiculo = idx.veiculo !== undefined ? linha[idx.veiculo] : 'Não informado';
                 const origem = idx.origem !== undefined ? linha[idx.origem] : '';
@@ -1235,97 +1219,59 @@
                 const pagamento = idx.pagamento !== undefined ? linha[idx.pagamento] : 'Não informado';
                 const status = idx.status !== undefined ? linha[idx.status] : 'Não informado';
                 
-                // Análise por status
-                if (!resumo.status[status]) {
-                    resumo.status[status] = { viagens: 0, valor: 0 };
-                }
-                resumo.status[status].viagens++;
-                resumo.status[status].valor += valor;
+                // --- Agrupamentos ---
                 
-                // Análise por forma de pagamento
-                if (!resumo.pagamentos[pagamento]) {
-                    resumo.pagamentos[pagamento] = { viagens: 0, valor: 0 };
-                }
-                resumo.pagamentos[pagamento].viagens++;
-                resumo.pagamentos[pagamento].valor += valor;
+                // Status
+                if (!resumo.status[status]) resumo.status[status] = { viagens: 0, valor: 0 };
+                resumo.status[status].viagens++; resumo.status[status].valor += valor;
                 
-                // Análise por motorista
-                if (!resumo.motoristas[motorista]) {
-                    resumo.motoristas[motorista] = { viagens: 0, valor: 0, km: 0 };
-                }
-                resumo.motoristas[motorista].viagens++;
-                resumo.motoristas[motorista].valor += valor;
-                resumo.motoristas[motorista].km += km;
+                // Pagamento
+                if (!resumo.pagamentos[pagamento]) resumo.pagamentos[pagamento] = { viagens: 0, valor: 0 };
+                resumo.pagamentos[pagamento].viagens++; resumo.pagamentos[pagamento].valor += valor;
                 
-                // Análise por veículo
-                if (!resumo.veiculos[veiculo]) {
-                    resumo.veiculos[veiculo] = { viagens: 0, valor: 0, km: 0 };
-                }
-                resumo.veiculos[veiculo].viagens++;
-                resumo.veiculos[veiculo].valor += valor;
-                resumo.veiculos[veiculo].km += km;
+                // Motorista
+                if (!resumo.motoristas[motorista]) resumo.motoristas[motorista] = { viagens: 0, valor: 0, km: 0 };
+                resumo.motoristas[motorista].viagens++; resumo.motoristas[motorista].valor += valor; resumo.motoristas[motorista].km += km;
                 
-                // Análise por cliente
-                if (!resumo.clientes[cliente]) {
-                    resumo.clientes[cliente] = { viagens: 0, valor: 0 };
-                }
-                resumo.clientes[cliente].viagens++;
-                resumo.clientes[cliente].valor += valor;
+                // Veículo
+                if (!resumo.veiculos[veiculo]) resumo.veiculos[veiculo] = { viagens: 0, valor: 0, km: 0 };
+                resumo.veiculos[veiculo].viagens++; resumo.veiculos[veiculo].valor += valor; resumo.veiculos[veiculo].km += km;
                 
-                // Análise por rota
+                // Cliente
+                if (!resumo.clientes[cliente]) resumo.clientes[cliente] = { viagens: 0, valor: 0 };
+                resumo.clientes[cliente].viagens++; resumo.clientes[cliente].valor += valor;
+                
+                // Rota
                 const rota = `${origem} → ${destino}`;
-                if (!resumo.rotas[rota]) {
-                    resumo.rotas[rota] = { viagens: 0, valor: 0, km: 0 };
-                }
-                resumo.rotas[rota].viagens++;
-                resumo.rotas[rota].valor += valor;
-                resumo.rotas[rota].km += km;
+                if (!resumo.rotas[rota]) resumo.rotas[rota] = { viagens: 0, valor: 0, km: 0 };
+                resumo.rotas[rota].viagens++; resumo.rotas[rota].valor += valor; resumo.rotas[rota].km += km;
                 
-                // Análise por data
-                if (data) {
-                    const dataObj = parsearDataBR(data);
+                // Data
+                if (dataRaw) {
+                    const dataObj = parsearDataBR(dataRaw);
                     if (dataObj) {
                         const dia = dataObj.toLocaleDateString('pt-BR');
                         const mes = `${dataObj.getMonth() + 1}/${dataObj.getFullYear()}`;
                         
-                        // Por dia
-                        if (!resumo.dias[dia]) {
-                            resumo.dias[dia] = { viagens: 0, valor: 0 };
-                        }
-                        resumo.dias[dia].viagens++;
-                        resumo.dias[dia].valor += valor;
+                        if (!resumo.dias[dia]) resumo.dias[dia] = { viagens: 0, valor: 0 };
+                        resumo.dias[dia].viagens++; resumo.dias[dia].valor += valor;
                         
-                        // Por mês
-                        if (!resumo.meses[mes]) {
-                            resumo.meses[mes] = { viagens: 0, valor: 0 };
-                        }
-                        resumo.meses[mes].viagens++;
-                        resumo.meses[mes].valor += valor;
+                        if (!resumo.meses[mes]) resumo.meses[mes] = { viagens: 0, valor: 0 };
+                        resumo.meses[mes].viagens++; resumo.meses[mes].valor += valor;
                     }
                 }
             });
             
-            // Calcular estatísticas finais
+            // Estatísticas Finais
             resumo.mediaValor = resumo.totalLinhas > 0 ? resumo.totalValor / resumo.totalLinhas : 0;
             resumo.mediaKM = resumo.totalLinhas > 0 ? resumo.totalKM / resumo.totalLinhas : 0;
             
             // Ordenações
-            resumo.motoristasOrdenados = Object.entries(resumo.motoristas)
-                .sort((a, b) => b[1].valor - a[1].valor);
-                
-            resumo.veiculosOrdenados = Object.entries(resumo.veiculos)
-                .sort((a, b) => b[1].valor - a[1].valor);
-                
-            resumo.clientesOrdenados = Object.entries(resumo.clientes)
-                .sort((a, b) => b[1].valor - a[1].valor);
-                
-            resumo.rotasOrdenadas = Object.entries(resumo.rotas)
-                .sort((a, b) => b[1].viagens - a[1].viagens)
-                .slice(0, 10);
-                
-            resumo.diasOrdenados = Object.entries(resumo.dias)
-                .sort((a, b) => new Date(b[0].split('/').reverse().join('-')) - 
-                               new Date(a[0].split('/').reverse().join('-')));
+            resumo.motoristasOrdenados = Object.entries(resumo.motoristas).sort((a, b) => b[1].valor - a[1].valor);
+            resumo.veiculosOrdenados = Object.entries(resumo.veiculos).sort((a, b) => b[1].valor - a[1].valor);
+            resumo.clientesOrdenados = Object.entries(resumo.clientes).sort((a, b) => b[1].valor - a[1].valor);
+            resumo.rotasOrdenadas = Object.entries(resumo.rotas).sort((a, b) => b[1].viagens - a[1].viagens).slice(0, 10);
+            resumo.diasOrdenados = Object.entries(resumo.dias).sort((a, b) => new Date(b[0].split('/').reverse().join('-')) - new Date(a[0].split('/').reverse().join('-')));
 
             return resumo;
         }
