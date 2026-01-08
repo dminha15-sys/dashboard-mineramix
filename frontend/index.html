@@ -902,6 +902,75 @@
 .stat-box:last-child {
     grid-column: span 2; /* O 3º quadrado ocupa a linha toda */
 }
+
+           
+            /* Estilos da Timeline de Rota */
+.route-timeline {
+    position: relative;
+    padding: 1rem 0;
+    margin-bottom: 1.5rem;
+}
+
+.route-point {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    position: relative;
+    z-index: 2;
+}
+
+.point-icon {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+    color: white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.origin { background: var(--cor-primaria); }
+.dest { background: var(--cor-secundaria); }
+
+.route-path {
+    padding-left: 20px; /* Metade do ícone */
+    margin: 10px 0;
+    position: relative;
+    min-height: 60px;
+    display: flex; align-items: center;
+}
+
+.path-line {
+    position: absolute; left: 19px; top: -10px; bottom: -10px;
+    width: 2px;
+    background: repeating-linear-gradient(to bottom, var(--cor-borda) 0, var(--cor-borda) 6px, transparent 6px, transparent 12px);
+    z-index: 1;
+}
+
+.toll-info {
+    margin-left: 35px;
+    display: flex; flex-direction: column; gap: 5px;
+}
+
+.toll-badge {
+    background: #ffc107; color: #333;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 6px;
+    width: fit-content;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.route-summary-box {
+    background: var(--cor-fundo);
+    padding: 1rem; border-radius: 8px;
+    border: 1px solid var(--cor-borda);
+}
+
+.summary-row {
+    display: flex; justify-content: space-between;
+    padding: 5px 0;
+    font-size: 0.9rem;
+}
 </style>
 </head>
 <body>
@@ -1147,6 +1216,58 @@
                         <span class="detail-label">Média por Viagem</span>
                         <strong id="modalMedia">R$ 0,00</strong>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+-modalrota-
+    <div id="modalRota" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <div>
+                <h3 style="color:var(--cor-primaria)">Detalhes da Rota</h3>
+                <small style="color:var(--cor-texto-sec)">Logística via BR-101</small>
+            </div>
+            <button class="modal-close" onclick="fecharModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="route-timeline">
+                <div class="route-point">
+                    <div class="point-icon origin"><i class="fas fa-industry"></i></div>
+                    <div class="point-content">
+                        <strong>Areal Tosana (Balança Minerare)</strong>
+                        <small>Origem Fixa</small>
+                    </div>
+                </div>
+
+                <div class="route-path">
+                    <div class="path-line"></div>
+                    <div class="toll-info" id="rotaPedagios">
+                        <span class="toll-badge"><i class="fas fa-ticket-alt"></i> Calculando...</span>
+                    </div>
+                </div>
+
+                <div class="route-point">
+                    <div class="point-icon dest"><i class="fas fa-map-marker-alt"></i></div>
+                    <div class="point-content">
+                        <strong id="rotaDestinoNome">--</strong>
+                        <small id="rotaKm">-- km estimados</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="route-summary-box">
+                <div class="summary-row">
+                    <span><i class="fas fa-road"></i> Distância Aprox.</span>
+                    <strong id="resumoKm">0 km</strong>
+                </div>
+                <div class="summary-row">
+                    <span><i class="fas fa-ticket-alt"></i> Custo Pedágio (Est.)</span>
+                    <strong id="resumoPedagio" style="color:#dc3545">R$ 0,00</strong>
                 </div>
             </div>
         </div>
@@ -1803,7 +1924,27 @@ function mostrarRelatorioRotas(resumo) {
             <h3 class="mobile-title">Rotas Mais Frequentes</h3>
             <div class="mobile-card-list">${cards}</div>
         `;
-        return;
+        // Dentro de mostrarRelatorioRotas...
+return `
+    <tr>
+        <td>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria)"></i>
+                ${rota}
+            </div>
+        </td>
+        <td class="center">${dados.viagens}</td>
+        <td class="center">${formatarNumero(kmMedio)}</td>
+        <td class="money">${formatarMoeda(dados.valor)}</td>
+        
+        <td class="center">
+            <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.7rem;" 
+                onclick="abrirDetalhesRota('${rota.replace(/'/g, "\\'")}', ${kmMedio})">
+                <i class="fas fa-route"></i> Ver Rota
+            </button>
+        </td>
+    </tr>
+`;;
     }
 
     // VERSÃO DESKTOP
@@ -2654,6 +2795,86 @@ window.onclick = function(event) {
     }
 }
 
+        -----------------------------
+// ==========================================
+// CONFIGURAÇÃO DE PEDÁGIOS (BR-101 / VIA LAGOS)
+// ==========================================
+const CUSTO_PEDAGIOS = {
+    // Defina aqui os valores atuais (Exemplos)
+    'AUTOPISTA_FLUMINENSE': 6.90, // Pedágio BR-101
+    'VIA_LAGOS': 27.00,           // Pedágio Via Lagos
+    'PONTE_RIO_NITEROI': 6.20,
+    'OUTROS': 0.00
+};
+
+// Mapeamento de Destinos -> Quantidade de Pedágios
+// O sistema procura por "partes" do nome. Ex: se achar "RIO", cobra Ponte.
+function calcularCustoPedagio(destino) {
+    let custo = 0;
+    let detalhes = [];
+    const dest = destino.toUpperCase();
+
+    // LÓGICA DE ROTAS (Saindo de Areal Tosana)
+    
+    // Rota 1: Região dos Lagos (Via Lagos)
+    if (dest.includes('CABO FRIO') || dest.includes('BUZIOS') || dest.includes('ARRAIAL') || dest.includes('SAO PEDRO')) {
+        custo += CUSTO_PEDAGIOS.VIA_LAGOS;
+        detalhes.push(`Via Lagos (R$ ${formatarMoeda(CUSTO_PEDAGIOS.VIA_LAGOS)})`);
+    }
+
+    // Rota 2: BR-101 Norte (Sentido Campos/Macaé)
+    if (dest.includes('MACAE') || dest.includes('RIO DAS OSTRAS') || dest.includes('CAMPOS') || dest.includes('CASIMIRO')) {
+        custo += CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE;
+        detalhes.push(`Praça BR-101 (R$ ${formatarMoeda(CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE)})`);
+    }
+
+    // Rota 3: Rio de Janeiro / Niterói (Ponte + BR-101 Sul)
+    if (dest.includes('RIO DE JANEIRO') || dest.includes('NITEROI') || dest.includes('SAO GONCALO') || dest.includes('ITABORAI')) {
+        custo += CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE; // Geralmente passa por um na Manilha
+        detalhes.push(`Pedágio Manilha (R$ ${formatarMoeda(CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE)})`);
+        
+        if(dest.includes('RIO DE JANEIRO')) {
+            custo += CUSTO_PEDAGIOS.PONTE_RIO_NITEROI;
+            detalhes.push(`Ponte Rio-Niterói (R$ ${formatarMoeda(CUSTO_PEDAGIOS.PONTE_RIO_NITEROI)})`);
+        }
+    }
+
+    // Se não identificou nenhum pedágio específico
+    if (custo === 0) {
+        detalhes.push("Rota s/ pedágio identificado ou localidade não mapeada");
+    }
+
+    return { total: custo, lista: detalhes };
+}
+
+// FUNÇÃO PARA ABRIR O NOVO MODAL
+function abrirDetalhesRota(destinoNome, kmTotal) {
+    const infoPedagio = calcularCustoPedagio(destinoNome);
+
+    // 1. Preencher Textos
+    document.getElementById('rotaDestinoNome').textContent = destinoNome;
+    document.getElementById('rotaKm').textContent = formatarNumero(kmTotal) + ' km (Estimado da planilha)';
+    document.getElementById('resumoKm').textContent = formatarNumero(kmTotal) + ' km';
+    document.getElementById('resumoPedagio').textContent = formatarMoeda(infoPedagio.total);
+
+    // 2. Preencher Lista de Pedágios Visual
+    const containerPedagios = document.getElementById('rotaPedagios');
+    containerPedagios.innerHTML = ''; // Limpa anterior
+
+    if (infoPedagio.total > 0) {
+        infoPedagio.lista.forEach(item => {
+            const badge = document.createElement('span');
+            badge.className = 'toll-badge';
+            badge.innerHTML = `<i class="fas fa-ticket-alt"></i> ${item}`;
+            containerPedagios.appendChild(badge);
+        });
+    } else {
+        containerPedagios.innerHTML = `<span style="font-size:0.8rem; color:var(--cor-texto-sec)">${infoPedagio.lista[0]}</span>`;
+    }
+
+    // 3. Abrir Modal
+    document.getElementById('modalRota').style.display = 'flex';
+}
 
     </script>
 </body>
