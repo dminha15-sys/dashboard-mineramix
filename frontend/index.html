@@ -10,6 +10,55 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
         <style>
+            /* Estilos do Modal (Pop-up) */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7); z-index: 3000;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(2px);
+    padding: 1rem;
+}
+
+.modal-card {
+    background: var(--cor-card); width: 100%; max-width: 500px;
+    border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    overflow: hidden; animation: slideUp 0.3s ease-out;
+    border: 1px solid var(--cor-borda);
+}
+
+.modal-header {
+    background: var(--cor-sidebar); color: white;
+    padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;
+}
+
+.close-btn {
+    background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;
+}
+
+.modal-body { padding: 1.5rem; }
+
+.modal-stats {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 1.5rem;
+}
+
+.stat-box {
+    background: var(--cor-fundo); padding: 0.8rem; border-radius: 8px; text-align: center;
+}
+.stat-box.destaque { border: 1px solid var(--cor-secundaria); background: rgba(255, 107, 53, 0.05); }
+
+.stat-label { font-size: 0.65rem; color: var(--cor-texto-sec); display: block; margin-bottom: 4px; text-transform: uppercase; }
+.stat-value { font-size: 0.9rem; color: var(--cor-primaria); display: block; }
+
+.modal-details-list { display: flex; flex-direction: column; gap: 1rem; }
+
+.detail-item {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0.8rem; border-bottom: 1px solid var(--cor-borda);
+}
+.detail-item i { font-size: 1.2rem; color: var(--cor-secundaria); width: 25px; text-align: center; }
+.detail-label { font-size: 0.75rem; color: var(--cor-texto-sec); display: block; }
+
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         :root {
             --cor-primaria: #1f2933;
             --cor-secundaria: #FF6B35;
@@ -1037,6 +1086,59 @@
                 <div class="metric-item highlight">
                     <span class="metric-label">LUCRO LÍQUIDO PREVISTO (=)</span>
                     <strong class="metric-value" id="motLucro" style="font-size:1.3rem;">R$ 0,00</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<div id="modalVeiculo" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 id="modalTitulo">Placa ABC-1234</h3>
+            <button class="close-btn" onclick="fecharModal()">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="modal-stats">
+                <div class="stat-box">
+                    <span class="stat-label">Faturamento Total</span>
+                    <strong class="stat-value money" id="modalFaturamento">R$ 0,00</strong>
+                </div>
+                <div class="stat-box destaque">
+                    <span class="stat-label">Rentabilidade</span>
+                    <strong class="stat-value" id="modalRentabilidade">R$ 0,00/km</strong>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">KM Total</span>
+                    <strong class="stat-value" id="modalKM">0 km</strong>
+                </div>
+            </div>
+
+            <div class="modal-details-list">
+                <div class="detail-item">
+                    <i class="fas fa-user-tie"></i>
+                    <div>
+                        <span class="detail-label">Motorista Principal</span>
+                        <strong id="modalMotorista">Carregando...</strong>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <i class="fas fa-route"></i>
+                    <div>
+                        <span class="detail-label">Rota Favorita</span>
+                        <strong id="modalRota">Carregando...</strong>
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <i class="fas fa-chart-line"></i>
+                    <div>
+                        <span class="detail-label">Média por Viagem</span>
+                        <strong id="modalMedia">R$ 0,00</strong>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2483,6 +2585,81 @@ function fecharModalMotorista() {
 document.getElementById('modalMotorista').addEventListener('click', function(e) {
     if(e.target === this) fecharModalMotorista();
 });
+        // --- FUNÇÕES DO MODAL ---
+function abrirDetalhesVeiculo(placa) {
+    if (!dadosOriginais) return;
+
+    // 1. Encontrar índices das colunas de novo (garantia)
+    const cab = dadosOriginais[0].map(c => c.toString().toLowerCase());
+    const idx = {
+        placa: cab.findIndex(c => c.includes('placa') || c.includes('veiculo')),
+        motorista: cab.findIndex(c => c.includes('motorista')),
+        origem: cab.findIndex(c => c.includes('origem')),
+        destino: cab.findIndex(c => c.includes('destino')),
+        valor: cab.findIndex(c => c.includes('valor') || c.includes('total')),
+        km: cab.findIndex(c => c.includes('km'))
+    };
+
+    // 2. Filtrar viagens desse veículo
+    const viagens = dadosOriginais.slice(1).filter(linha => linha[idx.placa] === placa);
+
+    // 3. Calcular Totais
+    let totalValor = 0;
+    let totalKM = 0;
+    const contagemMotoristas = {};
+    const contagemRotas = {};
+
+    viagens.forEach(v => {
+        const val = extrairNumero(v[idx.valor]);
+        const km = extrairNumero(v[idx.km]);
+        totalValor += val;
+        totalKM += km;
+
+        // Contar Motorista
+        const mot = v[idx.motorista] || 'Desconhecido';
+        contagemMotoristas[mot] = (contagemMotoristas[mot] || 0) + 1;
+
+        // Contar Rota
+        const rota = `${v[idx.origem] || '?'} ➝ ${v[idx.destino] || '?'}`;
+        contagemRotas[rota] = (contagemRotas[rota] || 0) + 1;
+    });
+
+    // 4. Achar os "Campeões" (Top 1)
+    const topMotorista = Object.entries(contagemMotoristas).sort((a,b) => b[1] - a[1])[0];
+    const topRota = Object.entries(contagemRotas).sort((a,b) => b[1] - a[1])[0];
+    
+    // Rentabilidade
+    const rentabilidade = totalKM > 0 ? (totalValor / totalKM) : 0;
+    const mediaViagem = viagens.length > 0 ? (totalValor / viagens.length) : 0;
+
+    // 5. Preencher HTML do Modal
+    document.getElementById('modalTitulo').textContent = `Veículo: ${placa}`;
+    document.getElementById('modalFaturamento').textContent = formatarMoeda(totalValor);
+    document.getElementById('modalKM').textContent = formatarNumero(totalKM) + ' km';
+    document.getElementById('modalRentabilidade').textContent = formatarMoeda(rentabilidade) + '/km';
+    
+    // Detalhes com porcentagem
+    const percMot = topMotorista ? Math.round((topMotorista[1] / viagens.length) * 100) : 0;
+    document.getElementById('modalMotorista').textContent = topMotorista ? `${topMotorista[0]} (${percMot}%)` : '-';
+    
+    document.getElementById('modalRota').textContent = topRota ? topRota[0] : '-';
+    document.getElementById('modalMedia').textContent = formatarMoeda(mediaViagem);
+
+    // 6. Mostrar
+    document.getElementById('modalVeiculo').style.display = 'flex';
+}
+
+function fecharModal() {
+    document.getElementById('modalVeiculo').style.display = 'none';
+}
+
+// Fechar ao clicar fora
+window.onclick = function(event) {
+    const modal = document.getElementById('modalVeiculo');
+    if (event.target == modal) {
+        fecharModal();
+    }
+}
     </script>
 </body>
 </html>
