@@ -1713,155 +1713,7 @@ function mostrarRelatorioVeiculos(resumo) {
     area.innerHTML = html;
 }
 
-// 2. ABRIR O POP-UP (COM PROTEÇÃO CONTRA ERROS DE LEITURA)
-function abrirDetalhesVeiculo(placa) {
-    if (!dadosOriginais) {
-        console.error("Dados originais não carregados.");
-        return;
-    }
 
-    try {
-        // --- 1. LOCALIZAR O CABEÇALHO CORRETAMENTE ---
-        let indiceCabecalho = -1;
-        // Procura nas primeiras 20 linhas para garantir
-        for(let i=0; i< Math.min(20, dadosOriginais.length); i++) {
-            if (!dadosOriginais[i]) continue; // Pula linha vazia/indefinida
-            const linhaStr = dadosOriginais[i].join(' ').toUpperCase();
-            if(linhaStr.includes('MOTORISTA') || linhaStr.includes('PLACA') || linhaStr.includes('VEICULO')) {
-                indiceCabecalho = i;
-                break;
-            }
-        }
-        
-        // Se não achou, assume 0
-        if (indiceCabecalho === -1) indiceCabecalho = 0; 
-
-        const cab = dadosOriginais[indiceCabecalho].map(c => c ? c.toString().toLowerCase() : '');
-        
-        // --- 2. MAPEAR COLUNAS ---
-        const idxPlaca = cab.findIndex(c => c.includes('placa') || c.includes('veiculo') || c.includes('cavalo'));
-        const idxMot = cab.findIndex(c => c.includes('motorista'));
-        const idxOrigem = cab.findIndex(c => c.includes('origem'));
-        const idxDestino = cab.findIndex(c => c.includes('destino'));
-        const idxValor = cab.findIndex(c => c.includes('valor') || c.includes('total') || c.includes('preço'));
-        const idxKm = cab.findIndex(c => c.includes('km'));
-
-        if (idxPlaca === -1) {
-            alert("Erro: Coluna de Placa não encontrada. Verifique a planilha.");
-            return;
-        }
-
-        // --- 3. FILTRAR VIAGENS ---
-        const viagens = dadosOriginais.slice(indiceCabecalho + 1).filter(linha => {
-            if (!linha || !linha[idxPlaca]) return false;
-            const p = linha[idxPlaca].toString().trim();
-            return p === placa;
-        });
-
-        if (viagens.length === 0) {
-            // Tenta usar o resumo pré-calculado se o filtro falhar
-            if(dadosAnalisados && dadosAnalisados.veiculos[placa]) {
-                const d = dadosAnalisados.veiculos[placa];
-                preencherModalVeiculo(placa, d.valor, d.km, d.viagens, 'N/A', 'N/A');
-            } else {
-                alert("Nenhum detalhe encontrado para este veículo.");
-            }
-            return;
-        }
-
-        // --- 4. CALCULAR TOTAIS ---
-        let totalValor = 0;
-        let totalKm = 0;
-        const contMotoristas = {};
-        const contRotas = {};
-
-        viagens.forEach(linha => {
-            const val = extrairNumero(linha[idxValor]);
-            const k = extrairNumero(linha[idxKm]);
-            
-            // Pega Motorista
-            let mot = 'Indefinido';
-            if (idxMot > -1 && linha[idxMot]) mot = linha[idxMot];
-
-            // Pega Rota
-            let rota = '?';
-            if (idxOrigem > -1 && idxDestino > -1) {
-                const orig = linha[idxOrigem] || '?';
-                const dest = linha[idxDestino] || '?';
-                rota = `${orig} ➝ ${dest}`;
-            }
-
-            totalValor += val;
-            totalKm += k;
-            
-            contMotoristas[mot] = (contMotoristas[mot] || 0) + 1;
-            contRotas[rota] = (contRotas[rota] || 0) + 1;
-        });
-
-        // Achar campeões
-        const topMot = Object.entries(contMotoristas).sort((a,b) => b[1] - a[1])[0];
-        const topRota = Object.entries(contRotas).sort((a,b) => b[1] - a[1])[0];
-        const percMot = topMot ? Math.round((topMot[1] / viagens.length) * 100) : 0;
-
-        // Preencher usando função auxiliar
-        preencherModalVeiculo(
-            placa, 
-            totalValor, 
-            totalKm, 
-            viagens.length, 
-            topMot ? `${topMot[0]} (${percMot}%)` : '-', 
-            topRota ? topRota[0] : '-'
-        );
-
-    } catch (e) {
-        console.error("Erro ao abrir detalhes:", e);
-        alert("Erro ao processar dados do veículo.");
-    }
-}
-
-// FUNÇÃO AUXILIAR PARA PREENCHER HTML (Evita repetição)
-function preencherModalVeiculo(placa, valor, km, viagens, motorista, rota) {
-    document.getElementById('modalTitulo').textContent = `Veículo: ${placa}`;
-    
-    // Cards Topo
-    if(document.getElementById('modalFaturamento')) 
-        document.getElementById('modalFaturamento').textContent = formatarMoeda(valor);
-    
-    if(document.getElementById('modalKM')) 
-        document.getElementById('modalKM').textContent = formatarNumero(km) + ' km';
-    
-    const rentabilidade = km > 0 ? valor / km : 0;
-    if(document.getElementById('modalRentabilidade'))
-        document.getElementById('modalRentabilidade').textContent = formatarMoeda(rentabilidade) + '/km';
-    
-    // Detalhes
-    if(document.getElementById('modalMotorista'))
-        document.getElementById('modalMotorista').textContent = motorista;
-    
-    if(document.getElementById('modalRota'))
-        document.getElementById('modalRota').textContent = rota;
-    
-    const media = viagens > 0 ? valor / viagens : 0;
-    if(document.getElementById('modalMedia'))
-        document.getElementById('modalMedia').textContent = formatarMoeda(media);
-
-    // Mostrar
-    const modal = document.getElementById('modalVeiculo');
-    if (modal) modal.style.display = 'flex';
-}
-
-// 3. FUNÇÃO UNIFICADA PARA FECHAR
-function fecharModal() {
-    const modals = document.querySelectorAll('.modal-overlay');
-    modals.forEach(m => m.style.display = 'none');
-}
-
-// 4. CLIQUE FORA PARA FECHAR (GLOBAL)
-window.onclick = function(event) {
-    if (event.target.classList.contains('modal-overlay')) {
-        fecharModal();
-    }
-}
        // Relatório por Cliente (Responsivo)
 function mostrarRelatorioClientes(resumo) {
     // VERSÃO MOBILE
@@ -2639,7 +2491,155 @@ document.getElementById('modalMotorista').addEventListener('click', function(e) 
     if(e.target === this) fecharModalMotorista();
 });
        
+// 2. ABRIR O POP-UP (COM PROTEÇÃO CONTRA ERROS DE LEITURA)
+function abrirDetalhesVeiculo(placa) {
+    if (!dadosOriginais) {
+        console.error("Dados originais não carregados.");
+        return;
+    }
 
+    try {
+        // --- 1. LOCALIZAR O CABEÇALHO CORRETAMENTE ---
+        let indiceCabecalho = -1;
+        // Procura nas primeiras 20 linhas para garantir
+        for(let i=0; i< Math.min(20, dadosOriginais.length); i++) {
+            if (!dadosOriginais[i]) continue; // Pula linha vazia/indefinida
+            const linhaStr = dadosOriginais[i].join(' ').toUpperCase();
+            if(linhaStr.includes('MOTORISTA') || linhaStr.includes('PLACA') || linhaStr.includes('VEICULO')) {
+                indiceCabecalho = i;
+                break;
+            }
+        }
+        
+        // Se não achou, assume 0
+        if (indiceCabecalho === -1) indiceCabecalho = 0; 
+
+        const cab = dadosOriginais[indiceCabecalho].map(c => c ? c.toString().toLowerCase() : '');
+        
+        // --- 2. MAPEAR COLUNAS ---
+        const idxPlaca = cab.findIndex(c => c.includes('placa') || c.includes('veiculo') || c.includes('cavalo'));
+        const idxMot = cab.findIndex(c => c.includes('motorista'));
+        const idxOrigem = cab.findIndex(c => c.includes('origem'));
+        const idxDestino = cab.findIndex(c => c.includes('destino'));
+        const idxValor = cab.findIndex(c => c.includes('valor') || c.includes('total') || c.includes('preço'));
+        const idxKm = cab.findIndex(c => c.includes('km'));
+
+        if (idxPlaca === -1) {
+            alert("Erro: Coluna de Placa não encontrada. Verifique a planilha.");
+            return;
+        }
+
+        // --- 3. FILTRAR VIAGENS ---
+        const viagens = dadosOriginais.slice(indiceCabecalho + 1).filter(linha => {
+            if (!linha || !linha[idxPlaca]) return false;
+            const p = linha[idxPlaca].toString().trim();
+            return p === placa;
+        });
+
+        if (viagens.length === 0) {
+            // Tenta usar o resumo pré-calculado se o filtro falhar
+            if(dadosAnalisados && dadosAnalisados.veiculos[placa]) {
+                const d = dadosAnalisados.veiculos[placa];
+                preencherModalVeiculo(placa, d.valor, d.km, d.viagens, 'N/A', 'N/A');
+            } else {
+                alert("Nenhum detalhe encontrado para este veículo.");
+            }
+            return;
+        }
+
+        // --- 4. CALCULAR TOTAIS ---
+        let totalValor = 0;
+        let totalKm = 0;
+        const contMotoristas = {};
+        const contRotas = {};
+
+        viagens.forEach(linha => {
+            const val = extrairNumero(linha[idxValor]);
+            const k = extrairNumero(linha[idxKm]);
+            
+            // Pega Motorista
+            let mot = 'Indefinido';
+            if (idxMot > -1 && linha[idxMot]) mot = linha[idxMot];
+
+            // Pega Rota
+            let rota = '?';
+            if (idxOrigem > -1 && idxDestino > -1) {
+                const orig = linha[idxOrigem] || '?';
+                const dest = linha[idxDestino] || '?';
+                rota = `${orig} ➝ ${dest}`;
+            }
+
+            totalValor += val;
+            totalKm += k;
+            
+            contMotoristas[mot] = (contMotoristas[mot] || 0) + 1;
+            contRotas[rota] = (contRotas[rota] || 0) + 1;
+        });
+
+        // Achar campeões
+        const topMot = Object.entries(contMotoristas).sort((a,b) => b[1] - a[1])[0];
+        const topRota = Object.entries(contRotas).sort((a,b) => b[1] - a[1])[0];
+        const percMot = topMot ? Math.round((topMot[1] / viagens.length) * 100) : 0;
+
+        // Preencher usando função auxiliar
+        preencherModalVeiculo(
+            placa, 
+            totalValor, 
+            totalKm, 
+            viagens.length, 
+            topMot ? `${topMot[0]} (${percMot}%)` : '-', 
+            topRota ? topRota[0] : '-'
+        );
+
+    } catch (e) {
+        console.error("Erro ao abrir detalhes:", e);
+        alert("Erro ao processar dados do veículo.");
+    }
+}
+
+// FUNÇÃO AUXILIAR PARA PREENCHER HTML (Evita repetição)
+function preencherModalVeiculo(placa, valor, km, viagens, motorista, rota) {
+    document.getElementById('modalTitulo').textContent = `Veículo: ${placa}`;
+    
+    // Cards Topo
+    if(document.getElementById('modalFaturamento')) 
+        document.getElementById('modalFaturamento').textContent = formatarMoeda(valor);
+    
+    if(document.getElementById('modalKM')) 
+        document.getElementById('modalKM').textContent = formatarNumero(km) + ' km';
+    
+    const rentabilidade = km > 0 ? valor / km : 0;
+    if(document.getElementById('modalRentabilidade'))
+        document.getElementById('modalRentabilidade').textContent = formatarMoeda(rentabilidade) + '/km';
+    
+    // Detalhes
+    if(document.getElementById('modalMotorista'))
+        document.getElementById('modalMotorista').textContent = motorista;
+    
+    if(document.getElementById('modalRota'))
+        document.getElementById('modalRota').textContent = rota;
+    
+    const media = viagens > 0 ? valor / viagens : 0;
+    if(document.getElementById('modalMedia'))
+        document.getElementById('modalMedia').textContent = formatarMoeda(media);
+
+    // Mostrar
+    const modal = document.getElementById('modalVeiculo');
+    if (modal) modal.style.display = 'flex';
+}
+
+// 3. FUNÇÃO UNIFICADA PARA FECHAR
+function fecharModal() {
+    const modals = document.querySelectorAll('.modal-overlay');
+    modals.forEach(m => m.style.display = 'none');
+}
+
+// 4. CLIQUE FORA PARA FECHAR (GLOBAL)
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal-overlay')) {
+        fecharModal();
+    }
+}
 
 
     </script>
