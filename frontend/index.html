@@ -700,6 +700,8 @@
         gap: 0.5rem;
         position: relative;
         overflow: hidden;
+        /* Garante a fonte correta em todo o card */
+        font-family: 'Inter', sans-serif; 
     }
     
     .mobile-card::before {
@@ -707,6 +709,32 @@
         position: absolute;
         left: 0; top: 0; bottom: 0; width: 5px;
         background: var(--cor-secundaria);
+    }
+    
+    .mobile-card strong { 
+        font-size: 1.1rem; 
+        color: var(--cor-primaria);
+        font-weight: 700; /* Garante negrito */
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .mobile-card span { 
+        font-size: 0.9rem; 
+        color: var(--cor-texto-sec); 
+        display: flex; 
+        justify-content: space-between;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .mobile-card .money { 
+        font-size: 1.2rem; 
+        font-weight: 700; 
+        color: var(--cor-pago); 
+        align-self: flex-end; 
+        margin-top: 0.5rem;
+        /* A CORREÇÃO PRINCIPAL ESTÁ AQUI EMBAIXO: */
+        font-family: 'Inter', sans-serif !important; 
+        letter-spacing: -0.5px; /* Deixa o número mais compacto e bonito */
     }
     
     .mobile-card strong { font-size: 1.1rem; color: var(--cor-primaria); }
