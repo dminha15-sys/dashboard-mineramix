@@ -1126,11 +1126,12 @@
             </div>
 
             <div class="modal-details-list">
-                <div class="detail-item">
-                    <i class="fas fa-user-tie"></i>
-                    <div>
-                        <span class="detail-label">Motorista Principal</span>
-                        <strong id="modalMotorista">Carregando...</strong>
+                  <div class="detail-item">
+                      <i class="fas fa-user-tie"></i>
+                        <div>
+                            <span class="detail-label">Motorista Principal</span>
+                            <strong id="textoMotoristaVeiculo">Carregando...</strong>
+                        </div>
                     </div>
                 </div>
                 <div class="detail-item">
@@ -2615,8 +2616,10 @@ function preencherModalVeiculo(placa, valor, km, viagens, motorista, rota) {
         document.getElementById('modalRentabilidade').textContent = formatarMoeda(rentabilidade) + '/km';
     
     // Detalhes
-    if(document.getElementById('modalMotorista'))
-        document.getElementById('modalMotorista').textContent = motorista;
+   // ... código anterior ...
+// Atualize aqui para o novo nome que criamos no HTML
+if(document.getElementById('textoMotoristaVeiculo'))
+    document.getElementById('textoMotoristaVeiculo').textContent = motorista;
     
     if(document.getElementById('modalRota'))
         document.getElementById('modalRota').textContent = rota;
