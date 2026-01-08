@@ -1722,58 +1722,70 @@ function mostrarRelatorioMotoristas(resumo) {
         </div>
     `;
 }
-// Relatório por Veículo (Com clique para detalhes)
-function mostrarRelatorioVeiculos(resumo) {
+// Relatório por Motorista (Tabela Completa no Desktop, Cards no Mobile)
+function mostrarRelatorioMotoristas(resumo) {
     const r = resumo;
     const area = document.getElementById('contentArea');
     const isMobile = window.innerWidth < 768;
 
     if (isMobile) {
-        // Versão Mobile (Cards clicáveis)
-        let html = `<h3 class="mobile-title">Veículos (Toque para ver Detalhes)</h3><div class="mobile-card-list">`;
-        html += r.veiculosOrdenados.map(([placa, d]) => `
-            <div class="mobile-card" onclick="abrirDetalhesVeiculo('${placa}')" style="border-left: 4px solid var(--cor-primaria);">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                    <strong style="font-size:1.1rem; color:#fff;">${placa}</strong>
-                    <span class="status-badge" style="background:rgba(255,255,255,0.1); color:#fff;">${d.viagens} viagens</span>
+        // --- VERSÃO MOBILE (Cards) ---
+        let html = `<h3 class="mobile-title">Motoristas</h3><div class="mobile-card-list">`;
+        html += r.motoristasOrdenados.slice(0, 15).map(([nome, d]) => `
+            <div class="mobile-card" onclick="abrirDetalhesMotorista('${nome}')" style="border-left: 4px solid var(--cor-primaria);">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong style="color:#fff;">${nome}</strong>
+                    <span class="status-badge" style="background:rgba(255,255,255,0.1); color:#ccc;">${d.viagens} viagens</span>
                 </div>
-                <div style="display:flex; justify-content:space-between; font-size:0.9rem; color:#aaa;">
+                <div style="display:flex; justify-content:space-between; margin-top:8px; color:#aaa; font-size:0.85rem;">
                     <span>${formatarNumero(d.km)} km</span>
-                    <span class="money" style="color:var(--cor-primaria); font-weight:bold; font-size:1.1rem;">${formatarMoeda(d.valor)}</span>
+                    <span class="money" style="color:var(--cor-primaria); font-size:1.1rem;">${formatarMoeda(d.valor)}</span>
                 </div>
             </div>`).join('');
         html += `</div>`;
         area.innerHTML = html;
+
     } else {
-        // Versão Desktop (Tabela clicável)
+        // --- VERSÃO DESKTOP (Tabela Idêntica à Imagem) ---
         let html = `
-        <div class="summary-card">
+        <div class="summary-card" style="overflow-x: auto;">
             <div class="summary-header">
-                <div class="summary-title">Ranking de Veículos (Clique na linha para ver Rentabilidade)</div>
+                <div class="summary-title">Resumo Faturamento por Motorista</div>
+                <div class="summary-icon" style="background:rgba(255,107,53,0.1); color:#FF6B35; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:4px;">
+                    <i class="fas fa-user-tie"></i>
+                </div>
             </div>
-            <table>
+
+            <table style="width: 100%; border-collapse: collapse; min-width: 900px;">
                 <thead>
                     <tr>
-                        <th>Placa</th>
-                        <th class="center">Viagens</th>
-                        <th class="center">KM Total</th>
-                        <th class="money">Faturamento Total</th>
-                        <th class="money">Média/Viagem</th>
-                        <th class="center">Ação</th>
+                        <th style="text-align: left; padding: 12px; color: #777; border-bottom: 2px solid #323238; font-size:0.85rem;">Motorista</th>
+                        <th style="text-align: center; padding: 12px; color: #777; border-bottom: 2px solid #323238; font-size:0.85rem;">Viagens</th>
+                        <th style="text-align: center; padding: 12px; color: #777; border-bottom: 2px solid #323238; font-size:0.85rem;">KM Total</th>
+                        <th style="text-align: right; padding: 12px; color: #777; border-bottom: 2px solid #323238; font-size:0.85rem;">Faturamento Total</th>
+                        <th style="text-align: right; padding: 12px; color: #777; border-bottom: 2px solid #323238; font-size:0.85rem;">Média/Viagem</th>
+                        <th style="text-align: right; padding: 12px; color: #777; border-bottom: 2px solid #323238; font-size:0.85rem;">Renda/KM</th>
+                        <th style="text-align: center; padding: 12px; color: #777; border-bottom: 2px solid #323238; font-size:0.85rem;">Detalhes</th>
                     </tr>
                 </thead>
                 <tbody>`;
-        
-        html += r.veiculosOrdenados.map(([placa, d]) => `
-            <tr onclick="abrirDetalhesVeiculo('${placa}')" style="cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-                <td style="font-weight:bold; color:var(--cor-primaria);">${placa}</td>
-                <td class="center">${d.viagens}</td>
-                <td class="center">${formatarNumero(d.km)}</td>
-                <td class="money" style="color:#fff;">${formatarMoeda(d.valor)}</td>
-                <td class="money">${formatarMoeda(d.valor / d.viagens)}</td>
-                <td class="center"><i class="fas fa-chart-line" style="color:var(--cor-texto-sec);"></i></td>
-            </tr>`).join('');
-            
+
+        html += r.motoristasOrdenados.map(([nome, d]) => {
+            const media = d.valor / d.viagens;
+            const rendaKm = d.km > 0 ? d.valor / d.km : 0;
+
+            return `
+            <tr onclick="abrirDetalhesMotorista('${nome}')" style="cursor:pointer; border-bottom: 1px solid #323238; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+                <td style="padding: 12px; font-weight:600; color:#fff; font-size:0.9rem;">${nome}</td>
+                <td style="padding: 12px; text-align: center; color: #ccc; font-size:0.9rem;">${d.viagens}</td>
+                <td style="padding: 12px; text-align: center; color: #ccc; font-size:0.9rem;">${formatarNumero(d.km)}</td>
+                <td class="money" style="padding: 12px; text-align: right; color: #fff; font-size:0.9rem;">${formatarMoeda(d.valor)}</td>
+                <td class="money" style="padding: 12px; text-align: right; color: #ccc; font-size:0.9rem;">${formatarMoeda(media)}</td>
+                <td class="money" style="padding: 12px; text-align: right; color: #ccc; font-size:0.9rem;">${formatarMoeda(rendaKm)}/km</td>
+                <td style="padding: 12px; text-align: center;"><i class="fas fa-file-invoice-dollar" style="color:#FF6B35; font-size:1rem;"></i></td>
+            </tr>`;
+        }).join('');
+
         html += `</tbody></table></div>`;
         area.innerHTML = html;
     }
