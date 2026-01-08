@@ -761,6 +761,8 @@
         position: absolute;
         left: 0; top: 0; bottom: 0; width: 5px;
         background: var(--cor-secundaria);
+        width: 95% !important;
+        padding: 1rem !important;
     }
     
     .mobile-card strong { 
@@ -777,6 +779,7 @@
         justify-content: space-between;
         font-family: 'Inter', sans-serif;
     }
+    
 
     .mobile-card .money { 
         font-size: 1.2rem; 
@@ -891,6 +894,21 @@
         gap: 2rem;
     }
 }
+            .modal-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px;
+    }
+
+    /* Faz o quadrado do KM ocupar a linha de baixo inteira */
+    .stat-box:last-child {
+        grid-column: span 2;
+    }
+    
+    /* Diminui um pouco a letra para não quebrar linha */
+    .stat-value {
+        font-size: 0.9rem !important;
+    }    
 </style>
 </head>
 <body>
@@ -1544,183 +1562,101 @@
             elementos.contentArea.innerHTML = metricsHTML + summaryHTML;
         }
 
-        // Relatório por Status
-        function mostrarRelatorioStatus(resumo) {
-            const statusEntries = Object.entries(resumo.status)
-                .sort((a, b) => b[1].valor - a[1].valor);
-            
-            elementos.contentArea.innerHTML = `
-                <div class="summary-card">
-                    <div class="summary-header">
-                        <div class="summary-title">Resumo Financeiro por Status</div>
-                        <div class="summary-icon"><i class="fas fa-check-circle"></i></div>
-                    </div>
-                    <table class="summary-table">
-                        <thead>
-                            <tr>
-                                <th>Status</th>
-                                <th class="center">Viagens</th>
-                                <th class="center">% Viagens</th>
-                                <th class="money">Valor Total</th>
-                                <th class="center">% Valor</th>
-                                <th class="money">Média/Viagem</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${statusEntries.map(([status, dados]) => {
-                                const percentViagens = ((dados.viagens / resumo.totalLinhas) * 100).toFixed(1);
-                                const percentValor = ((dados.valor / resumo.totalValor) * 100).toFixed(1);
-                                const media = dados.valor / dados.viagens;
-                                
-                                let statusClass = '';
-                                if (status.toLowerCase().includes('pago')) statusClass = 'status-pago';
-                                else if (status.toLowerCase().includes('pendente')) statusClass = 'status-pendente';
-                                else if (status.toLowerCase().includes('analise') || status.toLowerCase().includes('análise')) statusClass = 'status-analise';
-                                
-                                return `
-                                    <tr>
-                                        <td><span class="status-badge ${statusClass}">${status}</span></td>
-                                        <td class="center">${dados.viagens}</td>
-                                        <td class="center">${percentViagens}%</td>
-                                        <td class="money">${formatarMoeda(dados.valor)}</td>
-                                        <td class="center">${percentValor}%</td>
-                                        <td class="money">${formatarMoeda(media)}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                            <tr style="font-weight: bold; background: rgba(0,0,0,0.02);">
-                                <td>TOTAL</td>
-                                <td class="center">${resumo.totalLinhas}</td>
-                                <td class="center">100%</td>
-                                <td class="money">${formatarMoeda(resumo.totalValor)}</td>
-                                <td class="center">100%</td>
-                                <td class="money">${formatarMoeda(resumo.mediaValor)}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        }
 
-        // Relatório por Forma de Pagamento
-        function mostrarRelatorioPagamento(resumo) {
-            const pagamentos = Object.entries(resumo.pagamentos)
-                .sort((a, b) => b[1].valor - a[1].valor);
-            
-            elementos.contentArea.innerHTML = `
-                <div class="summary-card">
-                    <div class="summary-header">
-                        <div class="summary-title">Formas de Pagamento Utilizadas</div>
-                        <div class="summary-icon"><i class="fas fa-money-check-alt"></i></div>
-                    </div>
-                    <table class="summary-table">
-                        <thead>
-                            <tr>
-                                <th>Forma de Pagamento</th>
-                                <th class="center">Viagens</th>
-                                <th class="center">% Viagens</th>
-                                <th class="money">Valor Total</th>
-                                <th class="center">% Valor</th>
-                                <th class="money">Média/Viagem</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${pagamentos.map(([pagamento, dados]) => {
-                                const percentViagens = ((dados.viagens / resumo.totalLinhas) * 100).toFixed(1);
-                                const percentValor = ((dados.valor / resumo.totalValor) * 100).toFixed(1);
-                                const media = dados.valor / dados.viagens;
-                                
-                                return `
-                                    <tr>
-                                        <td>${pagamento}</td>
-                                        <td class="center">${dados.viagens}</td>
-                                        <td class="center">${percentViagens}%</td>
-                                        <td class="money">${formatarMoeda(dados.valor)}</td>
-                                        <td class="center">${percentValor}%</td>
-                                        <td class="money">${formatarMoeda(media)}</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        }
 
         // Relatório por Motorista
-function mostrarRelatorioMotoristas(resumo) {
-    // 1. Definição do clique
-    const gerarClick = (nome) => `onclick="abrirDetalhesMotorista('${nome}')" style="cursor:pointer"`;
+// --- FUNÇÃO 1: MOSTRAR A LISTA DE VEÍCULOS ---
+function mostrarRelatorioVeiculos(resumo) {
+    const r = resumo;
+    const area = document.getElementById('contentArea');
+    const isMobile = window.innerWidth < 768;
 
-    // VERSÃO MOBILE
-    if (window.innerWidth < 768) {
-        const lista = resumo.motoristasOrdenados.slice(0, 10);
-
-        const cards = lista.map(([nome, dados]) => `
-            <div class="mobile-card" ${gerarClick(nome)}>
-                <div style="display:flex; justify-content:space-between;">
-                    <strong>${nome}</strong>
-                    <span class="status-badge status-analise">${dados.viagens} viagens</span>
+    // VERSÃO MOBILE (Cards para caber na tela)
+    if (isMobile) {
+        let html = `<h3 class="mobile-title">Veículos (Toque para ver Detalhes)</h3><div class="mobile-card-list">`;
+        html += r.veiculosOrdenados.map(([placa, d]) => `
+            <div class="mobile-card" onclick="abrirDetalhesVeiculo('${placa}')" style="border-left: 4px solid var(--cor-primaria);">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong style="color:#fff; font-size:1.1rem;">${placa}</strong>
+                    <span class="status-badge" style="background:rgba(255,255,255,0.1); color:#ccc;">${d.viagens} viagens</span>
                 </div>
-                <div style="display:flex; justify-content:space-between; margin-top:5px; align-items:flex-end;">
-                     <div style="font-size:0.85rem; color:var(--cor-texto-sec);">
-                        KM Total: ${formatarNumero(dados.km)}
-                     </div>
-                     <div style="text-align:right;">
-                        <span class="money" style="font-size:1.2rem; display:block;">${formatarMoeda(dados.valor)}</span>
-                        <small style="font-size:0.7rem; color:var(--cor-secundaria);">Ver Raio-X <i class="fas fa-chevron-right"></i></small>
-                     </div>
+                <div style="display:flex; justify-content:space-between; margin-top:8px; color:#aaa; font-size:0.9rem;">
+                    <span>${formatarNumero(d.km)} km</span>
+                    <span class="money" style="color:var(--cor-primaria); font-weight:bold; font-size:1.1rem;">${formatarMoeda(d.valor)}</span>
                 </div>
-            </div>
-        `).join('');
-
-        elementos.contentArea.innerHTML = `
-            <h3 class="mobile-title">Motoristas (Toque para ver lucros)</h3>
-            <div class="mobile-card-list">${cards}</div>
-        `;
+            </div>`).join('');
+        html += `</div>`;
+        area.innerHTML = html;
         return;
     }
 
-    // VERSÃO DESKTOP
-    elementos.contentArea.innerHTML = `
-        <div class="summary-card">
-            <div class="summary-header">
-                <div class="summary-title">Resumo Faturamento por Motorista</div>
-                <div class="summary-icon"><i class="fas fa-user-tie"></i></div>
-            </div>
-            <table class="summary-table">
-                <thead>
-                    <tr>
-                        <th>Motorista</th>
-                        <th class="center">Viagens</th>
-                        <th class="center">KM Total</th>
-                        <th class="money">Faturamento Total</th>
-                        <th class="money">Média/Viagem</th>
-                        <th class="money">Renda/KM</th>
-                        <th class="center">Detalhes</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${resumo.motoristasOrdenados.map(([nome, dados]) => {
-                        const mediaViagem = dados.valor / dados.viagens;
-                        const mediaKM = dados.km > 0 ? dados.valor / dados.km : 0;
-                        
-                        return `
-                            <tr ${gerarClick(nome)} class="hover-row">
-                                <td>${nome}</td>
-                                <td class="center">${dados.viagens}</td>
-                                <td class="center">${formatarNumero(dados.km)}</td>
-                                <td class="money">${formatarMoeda(dados.valor)}</td>
-                                <td class="money">${formatarMoeda(mediaViagem)}</td>
-                                <td class="money">${formatarMoeda(mediaKM)}/km</td>
-                                <td class="center"><i class="fas fa-file-invoice-dollar" style="color:var(--cor-secundaria)"></i></td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
+    // VERSÃO DESKTOP (Tabela Completa)
+    let html = `
+    <div class="summary-card" style="overflow-x: auto;">
+        <div class="summary-header">
+            <div class="summary-title">Resumo Faturamento por Veículo</div>
+            <div class="summary-icon"><i class="fas fa-truck"></i></div>
         </div>
-    `;
+        
+        <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
+            <thead>
+                <tr>
+                    <th style="text-align: left; padding: 12px; color: #777; border-bottom: 2px solid #323238;">Placa</th>
+                    <th style="text-align: center; padding: 12px; color: #777; border-bottom: 2px solid #323238;">Viagens</th>
+                    <th style="text-align: center; padding: 12px; color: #777; border-bottom: 2px solid #323238;">KM Total</th>
+                    <th style="text-align: right; padding: 12px; color: #777; border-bottom: 2px solid #323238;">Faturamento Total</th>
+                    <th style="text-align: right; padding: 12px; color: #777; border-bottom: 2px solid #323238;">Média/Viagem</th>
+                    <th style="text-align: right; padding: 12px; color: #777; border-bottom: 2px solid #323238;">Renda/KM</th>
+                    <th style="text-align: center; padding: 12px; color: #777; border-bottom: 2px solid #323238;">Ação</th>
+                </tr>
+            </thead>
+            <tbody>`;
+    
+    html += r.veiculosOrdenados.map(([placa, d]) => {
+        const mediaViagem = d.valor / d.viagens;
+        const rendaKm = d.km > 0 ? d.valor / d.km : 0;
+        
+        return `
+        <tr onclick="abrirDetalhesVeiculo('${placa}')" style="cursor:pointer; border-bottom: 1px solid #323238; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+            <td style="padding: 12px; font-weight:bold; color:#fff;">${placa}</td>
+            <td style="padding: 12px; text-align: center; color: #ccc;">${d.viagens}</td>
+            <td style="padding: 12px; text-align: center; color: #ccc;">${formatarNumero(d.km)}</td>
+            <td class="money" style="padding: 12px; text-align: right; color: #fff;">${formatarMoeda(d.valor)}</td>
+            <td class="money" style="padding: 12px; text-align: right; color: #ccc;">${formatarMoeda(mediaViagem)}</td>
+            <td class="money" style="padding: 12px; text-align: right; color: #ccc;">${formatarMoeda(rendaKm)}/km</td>
+            <td style="padding: 12px; text-align: center;"><i class="fas fa-search-plus" style="color:var(--cor-primaria);"></i></td>
+        </tr>`;
+    }).join('');
+        
+    html += `</tbody></table></div>`;
+    area.innerHTML = html;
+}
+
+// --- FUNÇÃO 2: ABRIR O POP-UP (MODAL) ---
+function abrirDetalhesVeiculo(placa) {
+    if (!dadosAnalisados) return;
+    const d = dadosAnalisados.veiculos[placa];
+    if (!d) return;
+
+    // Preencher valores no Modal
+    document.getElementById('modalTitulo').textContent = `Veículo: ${placa}`;
+    
+    // Cards do Topo
+    document.getElementById('modalFaturamento').textContent = formatarMoeda(d.valor);
+    document.getElementById('modalKM').textContent = formatarNumero(d.km) + ' km';
+    
+    const rentabilidade = d.km > 0 ? d.valor / d.km : 0;
+    document.getElementById('modalRentabilidade').textContent = formatarMoeda(rentabilidade) + '/km';
+    
+    // Detalhes da Lista
+    document.getElementById('modalMedia').textContent = formatarMoeda(d.valor / d.viagens);
+    
+    // Placeholder para dados que precisariam de reprocessamento (opcional)
+    document.getElementById('modalMotorista').textContent = "Ver Detalhes na Tabela";
+    document.getElementById('modalRota').textContent = "Ver Detalhes na Tabela";
+
+    // Mostrar o Modal
+    document.getElementById('modalVeiculo').style.display = 'flex';
 }
 // Relatório por Motorista (Tabela Completa no Desktop, Cards no Mobile)
 function mostrarRelatorioMotoristas(resumo) {
