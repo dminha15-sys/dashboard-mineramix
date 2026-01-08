@@ -1668,13 +1668,18 @@ function mostrarRelatorioRotas(resumo) {
     `;
 }
 
-// Relatório Diário (Responsivo)
+// Relatório Diário (Versão Completa com Filtro)
 function mostrarRelatorioDiario(resumo) {
-    const ultimosDias = resumo.diasOrdenados.slice(0, 14);
+    // Agora pegamos TODOS os dias disponíveis no intervalo filtrado
+    // (Removemos o .slice(0, 14) que limitava a 2 semanas)
+    const listaDias = resumo.diasOrdenados;
+    
+    // Calcula totais do período exibido para mostrar no título
+    const totalPeriodo = listaDias.length;
 
     // VERSÃO MOBILE
     if (window.innerWidth < 768) {
-        const cards = ultimosDias.map(([dia, dados]) => {
+        const cards = listaDias.map(([dia, dados]) => {
             // Pegar dia da semana
             const dataObj = parsearDataBR(dia);
             const diaSemana = dataObj ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][dataObj.getDay()] : '';
@@ -1682,28 +1687,31 @@ function mostrarRelatorioDiario(resumo) {
             return `
             <div class="mobile-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong>${dia} <small style="font-weight:400; color:var(--cor-texto-sec);">(${diaSemana})</small></strong>
-                    <span class="status-badge status-analise">${dados.viagens} viagens</span>
+                    <strong>${dia} <small style="font-weight:400; color:var(--cor-texto-sec); font-size:0.8rem;">(${diaSemana})</small></strong>
+                    
+                    <span class="status-badge status-analise" style="font-size:0.8rem;">${dados.viagens} viagens</span>
                 </div>
+                
                 <div style="margin-top:0.5rem; text-align:right;">
-                    <span class="money" style="font-size:1.1rem;">${formatarMoeda(dados.valor)}</span>
+                    <span class="money" style="font-size:1.2rem;">${formatarMoeda(dados.valor)}</span>
                 </div>
             </div>
             `;
         }).join('');
 
         elementos.contentArea.innerHTML = `
-            <h3 class="mobile-title">Últimos 14 Dias</h3>
+            <h3 class="mobile-title">Histórico Diário (${totalPeriodo} dias)</h3>
+            <p style="font-size:0.8rem; color:var(--cor-texto-sec); margin-bottom:1rem;">Use o filtro no topo para selecionar datas específicas.</p>
             <div class="mobile-card-list">${cards}</div>
         `;
         return;
     }
 
-    // VERSÃO DESKTOP
+    // VERSÃO DESKTOP (Tabela Completa)
     elementos.contentArea.innerHTML = `
         <div class="summary-card">
             <div class="summary-header">
-                <div class="summary-title">Total de Viagens e Faturamento por Dia (Últimas 2 semanas)</div>
+                <div class="summary-title">Histórico Completo por Dia (${totalPeriodo} dias encontrados)</div>
                 <div class="summary-icon"><i class="fas fa-calendar-day"></i></div>
             </div>
             <table class="summary-table">
@@ -1717,7 +1725,7 @@ function mostrarRelatorioDiario(resumo) {
                     </tr>
                 </thead>
                 <tbody>
-                    ${ultimosDias.map(([dia, dados]) => {
+                    ${listaDias.map(([dia, dados]) => {
                         const dataObj = parsearDataBR(dia);
                         const diaSemana = dataObj ? 
                             ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][dataObj.getDay()] : '';
