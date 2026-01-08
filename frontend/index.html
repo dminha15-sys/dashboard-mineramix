@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transporte Minério - Cristhian</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
         <style>
         :root {
             --cor-primaria: #1f2933;
@@ -741,6 +744,53 @@
     .mobile-card span { font-size: 0.9rem; color: var(--cor-texto-sec); display: flex; justify-content: space-between; }
     .mobile-card .money { font-size: 1.2rem; font-weight: 700; color: var(--cor-pago); align-self: flex-end; margin-top: 0.5rem; }
 }
+            /* --- ESTILO DO MODAL (POP-UP) --- */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 3000;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem;
+    backdrop-filter: blur(3px);
+}
+
+.modal-content {
+    background: var(--cor-card);
+    width: 100%;
+    max-width: 600px;
+    border-radius: 12px;
+    padding: 1.5rem;
+    position: relative;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 1px solid var(--cor-borda);
+}
+
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.5rem; border-bottom: 1px solid var(--cor-borda);
+    padding-bottom: 1rem;
+}
+
+.modal-close {
+    background: none; border: none; font-size: 1.5rem;
+    color: var(--cor-texto-sec); cursor: pointer;
+}
+
+.modal-chart-container {
+    margin-bottom: 1.5rem;
+    height: 300px; /* Altura do gráfico */
+    width: 100%;
+}
+
+.driver-list-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.8rem; border-bottom: 1px solid var(--cor-borda);
+}
 </style>
 </head>
 <body>
@@ -860,7 +910,25 @@
             </div>
         </div>
     </main>
+    <div id="modalDia" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div>
+                <h3 id="modalTitulo" style="color:var(--cor-primaria)">Detalhes do Dia</h3>
+                <small id="modalSubtitulo" style="color:var(--cor-texto-sec)">Resumo operacional</small>
+            </div>
+            <button class="modal-close" onclick="fecharModal()">&times;</button>
+        </div>
 
+        <div class="modal-chart-container">
+            <canvas id="graficoDia"></canvas>
+        </div>
+
+        <h4 style="margin-bottom:1rem; color:var(--cor-primaria)">Lista de Motoristas</h4>
+        <div id="modalListaMotoristas">
+            </div>
+    </div>
+</div>
     <script>
         // Configuração
         const CONFIG = {
@@ -1670,30 +1738,27 @@ function mostrarRelatorioRotas(resumo) {
 
 // Relatório Diário (Versão Completa com Filtro)
 function mostrarRelatorioDiario(resumo) {
-    // Agora pegamos TODOS os dias disponíveis no intervalo filtrado
-    // (Removemos o .slice(0, 14) que limitava a 2 semanas)
     const listaDias = resumo.diasOrdenados;
-    
-    // Calcula totais do período exibido para mostrar no título
     const totalPeriodo = listaDias.length;
+
+    // Função auxiliar para gerar o HTML do card/linha clicável
+    const gerarClick = (dia) => `onclick="abrirDetalhesDia('${dia}')" style="cursor:pointer"`;
 
     // VERSÃO MOBILE
     if (window.innerWidth < 768) {
         const cards = listaDias.map(([dia, dados]) => {
-            // Pegar dia da semana
             const dataObj = parsearDataBR(dia);
             const diaSemana = dataObj ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][dataObj.getDay()] : '';
             
             return `
-            <div class="mobile-card">
+            <div class="mobile-card" ${gerarClick(dia)}>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <strong>${dia} <small style="font-weight:400; color:var(--cor-texto-sec); font-size:0.8rem;">(${diaSemana})</small></strong>
-                    
                     <span class="status-badge status-analise" style="font-size:0.8rem;">${dados.viagens} viagens</span>
                 </div>
-                
                 <div style="margin-top:0.5rem; text-align:right;">
                     <span class="money" style="font-size:1.2rem;">${formatarMoeda(dados.valor)}</span>
+                    <div style="font-size:0.7rem; color:var(--cor-secundaria); margin-top:2px;">Toque para ver detalhes <i class="fas fa-chevron-right"></i></div>
                 </div>
             </div>
             `;
@@ -1701,17 +1766,16 @@ function mostrarRelatorioDiario(resumo) {
 
         elementos.contentArea.innerHTML = `
             <h3 class="mobile-title">Histórico Diário (${totalPeriodo} dias)</h3>
-            <p style="font-size:0.8rem; color:var(--cor-texto-sec); margin-bottom:1rem;">Use o filtro no topo para selecionar datas específicas.</p>
             <div class="mobile-card-list">${cards}</div>
         `;
         return;
     }
 
-    // VERSÃO DESKTOP (Tabela Completa)
+    // VERSÃO DESKTOP
     elementos.contentArea.innerHTML = `
         <div class="summary-card">
             <div class="summary-header">
-                <div class="summary-title">Histórico Completo por Dia (${totalPeriodo} dias encontrados)</div>
+                <div class="summary-title">Histórico Completo por Dia</div>
                 <div class="summary-icon"><i class="fas fa-calendar-day"></i></div>
             </div>
             <table class="summary-table">
@@ -1720,24 +1784,25 @@ function mostrarRelatorioDiario(resumo) {
                         <th>Data</th>
                         <th class="center">Viagens</th>
                         <th class="money">Faturamento Total</th>
-                        <th class="money">Média por Viagem</th>
+                        <th class="money">Média</th>
                         <th class="center">Dia da Semana</th>
+                        <th class="center">Ação</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${listaDias.map(([dia, dados]) => {
                         const dataObj = parsearDataBR(dia);
-                        const diaSemana = dataObj ? 
-                            ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][dataObj.getDay()] : '';
+                        const diaSemana = dataObj ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][dataObj.getDay()] : '';
                         const media = dados.valor / dados.viagens;
                         
                         return `
-                            <tr>
+                            <tr ${gerarClick(dia)} class="hover-row">
                                 <td>${dia}</td>
                                 <td class="center">${dados.viagens}</td>
                                 <td class="money">${formatarMoeda(dados.valor)}</td>
                                 <td class="money">${formatarMoeda(media)}</td>
                                 <td class="center">${diaSemana}</td>
+                                <td class="center"><i class="fas fa-chart-bar" style="color:var(--cor-secundaria)"></i></td>
                             </tr>
                         `;
                     }).join('')}
@@ -2068,6 +2133,159 @@ window.addEventListener('resize', function() {
         mostrarRelatorio(report); 
     }
 });
+
+        // Variável para guardar o gráfico e destruí-lo antes de criar um novo
+let chartInstance = null;
+
+function abrirDetalhesDia(diaClicado) {
+    if(!dadosOriginais) return;
+
+    // 1. Filtrar os dados APENAS daquele dia
+    // Precisamos achar o índice da coluna de data novamente ou usar o mapeamento
+    const cabecalho = dadosOriginais[0];
+    const colunas = detectarColunas(cabecalho);
+    const idxData = colunas.find(c => c.tipo === 'data')?.indice;
+    const idxMotorista = colunas.find(c => c.tipo === 'motorista')?.indice;
+    const idxValor = colunas.find(c => c.tipo === 'valor')?.indice;
+    const idxKm = colunas.find(c => c.tipo === 'km')?.indice;
+
+    if(idxData === undefined) return alert('Erro ao identificar data');
+
+    // Filtra as linhas
+    const registrosDia = dadosOriginais.slice(1).filter(linha => {
+        // Normaliza a data da linha para comparar com o diaClicado (dd/mm/aaaa)
+        const dataLinha = linha[idxData];
+        if(!dataLinha) return false;
+        
+        // Tenta converter para string comparável
+        const dObj = parsearDataBR(dataLinha);
+        if(!dObj) return false;
+        const dStr = dObj.toLocaleDateString('pt-BR');
+        return dStr === diaClicado;
+    });
+
+    // 2. Agrupar por Motorista
+    const porMotorista = {};
+    let totalDia = 0;
+    
+    registrosDia.forEach(linha => {
+        const mot = linha[idxMotorista] || 'Indefinido';
+        const val = extrairNumero(linha[idxValor]);
+        
+        if(!porMotorista[mot]) porMotorista[mot] = { valor: 0, viagens: 0 };
+        porMotorista[mot].valor += val;
+        porMotorista[mot].viagens++;
+        totalDia += val;
+    });
+
+    // Converter para array e ordenar (maior valor primeiro)
+    const arrayMotoristas = Object.entries(porMotorista)
+        .sort((a,b) => b[1].valor - a[1].valor);
+
+    // 3. Preencher Modal
+    document.getElementById('modalTitulo').textContent = `Resumo: ${diaClicado}`;
+    document.getElementById('modalSubtitulo').textContent = 
+        `${registrosDia.length} viagens totais | ${formatarMoeda(totalDia)}`;
+
+    // Gerar Lista HTML
+    const listaHTML = arrayMotoristas.map(([nome, dados]) => `
+        <div class="driver-list-item">
+            <div>
+                <strong style="color:var(--cor-primaria)">${nome}</strong><br>
+                <small style="color:var(--cor-texto-sec)">${dados.viagens} viagens</small>
+            </div>
+            <div class="money" style="color:var(--cor-secundaria)">
+                ${formatarMoeda(dados.valor)}
+            </div>
+        </div>
+    `).join('');
+    document.getElementById('modalListaMotoristas').innerHTML = listaHTML;
+
+    // 4. Gerar Gráfico (Chart.js)
+    gerarGraficoModal(arrayMotoristas);
+
+    // 5. Mostrar Modal
+    document.getElementById('modalDia').style.display = 'flex';
+}
+
+function fecharModal() {
+    document.getElementById('modalDia').style.display = 'none';
+}
+
+// Fecha se clicar fora
+document.getElementById('modalDia').addEventListener('click', function(e) {
+    if(e.target === this) fecharModal();
+});
+
+function gerarGraficoModal(dadosMotoristas) {
+    const ctx = document.getElementById('graficoDia').getContext('2d');
+    
+    // Se já existir gráfico, destrói para criar o novo
+    if(chartInstance) chartInstance.destroy();
+
+    // Preparar dados para o Chart.js
+    const labels = dadosMotoristas.map(d => {
+        // Abrevia nome se for muito longo (Pega primeiro e último nome)
+        const nomes = d[0].split(' ');
+        return nomes.length > 1 ? `${nomes[0]} ${nomes[nomes.length-1]}` : nomes[0];
+    });
+    const valores = dadosMotoristas.map(d => d[1].valor);
+    const viagens = dadosMotoristas.map(d => d[1].viagens);
+
+    // Configuração do Chart.js
+    chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: valores,
+                backgroundColor: '#FF6B35', // Cor Laranja Mineramix
+                borderRadius: 4,
+                barPercentage: 0.6,
+            }]
+        },
+        plugins: [ChartDataLabels], // Ativa o plugin de labels
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }, // Esconde legenda
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const index = context.dataIndex;
+                            const vlr = context.raw;
+                            const vgs = viagens[index];
+                            // Tooltip mostra: R$ 1.000,00 (5 viagens)
+                            return `${vlr.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})} (${vgs} viagens)`;
+                        }
+                    }
+                },
+                datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    formatter: (value) => value.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}),
+                    font: { weight: 'bold', size: 10 },
+                    color: getComputedStyle(document.body).getPropertyValue('--cor-texto') // Cor adaptativa
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { display: false },
+                    ticks: { display: false } // Esconde números do eixo Y para ficar limpo igual sua foto
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { 
+                        color: getComputedStyle(document.body).getPropertyValue('--cor-texto-sec'),
+                        font: { size: 11 }
+                    }
+                }
+            }
+        }
+    });
+}
     </script>
 </body>
 </html>
