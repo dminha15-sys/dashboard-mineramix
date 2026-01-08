@@ -2502,71 +2502,69 @@ function abrirDetalhesVeiculo(placa) {
     }
 
     try {
-        // --- 1. LOCALIZAR O CABEÇALHO CORRETAMENTE ---
-        let indiceCabecalho = -1;
-        // Procura nas primeiras 20 linhas para garantir
-        for(let i=0; i< Math.min(20, dadosOriginais.length); i++) {
-            if (!dadosOriginais[i]) continue; // Pula linha vazia/indefinida
-            const linhaStr = dadosOriginais[i].join(' ').toUpperCase();
-            if(linhaStr.includes('MOTORISTA') || linhaStr.includes('PLACA') || linhaStr.includes('VEICULO')) {
-                indiceCabecalho = i;
-                break;
-            }
-        }
+        // 1. REUTILIZAR A LÓGICA DE COLUNAS QUE JÁ FUNCIONA
+        // Em vez de tentar adivinhar de novo, vamos usar a função detectarColunas
+        const cabecalho = dadosOriginais[0];
+        const colunas = detectarColunas(cabecalho);
         
-        // Se não achou, assume 0
-        if (indiceCabecalho === -1) indiceCabecalho = 0; 
+        // Mapear índices baseados na detecção global
+        const idxPlaca = colunas.find(c => c.tipo === 'veiculo')?.indice;
+        const idxMot = colunas.find(c => c.tipo === 'motorista')?.indice;
+        const idxOrigem = colunas.find(c => c.tipo === 'origem')?.indice;
+        const idxDestino = colunas.find(c => c.tipo === 'destino')?.indice;
+        const idxValor = colunas.find(c => c.tipo === 'valor')?.indice;
+        const idxKm = colunas.find(c => c.tipo === 'km')?.indice;
 
-        const cab = dadosOriginais[indiceCabecalho].map(c => c ? c.toString().toLowerCase() : '');
-        
-        // --- 2. MAPEAR COLUNAS ---
-        const idxPlaca = cab.findIndex(c => c.includes('placa') || c.includes('veiculo') || c.includes('cavalo'));
-        const idxMot = cab.findIndex(c => c.includes('motorista'));
-        const idxOrigem = cab.findIndex(c => c.includes('origem'));
-        const idxDestino = cab.findIndex(c => c.includes('destino'));
-        const idxValor = cab.findIndex(c => c.includes('valor') || c.includes('total') || c.includes('preço'));
-        const idxKm = cab.findIndex(c => c.includes('km'));
-
-        if (idxPlaca === -1) {
-            alert("Erro: Coluna de Placa não encontrada. Verifique a planilha.");
+        if (idxPlaca === undefined) {
+            alert("Erro: Coluna de Placa não encontrada na planilha.");
             return;
         }
 
-        // --- 3. FILTRAR VIAGENS ---
-        const viagens = dadosOriginais.slice(indiceCabecalho + 1).filter(linha => {
+        // 2. FILTRAGEM MAIS INTELIGENTE (CORREÇÃO DO N/A)
+        // Normalizamos tudo para maiúsculo e sem espaços para garantir que encontre
+        const placaAlvo = placa.toString().trim().toUpperCase();
+
+        const viagens = dadosOriginais.slice(1).filter(linha => {
+            // Verifica se a linha tem dados na coluna da placa
             if (!linha || !linha[idxPlaca]) return false;
-            const p = linha[idxPlaca].toString().trim();
-            return p === placa;
+            
+            // Limpa o dado da planilha também
+            const pPlanilha = linha[idxPlaca].toString().trim().toUpperCase();
+            
+            // Compara ignorando formatação
+            return pPlanilha === placaAlvo;
         });
 
+        // Se ainda assim não achar nada, cai no fallback (aí sim mostra N/A)
         if (viagens.length === 0) {
-            // Tenta usar o resumo pré-calculado se o filtro falhar
+            console.warn("Nenhuma viagem encontrada nos dados brutos para: ", placa);
             if(dadosAnalisados && dadosAnalisados.veiculos[placa]) {
                 const d = dadosAnalisados.veiculos[placa];
-                preencherModalVeiculo(placa, d.valor, d.km, d.viagens, 'N/A', 'N/A');
-            } else {
-                alert("Nenhum detalhe encontrado para este veículo.");
+                // Se cair aqui, é porque realmente não achou na busca detalhada
+                preencherModalVeiculo(placa, d.valor, d.km, d.viagens, 'Indisponível', 'Indisponível');
             }
             return;
         }
 
-        // --- 4. CALCULAR TOTAIS ---
+        // 3. CÁLCULOS DOS DETALHES (Top Motorista e Rota)
         let totalValor = 0;
         let totalKm = 0;
         const contMotoristas = {};
         const contRotas = {};
 
         viagens.forEach(linha => {
-            const val = extrairNumero(linha[idxValor]);
-            const k = extrairNumero(linha[idxKm]);
+            const val = idxValor !== undefined ? extrairNumero(linha[idxValor]) : 0;
+            const k = idxKm !== undefined ? extrairNumero(linha[idxKm]) : 0;
             
             // Pega Motorista
-            let mot = 'Indefinido';
-            if (idxMot > -1 && linha[idxMot]) mot = linha[idxMot];
+            let mot = 'Não Identificado';
+            if (idxMot !== undefined && linha[idxMot]) {
+                mot = linha[idxMot].toString().trim(); // Limpa espaços
+            }
 
             // Pega Rota
-            let rota = '?';
-            if (idxOrigem > -1 && idxDestino > -1) {
+            let rota = 'Rota não informada';
+            if (idxOrigem !== undefined && idxDestino !== undefined) {
                 const orig = linha[idxOrigem] || '?';
                 const dest = linha[idxDestino] || '?';
                 rota = `${orig} ➝ ${dest}`;
@@ -2575,28 +2573,38 @@ function abrirDetalhesVeiculo(placa) {
             totalValor += val;
             totalKm += k;
             
-            contMotoristas[mot] = (contMotoristas[mot] || 0) + 1;
-            contRotas[rota] = (contRotas[rota] || 0) + 1;
+            // Contagem para ranking
+            if (mot !== 'Não Identificado') {
+                contMotoristas[mot] = (contMotoristas[mot] || 0) + 1;
+            }
+            if (rota !== '? ➝ ?') {
+                contRotas[rota] = (contRotas[rota] || 0) + 1;
+            }
         });
 
-        // Achar campeões
-        const topMot = Object.entries(contMotoristas).sort((a,b) => b[1] - a[1])[0];
-        const topRota = Object.entries(contRotas).sort((a,b) => b[1] - a[1])[0];
-        const percMot = topMot ? Math.round((topMot[1] / viagens.length) * 100) : 0;
+        // Achar campeões (quem tem mais viagens)
+        const topMotArray = Object.entries(contMotoristas).sort((a,b) => b[1] - a[1]);
+        const topRotaArray = Object.entries(contRotas).sort((a,b) => b[1] - a[1]);
 
-        // Preencher usando função auxiliar
+        const topMot = topMotArray.length > 0 ? topMotArray[0] : ['-', 0];
+        const topRota = topRotaArray.length > 0 ? topRotaArray[0] : ['-', 0];
+
+        // Calcula porcentagem do motorista principal
+        const percMot = viagens.length > 0 ? Math.round((topMot[1] / viagens.length) * 100) : 0;
+
+        // 4. PREENCHER NA TELA
         preencherModalVeiculo(
             placa, 
             totalValor, 
             totalKm, 
             viagens.length, 
-            topMot ? `${topMot[0]} (${percMot}%)` : '-', 
-            topRota ? topRota[0] : '-'
+            topMot[0] !== '-' ? `${topMot[0]} (${percMot}%)` : 'Não identificado', 
+            topRota[0] !== '-' ? topRota[0] : 'Não identificada'
         );
 
     } catch (e) {
         console.error("Erro ao abrir detalhes:", e);
-        alert("Erro ao processar dados do veículo.");
+        alert("Erro ao processar dados do veículo: " + e.message);
     }
 }
 
