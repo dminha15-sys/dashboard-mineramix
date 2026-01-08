@@ -1161,6 +1161,7 @@
         }
 
         // Analisar dados da SUA planilha
+// Analisar dados da SUA planilha (VERSÃO CORRIGIDA "UNDEFINED")
         function analisarDadosMineramix(dados) {
             if (!dados || dados.length < 2) return null;
             
@@ -1176,7 +1177,7 @@
             
             // Estruturas de análise
             const resumo = {
-                totalLinhas: linhas.length,
+                totalLinhas: 0, // Ajustado para contar apenas linhas válidas
                 totalValor: 0,
                 totalKM: 0,
                 
@@ -1197,23 +1198,42 @@
             
             // Processar cada linha
             linhas.forEach(linha => {
-                // Extrair valores
-                const data = idx.data !== undefined ? linha[idx.data] : null;
-                const cliente = idx.cliente !== undefined ? linha[idx.cliente] : 'Não informado';
-                const motorista = idx.motorista !== undefined ? linha[idx.motorista] : 'Não informado';
-                const veiculo = idx.veiculo !== undefined ? linha[idx.veiculo] : 'Não informado';
-                const origem = idx.origem !== undefined ? linha[idx.origem] : '';
-                const destino = idx.destino !== undefined ? linha[idx.destino] : '';
+                // 1. Extrair valores numéricos primeiro para validação
                 const km = idx.km !== undefined ? extrairNumero(linha[idx.km]) : 0;
                 const valor = idx.valor !== undefined ? extrairNumero(linha[idx.valor]) : 0;
-                const pagamento = idx.pagamento !== undefined ? linha[idx.pagamento] : 'Não informado';
-                const status = idx.status !== undefined ? linha[idx.status] : 'Não informado';
                 
-                // Acumular totais
+                // 2. Extrair e limpar o nome do Motorista
+                let motoristaRaw = idx.motorista !== undefined ? linha[idx.motorista] : null;
+                
+                // Converte para string e remove espaços, ou define como nulo se for inválido
+                if (!motoristaRaw || String(motoristaRaw).trim() === '' || String(motoristaRaw).toLowerCase().includes('undefined')) {
+                    motoristaRaw = null;
+                }
+
+                // === AQUI ESTÁ A CORREÇÃO ===
+                // Se não tem Motorista, nem Valor, nem KM -> É LINHA SUJA -> IGNORA
+                if (motoristaRaw === null && valor === 0 && km === 0) {
+                    return; // Pula para a próxima linha
+                }
+
+                // Se tem valor/km mas não tem nome, define um padrão para não quebrar
+                const motorista = motoristaRaw || 'NÃO IDENTIFICADO';
+
+                // Se chegou aqui, a linha é válida. Incrementa contadores.
+                resumo.totalLinhas++;
                 resumo.totalValor += valor;
                 resumo.totalKM += km;
                 resumo.valores.push(valor);
                 resumo.kms.push(km);
+
+                // Restante das extrações de texto
+                const data = idx.data !== undefined ? linha[idx.data] : null;
+                const cliente = idx.cliente !== undefined ? linha[idx.cliente] : 'Não informado';
+                const veiculo = idx.veiculo !== undefined ? linha[idx.veiculo] : 'Não informado';
+                const origem = idx.origem !== undefined ? linha[idx.origem] : '';
+                const destino = idx.destino !== undefined ? linha[idx.destino] : '';
+                const pagamento = idx.pagamento !== undefined ? linha[idx.pagamento] : 'Não informado';
+                const status = idx.status !== undefined ? linha[idx.status] : 'Não informado';
                 
                 // Análise por status
                 if (!resumo.status[status]) {
@@ -1285,11 +1305,11 @@
                 }
             });
             
-            // Calcular estatísticas
+            // Calcular estatísticas finais
             resumo.mediaValor = resumo.totalLinhas > 0 ? resumo.totalValor / resumo.totalLinhas : 0;
             resumo.mediaKM = resumo.totalLinhas > 0 ? resumo.totalKM / resumo.totalLinhas : 0;
             
-            // Ordenar por valor (decrescente)
+            // Ordenações
             resumo.motoristasOrdenados = Object.entries(resumo.motoristas)
                 .sort((a, b) => b[1].valor - a[1].valor);
                 
@@ -1301,7 +1321,7 @@
                 
             resumo.rotasOrdenadas = Object.entries(resumo.rotas)
                 .sort((a, b) => b[1].viagens - a[1].viagens)
-                .slice(0, 10); // Top 10 rotas
+                .slice(0, 10);
                 
             resumo.diasOrdenados = Object.entries(resumo.dias)
                 .sort((a, b) => new Date(b[0].split('/').reverse().join('-')) - 
