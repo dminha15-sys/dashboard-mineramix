@@ -2217,69 +2217,85 @@ document.getElementById('modalDia').addEventListener('click', function(e) {
     if(e.target === this) fecharModal();
 });
 
+// CONFIGURAÇÃO DO GRÁFICO (COM AJUSTE DE ALTURA AUTOMÁTICO)
 function gerarGraficoModal(dadosMotoristas) {
     const ctx = document.getElementById('graficoDia').getContext('2d');
     
-    // Se já existir gráfico, destrói para criar o novo
     if(chartInstance) chartInstance.destroy();
 
-    // Preparar dados para o Chart.js
     const labels = dadosMotoristas.map(d => {
-        // Abrevia nome se for muito longo (Pega primeiro e último nome)
         const nomes = d[0].split(' ');
-        return nomes.length > 1 ? `${nomes[0]} ${nomes[nomes.length-1]}` : nomes[0];
+        return nomes[0]; 
     });
     const valores = dadosMotoristas.map(d => d[1].valor);
     const viagens = dadosMotoristas.map(d => d[1].viagens);
 
-    // Configuração do Chart.js
+    // 1. Encontrar o maior valor para calcular a margem de segurança
+    const maiorValor = Math.max(...valores);
+    // Define o teto do gráfico como 20% maior que o maior valor
+    // Se o maior valor for 0 (dia sem dados), define um teto padrão de 100
+    const tetoGrafico = maiorValor > 0 ? maiorValor * 1.2 : 100;
+
+    const isDark = document.body.classList.contains('dark');
+    const corTexto = isDark ? '#e9ecef' : '#1f2933';
+
     chartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
             datasets: [{
                 data: valores,
-                backgroundColor: '#FF6B35', // Cor Laranja Mineramix
+                backgroundColor: '#FF6B35',
+                hoverBackgroundColor: '#e55a2b',
                 borderRadius: 4,
-                barPercentage: 0.6,
+                barPercentage: 0.6, // Controla a largura da barra (0.6 deixa um espaço bom entre elas)
+                categoryPercentage: 0.8 // Controla o agrupamento
             }]
         },
-        plugins: [ChartDataLabels], // Ativa o plugin de labels
+        plugins: [ChartDataLabels],
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            layout: { 
+                padding: { 
+                    top: 30, // Garante espaço fixo extra para o rótulo não cortar
+                    left: 10,
+                    right: 10,
+                    bottom: 10
+                } 
+            },
             plugins: {
-                legend: { display: false }, // Esconde legenda
+                legend: { display: false },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
-                            const index = context.dataIndex;
-                            const vlr = context.raw;
-                            const vgs = viagens[index];
-                            // Tooltip mostra: R$ 1.000,00 (5 viagens)
-                            return `${vlr.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'})} (${vgs} viagens)`;
+                        label: (ctx) => {
+                            const vlr = ctx.raw;
+                            const vgs = viagens[ctx.dataIndex];
+                            return `${formatarMoeda(vlr)} (${vgs} viagens)`;
                         }
                     }
                 },
                 datalabels: {
+                    align: 'end',
                     anchor: 'end',
-                    align: 'top',
                     formatter: (value) => value.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}),
-                    font: { weight: 'bold', size: 10 },
-                    color: getComputedStyle(document.body).getPropertyValue('--cor-texto') // Cor adaptativa
+                    color: corTexto,
+                    font: { weight: 'bold', size: 11 },
+                    offset: 4 // Empurra o texto um pouco mais pra cima da barra
                 }
             },
             scales: {
                 y: {
+                    display: false, 
                     beginAtZero: true,
-                    grid: { display: false },
-                    ticks: { display: false } // Esconde números do eixo Y para ficar limpo igual sua foto
+                    max: tetoGrafico, // <--- AQUI ESTÁ O SEGREDO: Força o teto a ser mais alto que a barra
+                    grid: { display: false }
                 },
                 x: {
                     grid: { display: false },
-                    ticks: { 
-                        color: getComputedStyle(document.body).getPropertyValue('--cor-texto-sec'),
-                        font: { size: 11 }
+                    ticks: {
+                        color: corTexto,
+                        font: { size: 11, weight: '500' }
                     }
                 }
             }
