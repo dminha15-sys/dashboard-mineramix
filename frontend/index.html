@@ -2557,10 +2557,10 @@ document.getElementById('modalMotorista').addEventListener('click', function(e) 
 });
        
 // =============================================================
-//  ÁREA DE VEÍCULOS (CÓDIGO ÚNICO - COPIE E COLE ISTO)
+//  ÁREA DE VEÍCULOS (CORREÇÃO DO ERRO "NENHUM DETALHE")
 // =============================================================
 
-// 1. GERAR O RELATÓRIO DE VEÍCULOS
+// 1. GERAR O RELATÓRIO (LISTA/TABELA)
 function mostrarRelatorioVeiculos(resumo) {
     const r = resumo;
     const area = document.getElementById('contentArea');
@@ -2627,46 +2627,66 @@ function mostrarRelatorioVeiculos(resumo) {
     area.innerHTML = html;
 }
 
-// 2. FUNÇÃO QUE ABRE O POP-UP DO VEÍCULO
+// 2. ABRIR O POP-UP (AGORA COM BUSCA INTELIGENTE DE CABEÇALHO)
 function abrirDetalhesVeiculo(placa) {
     if (!dadosOriginais) return;
 
-    // Recalcular detalhes buscando nos dados originais
-    const cab = dadosOriginais[0].map(c => c.toString().toLowerCase());
-    
-    // Mapeamento de índices (segurança)
-    const idx = {
-        placa: cab.findIndex(c => c.includes('placa') || c.includes('veiculo') || c.includes('cavalo')),
-        motorista: cab.findIndex(c => c.includes('motorista')),
-        origem: cab.findIndex(c => c.includes('origem')),
-        destino: cab.findIndex(c => c.includes('destino')),
-        valor: cab.findIndex(c => c.includes('valor') || c.includes('total') || c.includes('preço')),
-        km: cab.findIndex(c => c.includes('km'))
-    };
+    // --- CORREÇÃO: PROCURAR ONDE COMEÇA A TABELA ---
+    let indiceCabecalho = -1;
+    for(let i=0; i<15; i++) {
+        const linhaStr = dadosOriginais[i].join(' ').toUpperCase();
+        if(linhaStr.includes('MOTORISTA') || linhaStr.includes('PLACA') || linhaStr.includes('VEICULO')) {
+            indiceCabecalho = i;
+            break;
+        }
+    }
+    if (indiceCabecalho === -1) indiceCabecalho = 0; // Fallback
 
-    // Filtra todas as linhas que têm essa placa
-    const viagens = dadosOriginais.slice(1).filter(linha => {
-        const p = linha[idx.placa];
-        // Remove espaços e compara
+    const cab = dadosOriginais[indiceCabecalho].map(c => c.toString().toLowerCase());
+    
+    // Mapear colunas
+    const idxPlaca = cab.findIndex(c => c.includes('placa') || c.includes('veiculo') || c.includes('cavalo'));
+    const idxMot = cab.findIndex(c => c.includes('motorista'));
+    const idxOrigem = cab.findIndex(c => c.includes('origem'));
+    const idxDestino = cab.findIndex(c => c.includes('destino'));
+    const idxValor = cab.findIndex(c => c.includes('valor') || c.includes('total') || c.includes('preço'));
+    const idxKm = cab.findIndex(c => c.includes('km'));
+
+    if (idxPlaca === -1) {
+        alert("Erro: Coluna de Placa/Veículo não encontrada na planilha.");
+        return;
+    }
+
+    // Filtrar viagens (Começando DEPOIS do cabeçalho)
+    const viagens = dadosOriginais.slice(indiceCabecalho + 1).filter(linha => {
+        const p = linha[idxPlaca];
+        // Compara removendo espaços extras
         return p && p.toString().trim() === placa;
     });
 
+    // Se não achou nada, tenta usar os dados pré-calculados do resumo para não dar erro
     if (viagens.length === 0) {
+        // Fallback: Usa o resumo se o filtro falhar
+        const dResumo = dadosAnalisados.veiculos[placa];
+        if (dResumo) {
+            preencherModalVeiculo(placa, dResumo.valor, dResumo.km, dResumo.viagens, '-', '-');
+            return;
+        }
         alert("Nenhum detalhe encontrado para este veículo.");
         return;
     }
 
-    // Calcular Totais
+    // Calcular Totais do Zero
     let totalValor = 0;
     let totalKm = 0;
     const contMotoristas = {};
     const contRotas = {};
 
     viagens.forEach(linha => {
-        const val = extrairNumero(linha[idx.valor]);
-        const k = extrairNumero(linha[idx.km]);
-        const mot = linha[idx.motorista] || 'Indefinido';
-        const rota = (linha[idx.origem] || '?') + ' ➝ ' + (linha[idx.destino] || '?');
+        const val = extrairNumero(linha[idxValor]);
+        const k = extrairNumero(linha[idxKm]);
+        const mot = linha[idxMot] || 'Indefinido';
+        const rota = (linha[idxOrigem] || '?') + ' ➝ ' + (linha[idxDestino] || '?');
 
         totalValor += val;
         totalKm += k;
@@ -2675,46 +2695,40 @@ function abrirDetalhesVeiculo(placa) {
         contRotas[rota] = (contRotas[rota] || 0) + 1;
     });
 
-    // Descobrir Motorista e Rota mais frequentes
     const topMot = Object.entries(contMotoristas).sort((a,b) => b[1] - a[1])[0];
     const topRota = Object.entries(contRotas).sort((a,b) => b[1] - a[1])[0];
-    const rentabilidade = totalKm > 0 ? totalValor / totalKm : 0;
-    const mediaViagem = totalValor / viagens.length;
     const percMot = topMot ? Math.round((topMot[1] / viagens.length) * 100) : 0;
 
-    // PREENCHER OS CAMPOS DA JANELA (IDs do seu HTML)
+    // Preencher
+    preencherModalVeiculo(
+        placa, 
+        totalValor, 
+        totalKm, 
+        viagens.length, 
+        topMot ? `${topMot[0]} (${percMot}%)` : '-', 
+        topRota ? topRota[0] : '-'
+    );
+}
+
+// Função auxiliar para preencher o HTML
+function preencherModalVeiculo(placa, valor, km, viagens, motorista, rota) {
     document.getElementById('modalTitulo').textContent = `Veículo: ${placa}`;
-    document.getElementById('modalFaturamento').textContent = formatarMoeda(totalValor);
-    document.getElementById('modalKM').textContent = formatarNumero(totalKm) + ' km';
+    document.getElementById('modalFaturamento').textContent = formatarMoeda(valor);
+    document.getElementById('modalKM').textContent = formatarNumero(km) + ' km';
+    
+    const rentabilidade = km > 0 ? valor / km : 0;
     document.getElementById('modalRentabilidade').textContent = formatarMoeda(rentabilidade) + '/km';
     
-    document.getElementById('modalMotorista').textContent = topMot ? `${topMot[0]} (${percMot}%)` : '-';
-    document.getElementById('modalRota').textContent = topRota ? topRota[0] : '-';
-    document.getElementById('modalMedia').textContent = formatarMoeda(mediaViagem);
+    document.getElementById('modalMotorista').textContent = motorista;
+    document.getElementById('modalRota').textContent = rota;
+    document.getElementById('modalMedia').textContent = formatarMoeda(valor / viagens);
 
-    // Exibir
     document.getElementById('modalVeiculo').style.display = 'flex';
 }
 
-// 3. FUNÇÃO UNIFICADA PARA FECHAR TODOS OS MODAIS
 function fecharModal() {
     document.getElementById('modalVeiculo').style.display = 'none';
-    document.getElementById('modalDia').style.display = 'none';
-    if(document.getElementById('modalMotorista')) {
-        document.getElementById('modalMotorista').style.display = 'none';
-    }
-}
-
-// 4. CLIQUE FORA PARA FECHAR (Gerenciador Global)
-window.onclick = function(event) {
-    const modalV = document.getElementById('modalVeiculo');
-    const modalD = document.getElementById('modalDia');
-    const modalM = document.getElementById('modalMotorista');
-    
-    if (event.target == modalV || event.target == modalD || event.target == modalM) {
-        fecharModal();
-        if(typeof fecharModalMotorista === 'function') fecharModalMotorista();
-    }
+    if(document.getElementById('modalDia')) document.getElementById('modalDia').style.display = 'none';
 }
     </script>
 </body>
