@@ -1095,50 +1095,33 @@
 
 
 
-<div id="modalVeiculo" class="modal-overlay" style="display: none;">
-    <div class="modal-card">
-        <div class="modal-header">
-            <h3 id="modalTitulo">Placa ABC-1234</h3>
-            <button class="close-btn" onclick="fecharModal()">&times;</button>
-        </div>
+<div id="modalVeiculo" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:3000; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+    <div class="modal-card" style="background:#121214; width:90%; max-width:500px; padding:2rem; border-radius:12px; border:1px solid #323238; color:#fff; position:relative;">
+        <button onclick="fecharModalVeiculo()" style="position:absolute; top:15px; right:15px; background:none; border:none; color:#777; font-size:1.5rem; cursor:pointer;">&times;</button>
         
-        <div class="modal-body">
-            <div class="modal-stats">
-                <div class="stat-box">
-                    <span class="stat-label">Faturamento Total</span>
-                    <strong class="stat-value money" id="modalFaturamento">R$ 0,00</strong>
-                </div>
-                <div class="stat-box destaque">
-                    <span class="stat-label">Rentabilidade</span>
-                    <strong class="stat-value" id="modalRentabilidade">R$ 0,00/km</strong>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-label">KM Total</span>
-                    <strong class="stat-value" id="modalKM">0 km</strong>
-                </div>
+        <h3 id="tituloModalVeiculo" style="font-size:1.5rem; margin-bottom:1.5rem; color:#fff;">Veículo</h3>
+        
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:2rem;">
+            <div style="background:#202024; padding:10px; border-radius:8px; text-align:center;">
+                <span style="font-size:0.7rem; color:#777; display:block;">FATURAMENTO</span>
+                <strong id="veicFaturamento" style="font-size:0.9rem; color:#fff;">R$ 0,00</strong>
             </div>
+            <div style="background:#202024; padding:10px; border-radius:8px; text-align:center; border:1px solid #FF6B35;">
+                <span style="font-size:0.7rem; color:#FF6B35; display:block;">RENTABILIDADE</span>
+                <strong id="veicRentabilidade" style="font-size:1rem; color:#fff;">R$ 0,00/km</strong>
+            </div>
+            <div style="background:#202024; padding:10px; border-radius:8px; text-align:center;">
+                <span style="font-size:0.7rem; color:#777; display:block;">KM TOTAL</span>
+                <strong id="veicKM" style="font-size:0.9rem; color:#fff;">0 km</strong>
+            </div>
+        </div>
 
-            <div class="modal-details-list">
-                <div class="detail-item">
-                    <i class="fas fa-user-tie"></i>
-                    <div>
-                        <span class="detail-label">Motorista Principal</span>
-                        <strong id="modalMotorista">Carregando...</strong>
-                    </div>
-                </div>
-                <div class="detail-item">
-                    <i class="fas fa-route"></i>
-                    <div>
-                        <span class="detail-label">Rota Favorita</span>
-                        <strong id="modalRota">Carregando...</strong>
-                    </div>
-                </div>
-                <div class="detail-item">
-                    <i class="fas fa-chart-line"></i>
-                    <div>
-                        <span class="detail-label">Média por Viagem</span>
-                        <strong id="modalMedia">R$ 0,00</strong>
-                    </div>
+        <div style="border-top:1px solid #323238; padding-top:1.5rem;">
+            <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+                <i class="fas fa-chart-line" style="color:#FF6B35; font-size:1.2rem;"></i>
+                <div>
+                    <span style="font-size:0.8rem; color:#777;">Média por Viagem</span><br>
+                    <strong id="veicMedia" style="font-size:1.1rem; color:#fff;">R$ 0,00</strong>
                 </div>
             </div>
         </div>
@@ -1739,75 +1722,62 @@ function mostrarRelatorioMotoristas(resumo) {
         </div>
     `;
 }
-        // Relatório por Veículo
-        function mostrarRelatorioVeiculos(resumo) {
-                                
+// Relatório por Veículo (Com clique para detalhes)
+function mostrarRelatorioVeiculos(resumo) {
+    const r = resumo;
+    const area = document.getElementById('contentArea');
+    const isMobile = window.innerWidth < 768;
 
-    // MOBILE
-    if (window.innerWidth < 768) {
-
-  const lista = resumo.veiculosOrdenados.slice(0, 10);
-
-  const cards = lista.map(([placa, dados]) => `
-    <div class="mobile-card">
-      <strong>${placa}</strong>
-      <span>Viagens: ${dados.viagens}</span>
-      <span>KM: ${formatarNumero(dados.km)}</span>
-      <span class="money">${formatarMoeda(dados.valor)}</span>
-    </div>
-  `).join('');
-
-  elementos.contentArea.innerHTML = `
-    <h3 class="mobile-title">Veículos</h3>
-    <div class="mobile-card-list">${cards}</div>
-  `;
-  return;
-}
-
-            const titulo = window.innerWidth < 480
-            ? 'Faturamento por Veículo'
-            : 'Resumo Faturamento por Veículo (Cavalo)';
-                elementos.contentArea.innerHTML = `
-                <div class="summary-card">
-                    <div class="summary-header">
-                       <div class="summary-title">${titulo}</div>
-                        <div class="summary-icon"><i class="fas fa-truck"></i></div>
-                    </div>
-                    <table class="summary-table">
-                        <thead>
-                            <tr>
-                                <th>Placa</th>
-                                <th class="center">Viagens</th>
-                                <th class="center">KM Total</th>
-                                <th class="money">Faturamento Total</th>
-                                <th class="center">% do Total</th>
-                                <th class="money">Média por Viagem</th>
-                                <th class="money">Média por KM</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${resumo.veiculosOrdenados.map(([placa, dados]) => {
-                                const percentual = ((dados.valor / resumo.totalValor) * 100).toFixed(1);
-                                const mediaViagem = dados.valor / dados.viagens;
-                                const mediaKM = dados.km > 0 ? dados.valor / dados.km : 0;
-                                
-                                return `
-                                    <tr>
-                                        <td>${placa}</td>
-                                        <td class="center">${dados.viagens}</td>
-                                        <td class="center">${formatarNumero(dados.km)}</td>
-                                        <td class="money">${formatarMoeda(dados.valor)}</td>
-                                        <td class="center">${percentual}%</td>
-                                        <td class="money">${formatarMoeda(mediaViagem)}</td>
-                                        <td class="money">${formatarMoeda(mediaKM)}/km</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
+    if (isMobile) {
+        // Versão Mobile (Cards clicáveis)
+        let html = `<h3 class="mobile-title">Veículos (Toque para ver Detalhes)</h3><div class="mobile-card-list">`;
+        html += r.veiculosOrdenados.map(([placa, d]) => `
+            <div class="mobile-card" onclick="abrirDetalhesVeiculo('${placa}')" style="border-left: 4px solid var(--cor-primaria);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                    <strong style="font-size:1.1rem; color:#fff;">${placa}</strong>
+                    <span class="status-badge" style="background:rgba(255,255,255,0.1); color:#fff;">${d.viagens} viagens</span>
                 </div>
-            `;
-        }
+                <div style="display:flex; justify-content:space-between; font-size:0.9rem; color:#aaa;">
+                    <span>${formatarNumero(d.km)} km</span>
+                    <span class="money" style="color:var(--cor-primaria); font-weight:bold; font-size:1.1rem;">${formatarMoeda(d.valor)}</span>
+                </div>
+            </div>`).join('');
+        html += `</div>`;
+        area.innerHTML = html;
+    } else {
+        // Versão Desktop (Tabela clicável)
+        let html = `
+        <div class="summary-card">
+            <div class="summary-header">
+                <div class="summary-title">Ranking de Veículos (Clique na linha para ver Rentabilidade)</div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Placa</th>
+                        <th class="center">Viagens</th>
+                        <th class="center">KM Total</th>
+                        <th class="money">Faturamento Total</th>
+                        <th class="money">Média/Viagem</th>
+                        <th class="center">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+        
+        html += r.veiculosOrdenados.map(([placa, d]) => `
+            <tr onclick="abrirDetalhesVeiculo('${placa}')" style="cursor:pointer; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
+                <td style="font-weight:bold; color:var(--cor-primaria);">${placa}</td>
+                <td class="center">${d.viagens}</td>
+                <td class="center">${formatarNumero(d.km)}</td>
+                <td class="money" style="color:#fff;">${formatarMoeda(d.valor)}</td>
+                <td class="money">${formatarMoeda(d.valor / d.viagens)}</td>
+                <td class="center"><i class="fas fa-chart-line" style="color:var(--cor-texto-sec);"></i></td>
+            </tr>`).join('');
+            
+        html += `</tbody></table></div>`;
+        area.innerHTML = html;
+    }
+}
 
        // Relatório por Cliente (Responsivo)
 function mostrarRelatorioClientes(resumo) {
@@ -2586,79 +2556,29 @@ document.getElementById('modalMotorista').addEventListener('click', function(e) 
     if(e.target === this) fecharModalMotorista();
 });
         // --- FUNÇÕES DO MODAL ---
+// Função para abrir o Modal do Veículo
 function abrirDetalhesVeiculo(placa) {
-    if (!dadosOriginais) return;
+    if (!dadosAnalisados) return;
+    const d = dadosAnalisados.veiculos[placa];
+    if (!d) return;
 
-    // 1. Encontrar índices das colunas de novo (garantia)
-    const cab = dadosOriginais[0].map(c => c.toString().toLowerCase());
-    const idx = {
-        placa: cab.findIndex(c => c.includes('placa') || c.includes('veiculo')),
-        motorista: cab.findIndex(c => c.includes('motorista')),
-        origem: cab.findIndex(c => c.includes('origem')),
-        destino: cab.findIndex(c => c.includes('destino')),
-        valor: cab.findIndex(c => c.includes('valor') || c.includes('total')),
-        km: cab.findIndex(c => c.includes('km'))
-    };
-
-    // 2. Filtrar viagens desse veículo
-    const viagens = dadosOriginais.slice(1).filter(linha => linha[idx.placa] === placa);
-
-    // 3. Calcular Totais
-    let totalValor = 0;
-    let totalKM = 0;
-    const contagemMotoristas = {};
-    const contagemRotas = {};
-
-    viagens.forEach(v => {
-        const val = extrairNumero(v[idx.valor]);
-        const km = extrairNumero(v[idx.km]);
-        totalValor += val;
-        totalKM += km;
-
-        // Contar Motorista
-        const mot = v[idx.motorista] || 'Desconhecido';
-        contagemMotoristas[mot] = (contagemMotoristas[mot] || 0) + 1;
-
-        // Contar Rota
-        const rota = `${v[idx.origem] || '?'} ➝ ${v[idx.destino] || '?'}`;
-        contagemRotas[rota] = (contagemRotas[rota] || 0) + 1;
-    });
-
-    // 4. Achar os "Campeões" (Top 1)
-    const topMotorista = Object.entries(contagemMotoristas).sort((a,b) => b[1] - a[1])[0];
-    const topRota = Object.entries(contagemRotas).sort((a,b) => b[1] - a[1])[0];
+    // Preencher valores
+    document.getElementById('tituloModalVeiculo').textContent = `Veículo: ${placa}`;
+    document.getElementById('veicFaturamento').textContent = formatarMoeda(d.valor);
+    document.getElementById('veicKM').textContent = formatarNumero(d.km) + ' km';
     
-    // Rentabilidade
-    const rentabilidade = totalKM > 0 ? (totalValor / totalKM) : 0;
-    const mediaViagem = viagens.length > 0 ? (totalValor / viagens.length) : 0;
-
-    // 5. Preencher HTML do Modal
-    document.getElementById('modalTitulo').textContent = `Veículo: ${placa}`;
-    document.getElementById('modalFaturamento').textContent = formatarMoeda(totalValor);
-    document.getElementById('modalKM').textContent = formatarNumero(totalKM) + ' km';
-    document.getElementById('modalRentabilidade').textContent = formatarMoeda(rentabilidade) + '/km';
+    // Cálculo de Rentabilidade
+    const rentabilidade = d.km > 0 ? d.valor / d.km : 0;
+    document.getElementById('veicRentabilidade').textContent = formatarMoeda(rentabilidade) + '/km';
     
-    // Detalhes com porcentagem
-    const percMot = topMotorista ? Math.round((topMotorista[1] / viagens.length) * 100) : 0;
-    document.getElementById('modalMotorista').textContent = topMotorista ? `${topMotorista[0]} (${percMot}%)` : '-';
+    document.getElementById('veicMedia').textContent = formatarMoeda(d.valor / d.viagens);
     
-    document.getElementById('modalRota').textContent = topRota ? topRota[0] : '-';
-    document.getElementById('modalMedia').textContent = formatarMoeda(mediaViagem);
-
-    // 6. Mostrar
+    // Mostrar o Modal
     document.getElementById('modalVeiculo').style.display = 'flex';
 }
 
-function fecharModal() {
+function fecharModalVeiculo() {
     document.getElementById('modalVeiculo').style.display = 'none';
-}
-
-// Fechar ao clicar fora
-window.onclick = function(event) {
-    const modal = document.getElementById('modalVeiculo');
-    if (event.target == modal) {
-        fecharModal();
-    }
 }
     </script>
 </body>
