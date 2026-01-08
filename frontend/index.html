@@ -791,6 +791,57 @@
     display: flex; justify-content: space-between; align-items: center;
     padding: 0.8rem; border-bottom: 1px solid var(--cor-borda);
 }
+            /* --- ESTILOS DO MODAL MOTORISTA --- */
+.driver-metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Duas colunas no PC */
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.metric-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.metric-label {
+    font-size: 0.85rem;
+    color: var(--cor-texto-sec);
+}
+
+.metric-value {
+    font-size: 1rem;
+    color: var(--cor-primaria);
+    font-weight: 600;
+}
+
+/* Cores Financeiras */
+.money-positive { color: var(--cor-primaria); }
+.money-negative { color: #dc3545; } /* Vermelho para despesas */
+
+.metric-divisor {
+    border-top: 2px dashed var(--cor-borda);
+    margin: 0.5rem 0;
+}
+
+.metric-item.highlight .metric-value {
+    font-family: 'Inter', sans-serif; /* Garante fonte limpa */
+}
+
+/* Responsividade para Mobile: Vira uma coluna só */
+@media (max-width: 768px) {
+    .driver-metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+}
 </style>
 </head>
 <body>
@@ -910,6 +961,7 @@
             </div>
         </div>
     </main>
+    <!-- modal por dia -->
     <div id="modalDia" class="modal-overlay">
     <div class="modal-content">
         <div class="modal-header">
@@ -927,6 +979,67 @@
         <h4 style="margin-bottom:1rem; color:var(--cor-primaria)">Lista de Motoristas</h4>
         <div id="modalListaMotoristas">
             </div>
+    </div>
+</div>
+            <!-- Modal por Motorista -->
+    <div id="modalMotorista" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div>
+                <h3 id="modalMotTitulo" style="color:var(--cor-primaria)">Motorista</h3>
+                <small style="color:var(--cor-texto-sec)">Análise de Rentabilidade Estimada</small>
+            </div>
+            <button class="modal-close" onclick="fecharModalMotorista()">&times;</button>
+        </div>
+
+        <div class="driver-metrics-grid">
+            <div class="metric-column">
+                <h4 style="margin-bottom:1rem; color:var(--cor-secundaria); border-bottom:1px solid var(--cor-borda); padding-bottom:5px;">
+                    <i class="fas fa-truck"></i> Operacional
+                </h4>
+                
+                <div class="metric-item">
+                    <span class="metric-label">Viagens Realizadas</span>
+                    <strong class="metric-value" id="motViagens">--</strong>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Distância Total Percorrida</span>
+                    <strong class="metric-value" id="motKm">-- km</strong>
+                </div>
+                <div class="metric-item">
+                    <span class="metric-label">Média KM por Viagem</span>
+                    <strong class="metric-value" id="motMediaKm">-- km</strong>
+                </div>
+            </div>
+
+            <div class="metric-column">
+                <h4 style="margin-bottom:1rem; color:var(--cor-pago); border-bottom:1px solid var(--cor-borda); padding-bottom:5px;">
+                    <i class="fas fa-coins"></i> Financeiro (Est.)
+                </h4>
+
+                <div class="metric-item">
+                    <span class="metric-label">Faturamento Bruto (+)</span>
+                    <strong class="metric-value money-positive" id="motFaturamento">R$ 0,00</strong>
+                </div>
+
+                <div class="metric-item">
+                    <span class="metric-label">Consumo Diesel Est. (-) <small>(2km/l a R$6,00)</small></span>
+                    <strong class="metric-value money-negative" id="motDiesel">R$ 0,00</strong>
+                </div>
+
+                <div class="metric-item">
+                    <span class="metric-label">Manutenção Est. (-) <small>(12%)</small></span>
+                    <strong class="metric-value money-negative" id="motManutencao">R$ 0,00</strong>
+                </div>
+
+                <div class="metric-divisor"></div>
+
+                <div class="metric-item highlight">
+                    <span class="metric-label">LUCRO LÍQUIDO PREVISTO (=)</span>
+                    <strong class="metric-value" id="motLucro" style="font-size:1.3rem;">R$ 0,00</strong>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
     <script>
@@ -1471,71 +1584,80 @@
         }
 
         // Relatório por Motorista
-        function mostrarRelatorioMotoristas(resumo) {
+function mostrarRelatorioMotoristas(resumo) {
+    // 1. Definição do clique
+    const gerarClick = (nome) => `onclick="abrirDetalhesMotorista('${nome}')" style="cursor:pointer"`;
 
-            /* ========= MOBILE FIRST ========= */
-            
-   if (window.innerWidth < 768) {
+    // VERSÃO MOBILE
+    if (window.innerWidth < 768) {
+        const lista = resumo.motoristasOrdenados.slice(0, 10);
 
-  const lista = resumo.motoristasOrdenados.slice(0, 10);
-
-  const cards = lista.map(([nome, dados]) => `
-    <div class="mobile-card">
-      <strong>${nome}</strong>
-      <span>Viagens: ${dados.viagens}</span>
-      <span>KM: ${formatarNumero(dados.km)}</span>
-      <span class="money">${formatarMoeda(dados.valor)}</span>
-    </div>
-  `).join('');
-
-  elementos.contentArea.innerHTML = `
-    <h3 class="mobile-title">Motoristas</h3>
-    <div class="mobile-card-list">${cards}</div>
-  `;
-  return;
-}
-            elementos.contentArea.innerHTML = `
-                <div class="summary-card">
-                    <div class="summary-header">
-                        <div class="summary-title">Resumo Faturamento por Motorista</div>
-                        <div class="summary-icon"><i class="fas fa-user-tie"></i></div>
-                    </div>
-                    <table class="summary-table">
-                        <thead>
-                            <tr>
-                                <th>Motorista</th>
-                                <th class="center">Viagens</th>
-                                <th class="center">KM Total</th>
-                                <th class="money">Faturamento Total</th>
-                                <th class="center">% do Total</th>
-                                <th class="money">Média por Viagem</th>
-                                <th class="money">Média por KM</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${resumo.motoristasOrdenados.map(([nome, dados]) => {
-                                const percentual = ((dados.valor / resumo.totalValor) * 100).toFixed(1);
-                                const mediaViagem = dados.valor / dados.viagens;
-                                const mediaKM = dados.km > 0 ? dados.valor / dados.km : 0;
-                                
-                                return `
-                                    <tr>
-                                        <td>${nome}</td>
-                                        <td class="center">${dados.viagens}</td>
-                                        <td class="center">${formatarNumero(dados.km)}</td>
-                                        <td class="money">${formatarMoeda(dados.valor)}</td>
-                                        <td class="center">${percentual}%</td>
-                                        <td class="money">${formatarMoeda(mediaViagem)}</td>
-                                        <td class="money">${formatarMoeda(mediaKM)}/km</td>
-                                    </tr>
-                                `;
-                            }).join('')}
-                        </tbody>
-                    </table>
+        const cards = lista.map(([nome, dados]) => `
+            <div class="mobile-card" ${gerarClick(nome)}>
+                <div style="display:flex; justify-content:space-between;">
+                    <strong>${nome}</strong>
+                    <span class="status-badge status-analise">${dados.viagens} viagens</span>
                 </div>
-            `;
-        }
+                <div style="display:flex; justify-content:space-between; margin-top:5px; align-items:flex-end;">
+                     <div style="font-size:0.85rem; color:var(--cor-texto-sec);">
+                        KM Total: ${formatarNumero(dados.km)}
+                     </div>
+                     <div style="text-align:right;">
+                        <span class="money" style="font-size:1.2rem; display:block;">${formatarMoeda(dados.valor)}</span>
+                        <small style="font-size:0.7rem; color:var(--cor-secundaria);">Ver Raio-X <i class="fas fa-chevron-right"></i></small>
+                     </div>
+                </div>
+            </div>
+        `).join('');
 
+        elementos.contentArea.innerHTML = `
+            <h3 class="mobile-title">Motoristas (Toque para ver lucros)</h3>
+            <div class="mobile-card-list">${cards}</div>
+        `;
+        return;
+    }
+
+    // VERSÃO DESKTOP
+    elementos.contentArea.innerHTML = `
+        <div class="summary-card">
+            <div class="summary-header">
+                <div class="summary-title">Resumo Faturamento por Motorista</div>
+                <div class="summary-icon"><i class="fas fa-user-tie"></i></div>
+            </div>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Motorista</th>
+                        <th class="center">Viagens</th>
+                        <th class="center">KM Total</th>
+                        <th class="money">Faturamento Total</th>
+                        <th class="money">Média/Viagem</th>
+                        <th class="money">Renda/KM</th>
+                        <th class="center">Detalhes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${resumo.motoristasOrdenados.map(([nome, dados]) => {
+                        const mediaViagem = dados.valor / dados.viagens;
+                        const mediaKM = dados.km > 0 ? dados.valor / dados.km : 0;
+                        
+                        return `
+                            <tr ${gerarClick(nome)} class="hover-row">
+                                <td>${nome}</td>
+                                <td class="center">${dados.viagens}</td>
+                                <td class="center">${formatarNumero(dados.km)}</td>
+                                <td class="money">${formatarMoeda(dados.valor)}</td>
+                                <td class="money">${formatarMoeda(mediaViagem)}</td>
+                                <td class="money">${formatarMoeda(mediaKM)}/km</td>
+                                <td class="center"><i class="fas fa-file-invoice-dollar" style="color:var(--cor-secundaria)"></i></td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
         // Relatório por Veículo
         function mostrarRelatorioVeiculos(resumo) {
                                 
@@ -2310,6 +2432,78 @@ function gerarGraficoModal(dadosMotoristas) {
         }
     });
 }
+        // --- LÓGICA DO MODAL MOTORISTA (RAIO-X) ---
+
+function abrirDetalhesMotorista(nomeMotorista) {
+    if(!dadosAnalisados) return;
+
+    // Buscar os dados já processados desse motorista específico
+    // (Não precisa filtrar tudo de novo, usamos o resumo já calculado)
+    const dadosMot = dadosAnalisados.motoristas[nomeMotorista];
+
+    if(!dadosMot) return alert('Dados não encontrados para este motorista.');
+
+    // --- PARÂMETROS DE CÁLCULO (Ajuste aqui se precisar) ---
+    const PRECO_DIESEL = 6.00;
+    const CONSUMO_MEDIO = 2.0; // km por litro
+    const TAXA_MANUTENCAO = 0.12; // 12%
+
+    // --- CÁLCULOS ---
+    const faturamento = dadosMot.valor;
+    const kmTotal = dadosMot.km;
+    
+    // 1. Diesel Estimado
+    const litrosEstimados = kmTotal > 0 ? kmTotal / CONSUMO_MEDIO : 0;
+    const custoDiesel = litrosEstimados * PRECO_DIESEL;
+
+    // 2. Manutenção Estimada
+    const custoManutencao = faturamento * TAXA_MANUTENCAO;
+
+    // 3. Lucro Líquido Estimado
+    const lucroLiquido = faturamento - custoDiesel - custoManutencao;
+
+    // --- PREENCHER O HTML ---
+    
+    // Título
+    document.getElementById('modalMotTitulo').textContent = nomeMotorista;
+
+    // Coluna Operacional
+    document.getElementById('motViagens').textContent = dadosMot.viagens;
+    document.getElementById('motKm').textContent = formatarNumero(kmTotal);
+    document.getElementById('motMediaKm').textContent = formatarNumero(kmTotal / dadosMot.viagens);
+
+    // Coluna Financeira
+    document.getElementById('motFaturamento').textContent = formatarMoeda(faturamento);
+    
+    document.getElementById('motDiesel').textContent = 
+        `- ${formatarMoeda(custoDiesel)}`; // Sinal de menos visual
+    
+    document.getElementById('motManutencao').textContent = 
+        `- ${formatarMoeda(custoManutencao)}`; // Sinal de menos visual
+
+    // Resultado Final
+    const elLucro = document.getElementById('motLucro');
+    elLucro.textContent = formatarMoeda(lucroLiquido);
+    
+    // Muda a cor se deu prejuízo
+    if(lucroLiquido >= 0) {
+        elLucro.style.color = 'var(--cor-pago)'; // Verde
+    } else {
+        elLucro.style.color = '#dc3545'; // Vermelho
+    }
+
+    // Exibir Modal
+    document.getElementById('modalMotorista').style.display = 'flex';
+}
+
+function fecharModalMotorista() {
+    document.getElementById('modalMotorista').style.display = 'none';
+}
+
+// Fechar ao clicar fora
+document.getElementById('modalMotorista').addEventListener('click', function(e) {
+    if(e.target === this) fecharModalMotorista();
+});
     </script>
 </body>
 </html>
