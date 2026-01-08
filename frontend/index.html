@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-        <style>
+    <style>
         :root {
             --cor-primaria: #1f2933;
             --cor-secundaria: #FF6B35;
@@ -26,7 +26,6 @@
             --cor-pendente: #ffc107;
             --cor-analise: #17a2b8;
         }
-
 
         body.dark {
             --cor-primaria: #ffffff;
@@ -903,8 +902,7 @@
     grid-column: span 2; /* O 3º quadrado ocupa a linha toda */
 }
 
-           
-            /* Estilos da Timeline de Rota */
+/* Estilos da Timeline de Rota */
 .route-timeline {
     position: relative;
     padding: 1rem 0;
@@ -974,7 +972,6 @@
 </style>
 </head>
 <body>
-    <!-- Sidebar -->
     <aside class="sidebar">
         <div class="logo">
             <h1>MINERA<span>MIX</span></h1>
@@ -1032,11 +1029,8 @@
         </div>
     </aside>
 
-    <!-- Conteúdo Principal -->
     <main class="main-content">
-        <!-- Top Bar -->
-<div class="top-bar">
-    <!-- Filtro à esquerda -->
+        <div class="top-bar">
     <div class="date-filter-top">
         <div class="date-input-group">
             <label>Início</label>
@@ -1053,7 +1047,6 @@
         </button>
     </div>
 
-    <!-- Botões à direita -->
     <div class="top-actions">
         <button class="icon-btn" onclick="carregarDados()" title="Atualizar">
             <i class="fas fa-arrows-rotate"></i>
@@ -1070,7 +1063,6 @@
     </div>
 </div>
 
-        <!-- Status -->
         <div class="system-status" id="systemStatus">
             <div class="status-indicator">
                 <span class="status-dot offline" id="statusDot"></span>
@@ -1082,7 +1074,6 @@
         </div>
 
        
-        <!-- Área de Conteúdo -->
         <div id="contentArea">
             <div class="loading">
                 <i class="fas fa-spinner"></i>
@@ -1090,8 +1081,7 @@
             </div>
         </div>
     </main>
-    <!-- modal por dia -->
-    <div id="modalDia" class="modal-overlay">
+    <div id="modalDia" class="modal-overlay" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
             <div>
@@ -1110,8 +1100,7 @@
             </div>
     </div>
 </div>
-            <!-- Modal por Motorista -->
-    <div id="modalMotorista" class="modal-overlay">
+            <div id="modalMotorista" class="modal-overlay" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
             <div>
@@ -1222,9 +1211,7 @@
     </div>
 </div>
 
-    
--modalrota-
-    <div id="modalRota" class="modal-overlay" style="display: none;">
+<div id="modalRota" class="modal-overlay" style="display: none;">
     <div class="modal-content" style="max-width: 500px;">
         <div class="modal-header">
             <div>
@@ -1273,10 +1260,22 @@
         </div>
     </div>
 </div>
+
     <script>
         // Configuração
         const CONFIG = {
             API_URL: 'https://dashboard-mineramix-backend.onrender.com/api/dados'
+        };
+
+        // ==========================================
+        // CONFIGURAÇÃO DE PEDÁGIOS (BR-101 / VIA LAGOS)
+        // ==========================================
+        const CUSTO_PEDAGIOS = {
+            // Defina aqui os valores atuais (Exemplos)
+            'AUTOPISTA_FLUMINENSE': 6.90, // Pedágio BR-101
+            'VIA_LAGOS': 27.00,           // Pedágio Via Lagos
+            'PONTE_RIO_NITEROI': 6.20,
+            'OUTROS': 0.00
         };
 
         // Variáveis globais
@@ -1633,7 +1632,6 @@
             
             const summaryHTML = `
                 <div class="summary-cards">
-                    <!-- Top Motoristas -->
                     <div class="summary-card">
                         <div class="summary-header">
                             <div class="summary-title">Top 5 Motoristas</div>
@@ -1659,7 +1657,6 @@
                         </table>
                     </div>
                     
-                    <!-- Top Veículos -->
                     <div class="summary-card">
                         <div class="summary-header">
                             <div class="summary-title">Top 5 Veículos</div>
@@ -1924,27 +1921,7 @@ function mostrarRelatorioRotas(resumo) {
             <h3 class="mobile-title">Rotas Mais Frequentes</h3>
             <div class="mobile-card-list">${cards}</div>
         `;
-        // Dentro de mostrarRelatorioRotas...
-return `
-    <tr>
-        <td>
-            <div style="display:flex; align-items:center; gap:8px;">
-                <i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria)"></i>
-                ${rota}
-            </div>
-        </td>
-        <td class="center">${dados.viagens}</td>
-        <td class="center">${formatarNumero(kmMedio)}</td>
-        <td class="money">${formatarMoeda(dados.valor)}</td>
-        
-        <td class="center">
-            <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.7rem;" 
-                onclick="abrirDetalhesRota('${rota.replace(/'/g, "\\'")}', ${kmMedio})">
-                <i class="fas fa-route"></i> Ver Rota
-            </button>
-        </td>
-    </tr>
-`;;
+        return;
     }
 
     // VERSÃO DESKTOP
@@ -1963,6 +1940,7 @@ return `
                         <th class="money">Faturamento Total</th>
                         <th class="money">Média por Viagem</th>
                         <th class="money">Média por KM</th>
+                         <th class="center">Ação</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1973,12 +1951,23 @@ return `
                         
                         return `
                             <tr>
-                                <td>${rota}</td>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria)"></i>
+                                        ${rota}
+                                    </div>
+                                </td>
                                 <td class="center">${dados.viagens}</td>
                                 <td class="center">${formatarNumero(kmMedio)}</td>
                                 <td class="money">${formatarMoeda(dados.valor)}</td>
                                 <td class="money">${formatarMoeda(mediaViagem)}</td>
                                 <td class="money">${formatarMoeda(mediaKM)}/km</td>
+                                <td class="center">
+                                    <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.7rem;" 
+                                        onclick="abrirDetalhesRota('${rota.replace(/'/g, "\\'")}', ${kmMedio})">
+                                        <i class="fas fa-route"></i> Ver Rota
+                                    </button>
+                                </td>
                             </tr>
                         `;
                     }).join('')}
@@ -2765,10 +2754,8 @@ function preencherModalVeiculo(placa, valor, km, viagens, motorista, rota) {
         document.getElementById('modalRentabilidade').textContent = formatarMoeda(rentabilidade) + '/km';
     
     // Detalhes
-   // ... código anterior ...
-// Atualize aqui para o novo nome que criamos no HTML
-if(document.getElementById('textoMotoristaVeiculo'))
-    document.getElementById('textoMotoristaVeiculo').textContent = motorista;
+    if(document.getElementById('textoMotoristaVeiculo'))
+        document.getElementById('textoMotoristaVeiculo').textContent = motorista;
     
     if(document.getElementById('modalRota'))
         document.getElementById('modalRota').textContent = rota;
@@ -2794,18 +2781,6 @@ window.onclick = function(event) {
         fecharModal();
     }
 }
-
-        -----------------------------
-// ==========================================
-// CONFIGURAÇÃO DE PEDÁGIOS (BR-101 / VIA LAGOS)
-// ==========================================
-const CUSTO_PEDAGIOS = {
-    // Defina aqui os valores atuais (Exemplos)
-    'AUTOPISTA_FLUMINENSE': 6.90, // Pedágio BR-101
-    'VIA_LAGOS': 27.00,           // Pedágio Via Lagos
-    'PONTE_RIO_NITEROI': 6.20,
-    'OUTROS': 0.00
-};
 
 // Mapeamento de Destinos -> Quantidade de Pedágios
 // O sistema procura por "partes" do nome. Ex: se achar "RIO", cobra Ponte.
