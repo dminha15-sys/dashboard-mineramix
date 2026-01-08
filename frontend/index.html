@@ -1160,109 +1160,122 @@
             }
         }
 
-// Analisar dados da SUA planilha (VERSÃO CORRIGIDA E SEGURA)
+// Analisar dados da SUA planilha (VERSÃO ADAPTADA PARA O SEU LAYOUT REAL)
         function analisarDadosMineramix(dados) {
-            if (!dados || dados.length < 2) return null;
-            
-            const cabecalhos = dados[0];
-            const linhas = dados.slice(1);
+            if (!dados || dados.length < 5) return null;
+
+            // 1. LOCALIZAR O CABEÇALHO REAL
+            // Percorre as primeiras 10 linhas procurando onde começa a tabela
+            let indiceCabecalho = -1;
+            for(let i=0; i<10; i++) {
+                const linhaStr = dados[i].join(' ').toUpperCase();
+                // Se a linha tiver "DATA" e "MOTORISTA", é o cabeçalho
+                if(linhaStr.includes('DATA') && linhaStr.includes('MOTORISTA')) {
+                    indiceCabecalho = i;
+                    break;
+                }
+            }
+
+            if(indiceCabecalho === -1) {
+                console.error("Cabeçalho não encontrado!");
+                return null;
+            }
+
+            const cabecalhos = dados[indiceCabecalho];
+            const linhasBrutas = dados.slice(indiceCabecalho + 1); // Pega tudo abaixo do cabeçalho
             const colunas = detectarColunas(cabecalhos);
-            
-            // Encontrar índices específicos
+
+            // Mapeamento dos índices
             const idx = {};
-            colunas.forEach(col => {
-                idx[col.tipo] = col.indice;
-            });
-            
+            colunas.forEach(col => { idx[col.tipo] = col.indice; });
+
             const resumo = {
-                totalLinhas: 0,
-                totalValor: 0,
-                totalKM: 0,
+                totalLinhas: 0, totalValor: 0, totalKM: 0,
                 status: {}, pagamentos: {}, motoristas: {}, 
                 veiculos: {}, clientes: {}, rotas: {}, dias: {}, meses: {},
                 valores: [], kms: []
             };
-            
-            linhas.forEach(linha => {
-                // 1. Extração de dados
-                const km = idx.km !== undefined ? extrairNumero(linha[idx.km]) : 0;
+
+            // 2. PROCESSAR LINHAS (COM TRAVA DE SEGURANÇA PARA O RODAPÉ)
+            for (let i = 0; i < linhasBrutas.length; i++) {
+                const linha = linhasBrutas[i];
+                
+                // Concatena a linha toda para verificar se é um rodapé de soma
+                const linhaTexto = linha.join(' ').toUpperCase();
+                
+                // SE ENCONTRAR TERMOS DE RODAPÉ, PARA A LEITURA IMEDIATAMENTE
+                if (linhaTexto.includes('TOTAL A RECEBER') || 
+                    linhaTexto.includes('TOTAL PAGO') || 
+                    linhaTexto.includes('SALDO')) {
+                    break; 
+                }
+
+                // Extração Segura dos Dados
+                const dataRaw = idx.data !== undefined ? linha[idx.data] : null;
+                
+                // Se não tem data válida, pula (ignora linhas vazias no meio)
+                if(!dataRaw || dataRaw.toString().trim() === '') continue;
+
+                // Tenta validar se é uma data real
+                const dataObj = parsearDataBR(dataRaw);
+                if(!dataObj) continue; // Se a data não for válida (ex: texto solto), ignora
+
+                // Se passou daqui, É UMA VIAGEM VÁLIDA!
                 const valor = idx.valor !== undefined ? extrairNumero(linha[idx.valor]) : 0;
-                let motoristaRaw = idx.motorista !== undefined ? linha[idx.motorista] : null;
-                const dataRaw = idx.data !== undefined ? linha[idx.data] : null; // <--- Importante
+                const km = idx.km !== undefined ? extrairNumero(linha[idx.km]) : 0;
+                
+                let motorista = idx.motorista !== undefined ? linha[idx.motorista] : 'NÃO IDENTIFICADO';
+                if(!motorista || motorista.toString().trim() === '') motorista = 'NÃO IDENTIFICADO';
 
-                // 2. Limpeza do nome do Motorista
-                if (!motoristaRaw || String(motoristaRaw).trim() === '' || String(motoristaRaw).toLowerCase().includes('undefined')) {
-                    motoristaRaw = null;
-                }
-
-                // === AQUI ESTÁ A CORREÇÃO ===
-                // Só ignora a linha se for COMPLETAMENTE vazia ou lixo (Sem Data, Sem Motorista, Sem Valor, Sem KM)
-                // Se tiver pelo menos uma DATA, consideramos que é uma viagem válida.
-                if (!dataRaw && motoristaRaw === null && valor === 0 && km === 0) {
-                    return; // Pula linha vazia/lixo
-                }
-
-                const motorista = motoristaRaw || 'NÃO IDENTIFICADO';
-
-                // Incrementa contadores
+                // Popula o resumo
                 resumo.totalLinhas++;
                 resumo.totalValor += valor;
                 resumo.totalKM += km;
                 resumo.valores.push(valor);
                 resumo.kms.push(km);
 
-                // Restante dos campos
+                // --- RESTO DOS AGRUPAMENTOS (Igual ao anterior) ---
                 const cliente = idx.cliente !== undefined ? linha[idx.cliente] : 'Não informado';
                 const veiculo = idx.veiculo !== undefined ? linha[idx.veiculo] : 'Não informado';
                 const origem = idx.origem !== undefined ? linha[idx.origem] : '';
                 const destino = idx.destino !== undefined ? linha[idx.destino] : '';
-                const pagamento = idx.pagamento !== undefined ? linha[idx.pagamento] : 'Não informado';
                 const status = idx.status !== undefined ? linha[idx.status] : 'Não informado';
-                
-                // --- Agrupamentos ---
-                
-                // Status
-                if (!resumo.status[status]) resumo.status[status] = { viagens: 0, valor: 0 };
-                resumo.status[status].viagens++; resumo.status[status].valor += valor;
-                
-                // Pagamento
-                if (!resumo.pagamentos[pagamento]) resumo.pagamentos[pagamento] = { viagens: 0, valor: 0 };
-                resumo.pagamentos[pagamento].viagens++; resumo.pagamentos[pagamento].valor += valor;
-                
+
                 // Motorista
                 if (!resumo.motoristas[motorista]) resumo.motoristas[motorista] = { viagens: 0, valor: 0, km: 0 };
-                resumo.motoristas[motorista].viagens++; resumo.motoristas[motorista].valor += valor; resumo.motoristas[motorista].km += km;
-                
+                resumo.motoristas[motorista].viagens++; 
+                resumo.motoristas[motorista].valor += valor; 
+                resumo.motoristas[motorista].km += km;
+
                 // Veículo
                 if (!resumo.veiculos[veiculo]) resumo.veiculos[veiculo] = { viagens: 0, valor: 0, km: 0 };
                 resumo.veiculos[veiculo].viagens++; resumo.veiculos[veiculo].valor += valor; resumo.veiculos[veiculo].km += km;
-                
+
                 // Cliente
                 if (!resumo.clientes[cliente]) resumo.clientes[cliente] = { viagens: 0, valor: 0 };
                 resumo.clientes[cliente].viagens++; resumo.clientes[cliente].valor += valor;
-                
+
+                // Status
+                if (!resumo.status[status]) resumo.status[status] = { viagens: 0, valor: 0 };
+                resumo.status[status].viagens++; resumo.status[status].valor += valor;
+
                 // Rota
                 const rota = `${origem} → ${destino}`;
                 if (!resumo.rotas[rota]) resumo.rotas[rota] = { viagens: 0, valor: 0, km: 0 };
                 resumo.rotas[rota].viagens++; resumo.rotas[rota].valor += valor; resumo.rotas[rota].km += km;
+
+                // Dias/Meses
+                const dia = dataObj.toLocaleDateString('pt-BR');
+                const mes = `${dataObj.getMonth() + 1}/${dataObj.getFullYear()}`;
                 
-                // Data
-                if (dataRaw) {
-                    const dataObj = parsearDataBR(dataRaw);
-                    if (dataObj) {
-                        const dia = dataObj.toLocaleDateString('pt-BR');
-                        const mes = `${dataObj.getMonth() + 1}/${dataObj.getFullYear()}`;
-                        
-                        if (!resumo.dias[dia]) resumo.dias[dia] = { viagens: 0, valor: 0 };
-                        resumo.dias[dia].viagens++; resumo.dias[dia].valor += valor;
-                        
-                        if (!resumo.meses[mes]) resumo.meses[mes] = { viagens: 0, valor: 0 };
-                        resumo.meses[mes].viagens++; resumo.meses[mes].valor += valor;
-                    }
-                }
-            });
-            
-            // Estatísticas Finais
+                if (!resumo.dias[dia]) resumo.dias[dia] = { viagens: 0, valor: 0 };
+                resumo.dias[dia].viagens++; resumo.dias[dia].valor += valor;
+                
+                if (!resumo.meses[mes]) resumo.meses[mes] = { viagens: 0, valor: 0 };
+                resumo.meses[mes].viagens++; resumo.meses[mes].valor += valor;
+            }
+
+            // Estatísticas finais
             resumo.mediaValor = resumo.totalLinhas > 0 ? resumo.totalValor / resumo.totalLinhas : 0;
             resumo.mediaKM = resumo.totalLinhas > 0 ? resumo.totalKM / resumo.totalLinhas : 0;
             
