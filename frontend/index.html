@@ -2555,158 +2555,166 @@ function fecharModalMotorista() {
 document.getElementById('modalMotorista').addEventListener('click', function(e) {
     if(e.target === this) fecharModalMotorista();
 });
-        // --- FUNÇÕES DO MODAL ---
-function abrirDetalhesVeiculo(placa) {
-    if (!dadosOriginais) return;
+       
+// =============================================================
+//  ÁREA DE VEÍCULOS (CÓDIGO ÚNICO - COPIE E COLE ISTO)
+// =============================================================
 
-    // 1. Encontrar índices das colunas de novo (garantia)
-    const cab = dadosOriginais[0].map(c => c.toString().toLowerCase());
-    const idx = {
-        placa: cab.findIndex(c => c.includes('placa') || c.includes('veiculo')),
-        motorista: cab.findIndex(c => c.includes('motorista')),
-        origem: cab.findIndex(c => c.includes('origem')),
-        destino: cab.findIndex(c => c.includes('destino')),
-        valor: cab.findIndex(c => c.includes('valor') || c.includes('total')),
-        km: cab.findIndex(c => c.includes('km'))
-    };
+// 1. GERAR O RELATÓRIO DE VEÍCULOS
+function mostrarRelatorioVeiculos(resumo) {
+    const r = resumo;
+    const area = document.getElementById('contentArea');
+    const isMobile = window.innerWidth < 768;
 
-    // 2. Filtrar viagens desse veículo
-    const viagens = dadosOriginais.slice(1).filter(linha => linha[idx.placa] === placa);
-
-    // 3. Calcular Totais
-    let totalValor = 0;
-    let totalKM = 0;
-    const contagemMotoristas = {};
-    const contagemRotas = {};
-
-    viagens.forEach(v => {
-        const val = extrairNumero(v[idx.valor]);
-        const km = extrairNumero(v[idx.km]);
-        totalValor += val;
-        totalKM += km;
-
-        // Contar Motorista
-        const mot = v[idx.motorista] || 'Desconhecido';
-        contagemMotoristas[mot] = (contagemMotoristas[mot] || 0) + 1;
-
-        // Contar Rota
-        const rota = `${v[idx.origem] || '?'} ➝ ${v[idx.destino] || '?'}`;
-        contagemRotas[rota] = (contagemRotas[rota] || 0) + 1;
-    });
-
-    // 4. Achar os "Campeões" (Top 1)
-    const topMotorista = Object.entries(contagemMotoristas).sort((a,b) => b[1] - a[1])[0];
-    const topRota = Object.entries(contagemRotas).sort((a,b) => b[1] - a[1])[0];
-    
-    // Rentabilidade
-    const rentabilidade = totalKM > 0 ? (totalValor / totalKM) : 0;
-    const mediaViagem = viagens.length > 0 ? (totalValor / viagens.length) : 0;
-
-    // 5. Preencher HTML do Modal
-    document.getElementById('modalTitulo').textContent = `Veículo: ${placa}`;
-    document.getElementById('modalFaturamento').textContent = formatarMoeda(totalValor);
-    document.getElementById('modalKM').textContent = formatarNumero(totalKM) + ' km';
-    document.getElementById('modalRentabilidade').textContent = formatarMoeda(rentabilidade) + '/km';
-    
-    // Detalhes com porcentagem
-    const percMot = topMotorista ? Math.round((topMotorista[1] / viagens.length) * 100) : 0;
-    document.getElementById('modalMotorista').textContent = topMotorista ? `${topMotorista[0]} (${percMot}%)` : '-';
-    
-    document.getElementById('modalRota').textContent = topRota ? topRota[0] : '-';
-    document.getElementById('modalMedia').textContent = formatarMoeda(mediaViagem);
-
-    // 6. Mostrar
-    document.getElementById('modalVeiculo').style.display = 'flex';
-}
-
-function fecharModal() {
-    document.getElementById('modalVeiculo').style.display = 'none';
-}
-
-// Fechar ao clicar fora
-window.onclick = function(event) {
-    const modal = document.getElementById('modalVeiculo');
-    if (event.target == modal) {
-        fecharModal();
+    // --- VERSÃO CELULAR (Cards) ---
+    if (isMobile) {
+        let html = `<h3 class="mobile-title">Veículos (Toque para ver Detalhes)</h3><div class="mobile-card-list">`;
+        html += r.veiculosOrdenados.map(([placa, d]) => `
+            <div class="mobile-card" onclick="abrirDetalhesVeiculo('${placa}')" style="border-left: 4px solid var(--cor-primaria);">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong style="color:var(--cor-primaria); font-size:1.1rem;">${placa}</strong>
+                    <span class="status-badge" style="background:rgba(0,0,0,0.05); color:var(--cor-texto-sec);">${d.viagens} viagens</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:8px; color:var(--cor-texto-sec); font-size:0.9rem;">
+                    <span>${formatarNumero(d.km)} km</span>
+                    <span class="money" style="color:var(--cor-pago); font-weight:bold; font-size:1.1rem;">${formatarMoeda(d.valor)}</span>
+                </div>
+            </div>`).join('');
+        html += `</div>`;
+        area.innerHTML = html;
+        return;
     }
+
+    // --- VERSÃO COMPUTADOR (Tabela Completa) ---
+    let html = `
+    <div class="summary-card" style="overflow-x: auto;">
+        <div class="summary-header">
+            <div class="summary-title">Resumo Faturamento por Veículo</div>
+            <div class="summary-icon" style="background:rgba(255,107,53,0.1); color:#FF6B35; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:4px;"><i class="fas fa-truck"></i></div>
+        </div>
+        
+        <table class="summary-table" style="width: 100%; border-collapse: collapse; min-width: 800px;">
+            <thead>
+                <tr>
+                    <th style="text-align: left; padding: 12px;">Placa</th>
+                    <th class="center" style="padding: 12px;">Viagens</th>
+                    <th class="center" style="padding: 12px;">KM Total</th>
+                    <th class="money" style="padding: 12px;">Faturamento Total</th>
+                    <th class="money" style="padding: 12px;">Média/Viagem</th>
+                    <th class="money" style="padding: 12px;">Renda/KM</th>
+                    <th class="center" style="padding: 12px;">Ação</th>
+                </tr>
+            </thead>
+            <tbody>`;
+    
+    html += r.veiculosOrdenados.map(([placa, d]) => {
+        const mediaViagem = d.valor / d.viagens;
+        const rendaKm = d.km > 0 ? d.valor / d.km : 0;
+        
+        return `
+        <tr onclick="abrirDetalhesVeiculo('${placa}')" style="cursor:pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.02)'" onmouseout="this.style.background='transparent'">
+            <td style="padding: 12px; font-weight:bold;">${placa}</td>
+            <td class="center" style="padding: 12px;">${d.viagens}</td>
+            <td class="center" style="padding: 12px;">${formatarNumero(d.km)}</td>
+            <td class="money" style="padding: 12px;">${formatarMoeda(d.valor)}</td>
+            <td class="money" style="padding: 12px;">${formatarMoeda(mediaViagem)}</td>
+            <td class="money" style="padding: 12px;">${formatarMoeda(rendaKm)}/km</td>
+            <td class="center" style="padding: 12px;"><i class="fas fa-search-plus" style="color:var(--cor-primaria);"></i></td>
+        </tr>`;
+    }).join('');
+        
+    html += `</tbody></table></div>`;
+    area.innerHTML = html;
 }
 
-        // --- FUNÇÃO DE ABRIR O POP-UP DO VEÍCULO (CLIQUE) ---
+// 2. FUNÇÃO QUE ABRE O POP-UP DO VEÍCULO
 function abrirDetalhesVeiculo(placa) {
     if (!dadosOriginais) return;
 
-    // 1. Identificar colunas nos dados originais
+    // Recalcular detalhes buscando nos dados originais
     const cab = dadosOriginais[0].map(c => c.toString().toLowerCase());
+    
+    // Mapeamento de índices (segurança)
     const idx = {
         placa: cab.findIndex(c => c.includes('placa') || c.includes('veiculo') || c.includes('cavalo')),
         motorista: cab.findIndex(c => c.includes('motorista')),
         origem: cab.findIndex(c => c.includes('origem')),
         destino: cab.findIndex(c => c.includes('destino')),
-        valor: cab.findIndex(c => c.includes('valor') || c.includes('total')),
+        valor: cab.findIndex(c => c.includes('valor') || c.includes('total') || c.includes('preço')),
         km: cab.findIndex(c => c.includes('km'))
     };
 
-    // 2. Filtrar todas as viagens deste veículo específico
+    // Filtra todas as linhas que têm essa placa
     const viagens = dadosOriginais.slice(1).filter(linha => {
         const p = linha[idx.placa];
+        // Remove espaços e compara
         return p && p.toString().trim() === placa;
     });
 
-    if (viagens.length === 0) return;
+    if (viagens.length === 0) {
+        alert("Nenhum detalhe encontrado para este veículo.");
+        return;
+    }
 
-    // 3. Calcular Totais e Estatísticas
+    // Calcular Totais
     let totalValor = 0;
-    let totalKM = 0;
-    const contagemMotoristas = {};
-    const contagemRotas = {};
+    let totalKm = 0;
+    const contMotoristas = {};
+    const contRotas = {};
 
     viagens.forEach(linha => {
         const val = extrairNumero(linha[idx.valor]);
         const k = extrairNumero(linha[idx.km]);
-        totalValor += val;
-        totalKM += k;
-
-        // Contar Motorista para achar o principal
         const mot = linha[idx.motorista] || 'Indefinido';
-        contagemMotoristas[mot] = (contagemMotoristas[mot] || 0) + 1;
+        const rota = (linha[idx.origem] || '?') + ' ➝ ' + (linha[idx.destino] || '?');
 
-        // Contar Rota para achar a favorita
-        const origem = linha[idx.origem] || '?';
-        const destino = linha[idx.destino] || '?';
-        const rota = `${origem} ➝ ${destino}`;
-        contagemRotas[rota] = (contagemRotas[rota] || 0) + 1;
+        totalValor += val;
+        totalKm += k;
+        
+        contMotoristas[mot] = (contMotoristas[mot] || 0) + 1;
+        contRotas[rota] = (contRotas[rota] || 0) + 1;
     });
 
-    // 4. Descobrir os campeões (Quem mais dirigiu e qual rota mais fez)
-    const topMot = Object.entries(contagemMotoristas).sort((a,b) => b[1] - a[1])[0];
-    const topRota = Object.entries(contagemRotas).sort((a,b) => b[1] - a[1])[0];
-
-    // 5. Cálculos Finais
-    const rentabilidade = totalKM > 0 ? (totalValor / totalKM) : 0;
+    // Descobrir Motorista e Rota mais frequentes
+    const topMot = Object.entries(contMotoristas).sort((a,b) => b[1] - a[1])[0];
+    const topRota = Object.entries(contRotas).sort((a,b) => b[1] - a[1])[0];
+    const rentabilidade = totalKm > 0 ? totalValor / totalKm : 0;
     const mediaViagem = totalValor / viagens.length;
     const percMot = topMot ? Math.round((topMot[1] / viagens.length) * 100) : 0;
 
-    // 6. PREENCHER O HTML (Usando os IDs corretos do seu arquivo)
+    // PREENCHER OS CAMPOS DA JANELA (IDs do seu HTML)
     document.getElementById('modalTitulo').textContent = `Veículo: ${placa}`;
-    
-    // Cards do Topo
     document.getElementById('modalFaturamento').textContent = formatarMoeda(totalValor);
-    document.getElementById('modalKM').textContent = formatarNumero(totalKM) + ' km';
+    document.getElementById('modalKM').textContent = formatarNumero(totalKm) + ' km';
     document.getElementById('modalRentabilidade').textContent = formatarMoeda(rentabilidade) + '/km';
     
-    // Lista de Detalhes
     document.getElementById('modalMotorista').textContent = topMot ? `${topMot[0]} (${percMot}%)` : '-';
     document.getElementById('modalRota').textContent = topRota ? topRota[0] : '-';
     document.getElementById('modalMedia').textContent = formatarMoeda(mediaViagem);
 
-    // 7. Mostrar o Modal
+    // Exibir
     document.getElementById('modalVeiculo').style.display = 'flex';
 }
 
-// Função para fechar (Garante que fecha ao clicar no X)
+// 3. FUNÇÃO UNIFICADA PARA FECHAR TODOS OS MODAIS
 function fecharModal() {
     document.getElementById('modalVeiculo').style.display = 'none';
-    document.getElementById('modalDia').style.display = 'none'; // Fecha o de dia também se estiver aberto
+    document.getElementById('modalDia').style.display = 'none';
+    if(document.getElementById('modalMotorista')) {
+        document.getElementById('modalMotorista').style.display = 'none';
+    }
+}
+
+// 4. CLIQUE FORA PARA FECHAR (Gerenciador Global)
+window.onclick = function(event) {
+    const modalV = document.getElementById('modalVeiculo');
+    const modalD = document.getElementById('modalDia');
+    const modalM = document.getElementById('modalMotorista');
+    
+    if (event.target == modalV || event.target == modalD || event.target == modalM) {
+        fecharModal();
+        if(typeof fecharModalMotorista === 'function') fecharModalMotorista();
+    }
 }
     </script>
 </body>
