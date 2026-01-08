@@ -1965,51 +1965,59 @@ function mostrarRelatorioKM(resumo) {
             }
         }
 
-        // Aplicar filtro de data
-        function aplicarFiltroData() {
-            if (!dadosOriginais) {
-                mostrarNotificacao('❌ Dados ainda não carregados', 'error');
-                return;
-            }
+// Aplicar filtro de data
+function aplicarFiltroData() {
+    if (!dadosOriginais) {
+        mostrarNotificacao('❌ Dados ainda não carregados', 'error');
+        return;
+    }
 
-            if (indiceColunaData === null) {
-                mostrarNotificacao('❌ Coluna de data não encontrada', 'error');
-                return;
-            }
+    if (indiceColunaData === null) {
+        mostrarNotificacao('❌ Coluna de data não encontrada', 'error');
+        return;
+    }
 
-            const inicio = document.getElementById('dataInicio').value;
-            const fim = document.getElementById('dataFim').value;
+    const inicio = document.getElementById('dataInicio').value;
+    const fim = document.getElementById('dataFim').value;
 
-            if (!inicio || !fim) {
-                mostrarNotificacao('⚠️ Selecione as duas datas', 'error');
-                return;
-            }
+    if (!inicio || !fim) {
+        mostrarNotificacao('⚠️ Selecione as duas datas', 'error');
+        return;
+    }
 
-            const dataInicio = new Date(inicio);
-            const dataFim = new Date(fim);
-            dataFim.setHours(23, 59, 59, 999);
+    const dataInicio = new Date(inicio);
+    const dataFim = new Date(fim);
+    dataFim.setHours(23, 59, 59, 999);
 
-            const cabecalho = dadosOriginais[0];
-            const linhas = dadosOriginais.slice(1);
+    const cabecalho = dadosOriginais[0];
+    const linhas = dadosOriginais.slice(1);
 
-            const linhasFiltradas = linhas.filter(linha => {
-                const data = parsearDataBR(linha[indiceColunaData]);
-                return data && data >= dataInicio && data <= dataFim;
-            });
+    const linhasFiltradas = linhas.filter(linha => {
+        const data = parsearDataBR(linha[indiceColunaData]);
+        return data && data >= dataInicio && data <= dataFim;
+    });
 
-            if (!linhasFiltradas.length) {
-                mostrarNotificacao('⚠️ Nenhum registro no período', 'error');
-                return;
-            }
+    if (!linhasFiltradas.length) {
+        mostrarNotificacao('⚠️ Nenhum registro no período', 'error');
+        return;
+    }
 
-            dadosAnalisados = analisarDadosMineramix([cabecalho, ...linhasFiltradas]);
-            mostrarRelatorio('overview');
+    dadosAnalisados = analisarDadosMineramix([cabecalho, ...linhasFiltradas]);
 
-            mostrarNotificacao(
-                `📅 Período aplicado: ${linhasFiltradas.length} registros`,
-                'success'
-            );
-        }
+    // ============================================================
+    // CORREÇÃO: Mantém a aba atual em vez de voltar para 'overview'
+    // ============================================================
+    const itemAtivo = document.querySelector('.menu-item.active');
+    const relatorioAtual = itemAtivo ? itemAtivo.getAttribute('data-report') : 'overview';
+    
+    mostrarRelatorio(relatorioAtual);
+    // ============================================================
+
+    mostrarNotificacao(
+        `📅 Período aplicado: ${linhasFiltradas.length} registros`,
+        'success'
+    );
+}
 
         // Testar conexão
         async function testarConexao() {
