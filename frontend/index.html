@@ -124,7 +124,7 @@
             </div>
         </div>
     </main>
-    <div id="modalDia" class="modal-overlay" style="display: none;">
+<div id="modalDia" class="modal-overlay" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
             <div>
@@ -133,17 +133,15 @@
             </div>
             <button class="modal-close" onclick="fecharModal()">&times;</button>
         </div>
-
         <div class="modal-chart-container">
             <canvas id="graficoDia"></canvas>
         </div>
-
         <h4 style="margin-bottom:1rem; color:var(--cor-primaria)">Lista de Motoristas</h4>
-        <div id="modalListaMotoristas">
-            </div>
+        <div id="modalListaMotoristas"></div>
     </div>
 </div>
-            <div id="modalMotorista" class="modal-overlay" style="display: none;">
+
+<div id="modalMotorista" class="modal-overlay" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
             <div>
@@ -152,13 +150,11 @@
             </div>
             <button class="modal-close" onclick="fecharModalMotorista()">&times;</button>
         </div>
-
         <div class="driver-metrics-grid">
             <div class="metric-column">
                 <h4 style="margin-bottom:1rem; color:var(--cor-secundaria); border-bottom:1px solid var(--cor-borda); padding-bottom:5px;">
                     <i class="fas fa-truck"></i> Operacional
                 </h4>
-                
                 <div class="metric-item">
                     <span class="metric-label">Viagens Realizadas</span>
                     <strong class="metric-value" id="motViagens">--</strong>
@@ -172,29 +168,23 @@
                     <strong class="metric-value" id="motMediaKm">-- km</strong>
                 </div>
             </div>
-
             <div class="metric-column">
                 <h4 style="margin-bottom:1rem; color:var(--cor-pago); border-bottom:1px solid var(--cor-borda); padding-bottom:5px;">
                     <i class="fas fa-coins"></i> Financeiro (Est.)
                 </h4>
-
                 <div class="metric-item">
                     <span class="metric-label">Faturamento Bruto (+)</span>
                     <strong class="metric-value money-positive" id="motFaturamento">R$ 0,00</strong>
                 </div>
-
                 <div class="metric-item">
                     <span class="metric-label">Consumo Diesel Est. (-) <small>(2km/l a R$6,00)</small></span>
                     <strong class="metric-value money-negative" id="motDiesel">R$ 0,00</strong>
                 </div>
-
                 <div class="metric-item">
                     <span class="metric-label">Manutenção Est. (-) <small>(12%)</small></span>
                     <strong class="metric-value money-negative" id="motManutencao">R$ 0,00</strong>
                 </div>
-
                 <div class="metric-divisor"></div>
-
                 <div class="metric-item highlight">
                     <span class="metric-label">LUCRO LÍQUIDO PREVISTO (=)</span>
                     <strong class="metric-value" id="motLucro" style="font-size:1.3rem;">R$ 0,00</strong>
@@ -209,7 +199,6 @@
             <h3 id="tituloModalVeiculo">Placa ABC-1234</h3>
             <button class="close-btn" onclick="fecharModal()">&times;</button>
         </div>
-        
         <div class="modal-body">
             <div class="modal-stats">
                 <div class="stat-box">
@@ -225,41 +214,12 @@
                     <strong class="stat-value" id="modalKM">0 km</strong>
                 </div>
             </div>
-
             <div class="modal-details-list">
                 <div class="detail-item">
                     <i class="fas fa-user-tie"></i>
                     <div>
                         <span class="detail-label">Motorista Principal</span>
                         <strong id="textoMotoristaVeiculo">Carregando...</strong>
-                    </div>
-                </div>
-                
-                <div class="detail-item">
-                    <i class="fas fa-route"></i>
-                    <div>
-                        <span class="detail-label">Rota Favorita</span>
-                        <strong id="modalRota">Carregando...</strong>
-                    </div>
-                </div>
-
-                <div class="detail-item">
-                    <i class="fas fa-chart-line"></i>
-                    <div>
-                        <span class="detail-label">Média por Viagem</span>
-                        <strong id="modalMedia">R$ 0,00</strong>
-                    </div>
-                </div>
-            </div> </div> </div> </div> ```
-
-
-            <div class="modal-details-list">
-                  <div class="detail-item">
-                      <i class="fas fa-user-tie"></i>
-                        <div>
-                            <span class="detail-label">Motorista Principal</span>
-                            <strong id="textoMotoristaVeiculo">Carregando...</strong>
-                        </div>
                     </div>
                 </div>
                 <div class="detail-item">
@@ -290,7 +250,6 @@
             </div>
             <button class="modal-close" onclick="fecharModal()">&times;</button>
         </div>
-
         <div class="modal-body">
             <div class="route-timeline">
                 <div class="route-point">
@@ -300,14 +259,12 @@
                         <small>Origem Fixa</small>
                     </div>
                 </div>
-
                 <div class="route-path">
                     <div class="path-line"></div>
                     <div class="toll-info" id="rotaPedagios">
                         <span class="toll-badge"><i class="fas fa-ticket-alt"></i> Calculando...</span>
                     </div>
                 </div>
-
                 <div class="route-point">
                     <div class="point-icon dest"><i class="fas fa-map-marker-alt"></i></div>
                     <div class="point-content">
@@ -316,7 +273,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="route-summary-box">
                 <div class="summary-row">
                     <span><i class="fas fa-road"></i> Distância Aprox.</span>
