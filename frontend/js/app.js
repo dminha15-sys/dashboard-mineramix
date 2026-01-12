@@ -284,32 +284,34 @@ const summaryHTML = `
     elementos.contentArea.innerHTML = metricsHTML + summaryHTML;
 } 
 
-function mostrarRelatorioMotoristas(resumo) {
-    const gerarClick = (nome) => `onclick="abrirDetalhesMotorista('${nome}')" style="cursor:pointer"`;
-    if (window.innerWidth < 768) {
-        const lista = resumo.motoristasOrdenados.slice(0, 10);
-        const cards = lista.map(([nome, dados]) => `
-            <div class="mobile-card" ${gerarClick(nome)}>
-                <div style="display:flex; justify-content:space-between;"><strong>${nome}</strong><span class="status-badge status-analise">${dados.viagens} viagens</span></div>
-                <div style="display:flex; justify-content:space-between; margin-top:5px; align-items:flex-end;">
-                     <div style="font-size:0.85rem; color:var(--cor-texto-sec);">KM Total: ${formatarNumero(dados.km)}</div>
-                     <div style="text-align:right;"><span class="money" style="font-size:1.2rem; display:block;">${formatarMoeda(dados.valor)}</span><small style="font-size:0.7rem; color:var(--cor-secundaria);">Ver Raio-X <i class="fas fa-chevron-right"></i></small></div>
-                </div>
+// ============================================================
+// CORREÇÃO: O NOME DA FUNÇÃO ABAIXO ERA O PROBLEMA
+// ============================================================
+function mostrarRelatorioVeiculos(resumo) { 
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+        let html = `<h3 class="mobile-title">Veículos (Toque para ver Detalhes)</h3><div class="mobile-card-list">`;
+        html += resumo.veiculosOrdenados.map(([placa, d]) => `
+            <div class="mobile-card" onclick="abrirDetalhesVeiculo('${placa}')" style="border-left: 4px solid var(--cor-primaria);">
+                <div style="display:flex; justify-content:space-between; align-items:center;"><strong style="color:var(--cor-primaria); font-size:1.1rem;">${placa}</strong><span class="status-badge" style="background:rgba(0,0,0,0.05); color:var(--cor-texto-sec);">${d.viagens} viagens</span></div>
+                <div style="display:flex; justify-content:space-between; margin-top:8px; color:var(--cor-texto-sec); font-size:0.9rem;"><span>${formatarNumero(d.km)} km</span><span class="money" style="color:var(--cor-pago); font-weight:bold; font-size:1.1rem;">${formatarMoeda(d.valor)}</span></div>
             </div>`).join('');
-        elementos.contentArea.innerHTML = `<h3 class="mobile-title">Motoristas (Toque para ver lucros)</h3><div class="mobile-card-list">${cards}</div>`;
+        html += `</div>`;
+        elementos.contentArea.innerHTML = html;
         return;
     }
-    elementos.contentArea.innerHTML = `
-        <div class="summary-card">
-            <div class="summary-header"><div class="summary-title">Resumo Faturamento por Motorista</div><div class="summary-icon"><i class="fas fa-user-tie"></i></div></div>
-            <table class="summary-table">
-                <thead><tr><th>Motorista</th><th class="center">Viagens</th><th class="center">KM Total</th><th class="money">Faturamento Total</th><th class="money">Média/Viagem</th><th class="money">Renda/KM</th><th class="center">Detalhes</th></tr></thead>
-                <tbody>${resumo.motoristasOrdenados.map(([nome, dados]) => `
-                    <tr ${gerarClick(nome)} class="hover-row">
-                        <td>${nome}</td><td class="center">${dados.viagens}</td><td class="center">${formatarNumero(dados.km)}</td><td class="money">${formatarMoeda(dados.valor)}</td><td class="money">${formatarMoeda(dados.valor / dados.viagens)}</td><td class="money">${formatarMoeda(dados.km > 0 ? dados.valor / dados.km : 0)}/km</td><td class="center"><i class="fas fa-file-invoice-dollar" style="color:var(--cor-secundaria)"></i></td>
-                    </tr>`).join('')}</tbody>
-            </table>
-        </div>`;
+    let html = `
+    <div class="summary-card" style="overflow-x: auto;">
+        <div class="summary-header"><div class="summary-title">Resumo Faturamento por Veículo</div><div class="summary-icon" style="background:rgba(255,107,53,0.1); color:#FF6B35; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:4px;"><i class="fas fa-truck"></i></div></div>
+        <table class="summary-table" style="width: 100%; border-collapse: collapse; min-width: 800px;">
+            <thead><tr><th style="text-align: left; padding: 12px;">Placa</th><th class="center" style="padding: 12px;">Viagens</th><th class="center" style="padding: 12px;">KM Total</th><th class="money" style="padding: 12px;">Faturamento Total</th><th class="money" style="padding: 12px;">Média/Viagem</th><th class="money" style="padding: 12px;">Renda/KM</th><th class="center" style="padding: 12px;">Ação</th></tr></thead>
+            <tbody>`;
+    html += resumo.veiculosOrdenados.map(([placa, d]) => `
+        <tr onclick="abrirDetalhesVeiculo('${placa}')" style="cursor:pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.02)'" onmouseout="this.style.background='transparent'">
+            <td style="padding: 12px; font-weight:bold;">${placa}</td><td class="center" style="padding: 12px;">${d.viagens}</td><td class="center" style="padding: 12px;">${formatarNumero(d.km)}</td><td class="money" style="padding: 12px;">${formatarMoeda(d.valor)}</td><td class="money" style="padding: 12px;">${formatarMoeda(d.valor / d.viagens)}</td><td class="money" style="padding: 12px;">${formatarMoeda(d.km > 0 ? d.valor / d.km : 0)}/km</td><td class="center" style="padding: 12px;"><i class="fas fa-search-plus" style="color:var(--cor-primaria);"></i></td>
+        </tr>`).join('');
+    html += `</tbody></table></div>`;
+    elementos.contentArea.innerHTML = html;
 }
 
 function mostrarRelatorioMotoristas(resumo) {
