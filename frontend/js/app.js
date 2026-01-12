@@ -305,10 +305,15 @@ function mostrarRelatorioMotoristas(resumo) {
                         <td>${nome}</td><td class="center">${dados.viagens}</td><td class="center">${formatarNumero(dados.km)}</td><td class="money">${formatarMoeda(dados.valor)}</td><td class="money">${formatarMoeda(dados.valor / dados.viagens)}</td><td class="money">${formatarMoeda(dados.km > 0 ? dados.valor / dados.km : 0)}/km</td><td class="center"><i class="fas fa-file-invoice-dollar" style="color:var(--cor-secundaria)"></i></td>
                     </tr>`).join('')}</tbody>
             </table>
-        </div>`;
-}
+       </div>
+`;
 
-function mostrarRelatorioVeiculos(resumo) {
+    // ADICIONE ESTAS DUAS LINHAS:
+    elementos.contentArea.innerHTML = metricsHTML + summaryHTML;
+} 
+
+function mostrarRelatorioMotoristas(resumo) {
+// ...
     const isMobile = window.innerWidth < 768;
     if (isMobile) {
         let html = `<h3 class="mobile-title">Veículos (Toque para ver Detalhes)</h3><div class="mobile-card-list">`;
