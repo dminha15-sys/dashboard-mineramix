@@ -1,3 +1,13 @@
+       
+
+
+       // Adicione isso no topo do app.js
+       const CUSTOS = {
+           DIESEL_PRECO: 6.00,
+           CONSUMO_MEDIO: 2.0, // km/L
+           MANUTENCAO_PCT: 0.12 // 12% sobre o faturamento
+       };
+
        // Configuração
         const CONFIG = {
             API_URL: 'https://dashboard-mineramix-backend.onrender.com/api/dados'
@@ -1287,65 +1297,41 @@ function gerarGraficoModal(dadosMotoristas) {
         }
     });
 }
-        // --- LÓGICA DO MODAL MOTORISTA (RAIO-X) ---
-
+// ========================================================
+// 1. NOVA FUNÇÃO: DETALHES MOTORISTA (SIMPLIFICADA)
+// ========================================================
 function abrirDetalhesMotorista(nomeMotorista) {
     if(!dadosAnalisados) return;
 
-    // Buscar os dados já processados desse motorista específico
-    // (Não precisa filtrar tudo de novo, usamos o resumo já calculado)
+    // Pega os dados JÁ FILTRADOS pelo período
     const dadosMot = dadosAnalisados.motoristas[nomeMotorista];
 
     if(!dadosMot) return alert('Dados não encontrados para este motorista.');
 
-    // --- PARÂMETROS DE CÁLCULO (Ajuste aqui se precisar) ---
-    const PRECO_DIESEL = 6.00;
-    const CONSUMO_MEDIO = 2.0; // km por litro
-    const TAXA_MANUTENCAO = 0.12; // 12%
-
-    // --- CÁLCULOS ---
+    // --- CÁLCULOS FINANCEIROS ---
     const faturamento = dadosMot.valor;
     const kmTotal = dadosMot.km;
     
-    // 1. Diesel Estimado
-    const litrosEstimados = kmTotal > 0 ? kmTotal / CONSUMO_MEDIO : 0;
-    const custoDiesel = litrosEstimados * PRECO_DIESEL;
+    // Estimativa de Diesel
+    const litros = kmTotal > 0 ? kmTotal / CUSTOS.CONSUMO_MEDIO : 0;
+    const custoDiesel = litros * CUSTOS.DIESEL_PRECO;
 
-    // 2. Manutenção Estimada
-    const custoManutencao = faturamento * TAXA_MANUTENCAO;
+    // Lucro Operacional (Faturamento - Diesel apenas, conforme pedido)
+    const lucroOperacional = faturamento - custoDiesel;
 
-    // 3. Lucro Líquido Estimado
-    const lucroLiquido = faturamento - custoDiesel - custoManutencao;
-
-    // --- PREENCHER O HTML ---
-    
-    // Título
+    // --- PREENCHIMENTO DO HTML ---
     document.getElementById('modalMotTitulo').textContent = nomeMotorista;
-
-    // Coluna Operacional
-    document.getElementById('motViagens').textContent = dadosMot.viagens;
-    document.getElementById('motKm').textContent = formatarNumero(kmTotal);
-    document.getElementById('motMediaKm').textContent = formatarNumero(kmTotal / dadosMot.viagens);
-
-    // Coluna Financeira
+    
+    // Cards Topo
     document.getElementById('motFaturamento').textContent = formatarMoeda(faturamento);
-    
-    document.getElementById('motDiesel').textContent = 
-        `- ${formatarMoeda(custoDiesel)}`; // Sinal de menos visual
-    
-    document.getElementById('motManutencao').textContent = 
-        `- ${formatarMoeda(custoManutencao)}`; // Sinal de menos visual
+    document.getElementById('motKm').textContent = formatarNumero(kmTotal) + ' km';
 
-    // Resultado Final
-    const elLucro = document.getElementById('motLucro');
-    elLucro.textContent = formatarMoeda(lucroLiquido);
+    // Card Rentabilidade
+    document.getElementById('motCustoDiesel').textContent = `- ${formatarMoeda(custoDiesel)}`;
     
-    // Muda a cor se deu prejuízo
-    if(lucroLiquido >= 0) {
-        elLucro.style.color = 'var(--cor-pago)'; // Verde
-    } else {
-        elLucro.style.color = '#dc3545'; // Vermelho
-    }
+    const elLucro = document.getElementById('motLucro');
+    elLucro.textContent = formatarMoeda(lucroOperacional);
+    elLucro.style.color = lucroOperacional >= 0 ? 'var(--cor-pago)' : '#dc3545';
 
     // Exibir Modal
     document.getElementById('modalMotorista').style.display = 'flex';
@@ -1355,160 +1341,138 @@ function fecharModalMotorista() {
     document.getElementById('modalMotorista').style.display = 'none';
 }
 
-// Fechar ao clicar fora
-document.getElementById('modalMotorista').addEventListener('click', function(e) {
-    if(e.target === this) fecharModalMotorista();
-});
-       
-// 2. ABRIR O POP-UP (COM PROTEÇÃO CONTRA ERROS DE LEITURA)
+
+// ========================================================
+// 2. NOVA FUNÇÃO: DETALHES VEÍCULO (COM CUSTOS)
+// ========================================================
 function abrirDetalhesVeiculo(placa) {
-    if (!dadosOriginais) {
-        console.error("Dados originais não carregados.");
+    if (!dadosAnalisados || !dadosAnalisados.veiculos[placa]) {
+        alert("Dados não encontrados para este veículo no período selecionado.");
         return;
     }
 
     try {
-        // 1. REUTILIZAR A LÓGICA DE COLUNAS QUE JÁ FUNCIONA
-        // Em vez de tentar adivinhar de novo, vamos usar a função detectarColunas
-        const cabecalho = dadosOriginais[0];
-        const colunas = detectarColunas(cabecalho);
+        // Pega os totais JÁ FILTRADOS (Respeita data e filtros)
+        const d = dadosAnalisados.veiculos[placa];
         
-        // Mapear índices baseados na detecção global
-        const idxPlaca = colunas.find(c => c.tipo === 'veiculo')?.indice;
-        const idxMot = colunas.find(c => c.tipo === 'motorista')?.indice;
-        const idxOrigem = colunas.find(c => c.tipo === 'origem')?.indice;
-        const idxDestino = colunas.find(c => c.tipo === 'destino')?.indice;
-        const idxValor = colunas.find(c => c.tipo === 'valor')?.indice;
-        const idxKm = colunas.find(c => c.tipo === 'km')?.indice;
+        // --- 1. CÁLCULOS DE CUSTO ---
+        const faturamento = d.valor;
+        const kmTotal = d.km;
+        
+        // Diesel
+        const litros = kmTotal > 0 ? kmTotal / CUSTOS.CONSUMO_MEDIO : 0;
+        const custoDiesel = litros * CUSTOS.DIESEL_PRECO;
+        
+        // Manutenção (12% do faturamento)
+        const custoManutencao = faturamento * CUSTOS.MANUTENCAO_PCT;
+        
+        // Lucro Líquido
+        const lucroLiquido = faturamento - custoDiesel - custoManutencao;
 
-        if (idxPlaca === undefined) {
-            alert("Erro: Coluna de Placa não encontrada na planilha.");
-            return;
+        // --- 2. BUSCAR TOP MOTORISTA E ROTA (Requer varredura nos dados originais filtrados) ---
+        // Para fazer isso corretamente sem perder o filtro de data, vamos usar 'dadosAnalisados' 
+        // Mas 'dadosAnalisados' é um resumo. Precisamos achar o motorista principal de outra forma
+        // ou aceitar recalcular. Vamos recalcular usando os dadosOriginais MAS filtrando pelo período atual.
+        
+        // *Reutilizando lógica segura de busca*
+        // NOTA: Para simplificar e garantir performance, vamos usar um método aproximado se os dados detalhados não estiverem acessíveis,
+        // mas aqui vamos tentar achar nos dadosOriginais se possível.
+        
+        let motoristaPrincipal = "Analisando...";
+        let rotaPrincipal = "Analisando...";
+        
+        // Se temos acesso aos dados originais, vamos filtrar rapidinho para achar o top driver
+        if(dadosOriginais && indiceColunaData !== null) {
+             // Recupera datas do filtro
+             const inicioInput = document.getElementById('dataInicio').value;
+             const fimInput = document.getElementById('dataFim').value;
+             
+             let viagensFiltradas = [];
+             
+             // Se tem filtro de data ativo
+             if(inicioInput && fimInput) {
+                 const dInicio = new Date(inicioInput);
+                 const dFim = new Date(fimInput);
+                 dFim.setHours(23,59,59);
+                 
+                 viagensFiltradas = dadosOriginais.slice(1).filter(linha => {
+                     const dt = parsearDataBR(linha[indiceColunaData]);
+                     // Filtra data E Placa
+                     return dt >= dInicio && dt <= dFim && linha.toString().includes(placa);
+                 });
+             } else {
+                 // Sem filtro de data, pega todas da placa
+                 viagensFiltradas = dadosOriginais.slice(1).filter(l => l.toString().includes(placa));
+             }
+
+             // Contar frequencia
+             const contMot = {};
+             const contRota = {};
+             
+             // Detectar índices novamente para segurança
+             const cols = detectingColumnsGlobal(dadosOriginais[0]); 
+             const idxMot = cols.motorista;
+             const idxOrig = cols.origem;
+             const idxDest = cols.destino;
+
+             viagensFiltradas.forEach(v => {
+                 if(idxMot !== undefined) {
+                     const m = v[idxMot] || 'Desconhecido';
+                     contMot[m] = (contMot[m] || 0) + 1;
+                 }
+                 if(idxOrig !== undefined && idxDest !== undefined) {
+                     const r = `${v[idxOrig]} -> ${v[idxDest]}`;
+                     contRota[r] = (contRota[r] || 0) + 1;
+                 }
+             });
+
+             // Pegar maior
+             const sortMot = Object.entries(contMot).sort((a,b)=>b[1]-a[1]);
+             if(sortMot.length > 0) motoristaPrincipal = `${sortMot[0][0]} (${Math.round(sortMot[0][1]/viagensFiltradas.length*100)}%)`;
+
+             const sortRota = Object.entries(contRota).sort((a,b)=>b[1]-a[1]);
+             if(sortRota.length > 0) rotaPrincipal = sortRota[0][0];
         }
 
-        // 2. FILTRAGEM MAIS INTELIGENTE (CORREÇÃO DO N/A)
-        // Normalizamos tudo para maiúsculo e sem espaços para garantir que encontre
-        const placaAlvo = placa.toString().trim().toUpperCase();
+        // --- 3. PREENCHER HTML ---
+        document.getElementById('tituloModalVeiculo').textContent = `Veículo: ${placa}`;
+        
+        // Resumo
+        document.getElementById('modalFaturamento').textContent = formatarMoeda(faturamento);
+        document.getElementById('modalKM').textContent = formatarNumero(kmTotal) + ' km';
+        
+        // Custos e Lucro
+        document.getElementById('modalCustoCombustivel').textContent = `- ${formatarMoeda(custoDiesel)}`;
+        document.getElementById('modalCustoManutencao').textContent = `- ${formatarMoeda(custoManutencao)}`;
+        
+        const elLucroLiq = document.getElementById('modalLucroLiquido');
+        elLucroLiq.textContent = formatarMoeda(lucroLiquido);
+        elLucroLiq.style.color = lucroLiquido >= 0 ? 'var(--cor-pago)' : '#dc3545';
 
-        const viagens = dadosOriginais.slice(1).filter(linha => {
-            // Verifica se a linha tem dados na coluna da placa
-            if (!linha || !linha[idxPlaca]) return false;
-            
-            // Limpa o dado da planilha também
-            const pPlanilha = linha[idxPlaca].toString().trim().toUpperCase();
-            
-            // Compara ignorando formatação
-            return pPlanilha === placaAlvo;
-        });
+        // Detalhes
+        document.getElementById('textoMotoristaVeiculo').textContent = motoristaPrincipal;
+        document.getElementById('modalRota').textContent = rotaPrincipal;
+        document.getElementById('modalMedia').textContent = formatarMoeda(d.viagens > 0 ? faturamento/d.viagens : 0);
 
-        // Se ainda assim não achar nada, cai no fallback (aí sim mostra N/A)
-        if (viagens.length === 0) {
-            console.warn("Nenhuma viagem encontrada nos dados brutos para: ", placa);
-            if(dadosAnalisados && dadosAnalisados.veiculos[placa]) {
-                const d = dadosAnalisados.veiculos[placa];
-                // Se cair aqui, é porque realmente não achou na busca detalhada
-                preencherModalVeiculo(placa, d.valor, d.km, d.viagens, 'Indisponível', 'Indisponível');
-            }
-            return;
-        }
-
-        // 3. CÁLCULOS DOS DETALHES (Top Motorista e Rota)
-        let totalValor = 0;
-        let totalKm = 0;
-        const contMotoristas = {};
-        const contRotas = {};
-
-        viagens.forEach(linha => {
-            const val = idxValor !== undefined ? extrairNumero(linha[idxValor]) : 0;
-            const k = idxKm !== undefined ? extrairNumero(linha[idxKm]) : 0;
-            
-            // Pega Motorista
-            let mot = 'Não Identificado';
-            if (idxMot !== undefined && linha[idxMot]) {
-                mot = linha[idxMot].toString().trim(); // Limpa espaços
-            }
-
-            // Pega Rota
-            let rota = 'Rota não informada';
-            if (idxOrigem !== undefined && idxDestino !== undefined) {
-                const orig = linha[idxOrigem] || '?';
-                const dest = linha[idxDestino] || '?';
-                rota = `${orig} ➝ ${dest}`;
-            }
-
-            totalValor += val;
-            totalKm += k;
-            
-            // Contagem para ranking
-            if (mot !== 'Não Identificado') {
-                contMotoristas[mot] = (contMotoristas[mot] || 0) + 1;
-            }
-            if (rota !== '? ➝ ?') {
-                contRotas[rota] = (contRotas[rota] || 0) + 1;
-            }
-        });
-
-        // Achar campeões (quem tem mais viagens)
-        const topMotArray = Object.entries(contMotoristas).sort((a,b) => b[1] - a[1]);
-        const topRotaArray = Object.entries(contRotas).sort((a,b) => b[1] - a[1]);
-
-        const topMot = topMotArray.length > 0 ? topMotArray[0] : ['-', 0];
-        const topRota = topRotaArray.length > 0 ? topRotaArray[0] : ['-', 0];
-
-        // Calcula porcentagem do motorista principal
-        const percMot = viagens.length > 0 ? Math.round((topMot[1] / viagens.length) * 100) : 0;
-
-        // 4. PREENCHER NA TELA
-        preencherModalVeiculo(
-            placa, 
-            totalValor, 
-            totalKm, 
-            viagens.length, 
-            topMot[0] !== '-' ? `${topMot[0]} (${percMot}%)` : 'Não identificado', 
-            topRota[0] !== '-' ? topRota[0] : 'Não identificada'
-        );
+        // Mostrar
+        document.getElementById('modalVeiculo').style.display = 'flex';
 
     } catch (e) {
-        console.error("Erro ao abrir detalhes:", e);
-        alert("Erro ao processar dados do veículo: " + e.message);
+        console.error("Erro detalhes veiculo", e);
+        alert("Erro ao processar dados: " + e.message);
     }
 }
 
-// FUNÇÃO AUXILIAR PARA PREENCHER HTML (Evita repetição)
-function preencherModalVeiculo(placa, valor, km, viagens, motorista, rota) {
-    document.getElementById('tituloModalVeiculo').textContent = `Veículo: ${placa}`;
-    
-    // Cards Topo
-    if(document.getElementById('modalFaturamento')) 
-        document.getElementById('modalFaturamento').textContent = formatarMoeda(valor);
-    
-    if(document.getElementById('modalKM')) 
-        document.getElementById('modalKM').textContent = formatarNumero(km) + ' km';
-    
-    const rentabilidade = km > 0 ? valor / km : 0;
-    if(document.getElementById('modalRentabilidade'))
-        document.getElementById('modalRentabilidade').textContent = formatarMoeda(rentabilidade) + '/km';
-    
-    // Detalhes
-    if(document.getElementById('textoMotoristaVeiculo'))
-        document.getElementById('textoMotoristaVeiculo').textContent = motorista;
-    
-    if(document.getElementById('modalRota'))
-        document.getElementById('modalRota').textContent = rota;
-    
-    const media = viagens > 0 ? valor / viagens : 0;
-    if(document.getElementById('modalMedia'))
-        document.getElementById('modalMedia').textContent = formatarMoeda(media);
-
-    // Mostrar
-    const modal = document.getElementById('modalVeiculo');
-    if (modal) modal.style.display = 'flex';
-}
-
-// 3. FUNÇÃO UNIFICADA PARA FECHAR
-function fecharModal() {
-    const modals = document.querySelectorAll('.modal-overlay');
-    modals.forEach(m => m.style.display = 'none');
+// Helper para detectar colunas dentro da função (para garantir contexto)
+function detectingColumnsGlobal(cabecalhos) {
+    const map = {};
+    cabecalhos.forEach((c, i) => {
+        const t = c.toString().toLowerCase();
+        if(t.includes('motorista')) map.motorista = i;
+        if(t.includes('origem')) map.origem = i;
+        if(t.includes('destino')) map.destino = i;
+    });
+    return map;
 }
 
 // 4. CLIQUE FORA PARA FECHAR (GLOBAL)
