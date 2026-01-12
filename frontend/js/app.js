@@ -836,17 +836,15 @@ function calcularCustoPedagio(destino) {
 
 window.abrirDetalhesRota = function(rotaCodificada, kmTotal) {
     try {
-        // 1. Decodificar e Limpar o Nome
+        // 1. Decodificar e Limpar
         const destinoBruto = decodeURIComponent(rotaCodificada);
-        // Remove tudo antes da seta e a própria seta
         const destinoNome = destinoBruto.replace(/.*→/, '').trim(); 
-        
-        console.log("🚀 Iniciando abertura do modal para:", destinoNome);
+        console.log("🚀 Abrindo rota para:", destinoNome);
 
-        // 2. Calcular
+        // 2. Calcular Pedágio
         const infoPedagio = calcularCustoPedagio(destinoNome);
 
-        // 3. Capturar Elementos HTML (Com verificação rigorosa)
+        // 3. Pegar Elementos
         const elDestino = document.getElementById('rotaDestinoNome');
         const elRotaKm = document.getElementById('rotaKm');
         const elResumoKm = document.getElementById('resumoKm');
@@ -854,40 +852,48 @@ window.abrirDetalhesRota = function(rotaCodificada, kmTotal) {
         const containerPedagios = document.getElementById('rotaPedagios');
         const modal = document.getElementById('modalRota');
 
-        // SE ALGUM DESSES FALTAR, O CÓDIGO AVISA E PARA (Evita tela travada)
-        if (!modal) throw new Error("Elemento 'modalRota' não encontrado no HTML");
-        if (!elDestino) throw new Error("Elemento 'rotaDestinoNome' não encontrado");
-        if (!containerPedagios) throw new Error("Elemento 'rotaPedagios' não encontrado");
+        if (!modal) {
+            alert("ERRO CRÍTICO: O Modal não existe no HTML!");
+            return;
+        }
 
-        // 4. Preencher HTML
+        // 4. Preencher Dados
         elDestino.textContent = destinoNome;
         elRotaKm.textContent = formatarNumero(kmTotal) + ' km (Estimado)';
         elResumoKm.textContent = formatarNumero(kmTotal) + ' km';
-        
-        // Formata o valor com cor vermelha se for > 0
         elResumoPedagio.textContent = formatarMoeda(infoPedagio.total);
-        elResumoPedagio.style.color = infoPedagio.total > 0 ? '#dc3545' : 'var(--cor-texto)';
+        elResumoPedagio.style.color = infoPedagio.total > 0 ? '#dc3545' : '#333';
 
-        // 5. Lista de Pedágios (Visual)
-        containerPedagios.innerHTML = ''; 
-        infoPedagio.lista.forEach(item => {
-            const badge = document.createElement('span');
-            badge.className = 'toll-badge';
-            // Se for "Rota local...", usa cor cinza, senão amarelo
-            const isInfo = item.includes("Rota local");
-            badge.style.background = isInfo ? '#e9ecef' : '#ffc107';
-            badge.style.color = isInfo ? '#666' : '#333';
-            
-            badge.innerHTML = `<i class="fas fa-ticket-alt"></i> ${item}`;
-            containerPedagios.appendChild(badge);
-        });
+        // 5. Preencher Pedágios
+        if(containerPedagios) {
+            containerPedagios.innerHTML = ''; 
+            infoPedagio.lista.forEach(item => {
+                const badge = document.createElement('span');
+                badge.style.cssText = "background:#ffc107; color:#000; padding:4px 8px; border-radius:10px; font-size:12px; margin-right:5px; display:inline-block;";
+                badge.innerHTML = `<i class="fas fa-ticket-alt"></i> ${item}`;
+                containerPedagios.appendChild(badge);
+            });
+        }
 
-        // 6. FORÇAR ABERTURA (Display Flex)
-        modal.style.display = 'flex';
-        console.log("✅ Modal aberto com sucesso!");
+        // ============================================================
+        // 6. FORÇA BRUTA VISUAL (AQUI ESTÁ A CORREÇÃO MÁGICA)
+        // Isso obriga o navegador a desenhar o modal ignorando o CSS externo
+        // ============================================================
+        
+        // Fundo Preto Transparente
+        modal.style.cssText = "display: flex !important; position: fixed !important; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 99999; align-items: center; justify-content: center;";
+
+        // O Cartão Branco (Conteúdo)
+        // Procuramos o filho direto (modal-content) para pintar de branco
+        const card = modal.querySelector('.modal-content');
+        if(card) {
+            card.style.cssText = "background-color: #ffffff !important; display: block !important; width: 90%; max-width: 500px; padding: 20px; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.5); position: relative; z-index: 100000; color: #333;";
+        }
+
+        console.log("✅ Modal forçado via JS Inline!");
 
     } catch (erro) {
-        console.error("❌ Erro ao abrir modal:", erro);
-        alert("Erro técnico ao abrir rota: " + erro.message);
+        alert("Erro no Script: " + erro.message);
+        console.error(erro);
     }
 }
