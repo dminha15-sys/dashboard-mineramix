@@ -786,80 +786,108 @@ window.onclick = function(event) {
 }
 
 function calcularCustoPedagio(destino) {
+    // 1. Limpeza de segurança: Converte para texto e Remove a seta "→" se existir
+    let destLimpo = String(destino || "").toUpperCase();
+    if (destLimpo.includes('→')) {
+        destLimpo = destLimpo.split('→')[1] || destLimpo; // Pega o que vem depois da seta
+    }
+    destLimpo = destLimpo.trim(); // Remove espaços extras
+
+    console.log("🔍 Calculando pedágio para:", destLimpo); // Debug para você ver
+
     let custo = 0;
     let detalhes = [];
-    
-    // --- CORREÇÃO: Força virar texto antes de dar UpperCase ---
-    const dest = String(destino || "").toUpperCase(); 
 
-    // ... (o resto do código continua igual)
-    if (dest.includes('CABO FRIO') || dest.includes('BUZIOS') || dest.includes('ARRAIAL') || dest.includes('SAO PEDRO')) {
+    // --- LÓGICA DE ROTAS ---
+    
+    // Rota 1: Região dos Lagos
+    if (destLimpo.includes('CABO FRIO') || destLimpo.includes('BUZIOS') || destLimpo.includes('ARRAIAL') || destLimpo.includes('SAO PEDRO') || destLimpo.includes('IGUABA')) {
         custo += CUSTO_PEDAGIOS.VIA_LAGOS;
         detalhes.push(`Via Lagos (R$ ${formatarMoeda(CUSTO_PEDAGIOS.VIA_LAGOS)})`);
     }
-    if (dest.includes('MACAE') || dest.includes('RIO DAS OSTRAS') || dest.includes('CAMPOS') || dest.includes('CASIMIRO')) {
+
+    // Rota 2: BR-101 Norte (Macaé/Campos)
+    if (destLimpo.includes('MACAE') || destLimpo.includes('RIO DAS OSTRAS') || destLimpo.includes('CAMPOS') || destLimpo.includes('CASIMIRO')) {
         custo += CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE;
         detalhes.push(`Praça BR-101 (R$ ${formatarMoeda(CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE)})`);
     }
-    if (dest.includes('RIO DE JANEIRO') || dest.includes('NITEROI') || dest.includes('SAO GONCALO') || dest.includes('ITABORAI')) {
-        custo += CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE;
+
+    // Rota 3: Rio/Niterói
+    if (destLimpo.includes('RIO DE JANEIRO') || destLimpo.includes('NITEROI') || destLimpo.includes('SAO GONCALO') || destLimpo.includes('ITABORAI') || destLimpo.includes('DUQUE')) {
+        custo += CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE; 
         detalhes.push(`Pedágio Manilha (R$ ${formatarMoeda(CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE)})`);
-        if(dest.includes('RIO DE JANEIRO')) {
+        
+        if(destLimpo.includes('RIO DE JANEIRO') || destLimpo.includes('DUQUE')) {
             custo += CUSTO_PEDAGIOS.PONTE_RIO_NITEROI;
             detalhes.push(`Ponte Rio-Niterói (R$ ${formatarMoeda(CUSTO_PEDAGIOS.PONTE_RIO_NITEROI)})`);
         }
     }
-    if (custo === 0) detalhes.push("Rota s/ pedágio identificado ou localidade não mapeada");
+
+    // Se não achou nada, retorna zerado mas sem erro
+    if (custo === 0) {
+        detalhes.push("Rota local ou sem pedágio mapeado");
+    }
+
     return { total: custo, lista: detalhes };
 }
-
 // =============================================================
 // TROQUE A FUNÇÃO abrirDetalhesRota INTEIRA POR ESTA VERSÃO:
 // =============================================================
 
 window.abrirDetalhesRota = function(rotaCodificada, kmTotal) {
-    // Decodifica o nome (resolve problemas de aspas e acentos)
-    const destinoNome = decodeURIComponent(rotaCodificada);
+    try {
+        // 1. Decodificar e Limpar o Nome
+        const destinoBruto = decodeURIComponent(rotaCodificada);
+        // Remove tudo antes da seta e a própria seta
+        const destinoNome = destinoBruto.replace(/.*→/, '').trim(); 
+        
+        console.log("🚀 Iniciando abertura do modal para:", destinoNome);
 
-    console.log("Botão clicado:", destinoNome, kmTotal); // Para debug no console
+        // 2. Calcular
+        const infoPedagio = calcularCustoPedagio(destinoNome);
 
-    // Chama a função de cálculo (garantindo que o nome seja string)
-    const infoPedagio = calcularCustoPedagio(String(destinoNome));
+        // 3. Capturar Elementos HTML (Com verificação rigorosa)
+        const elDestino = document.getElementById('rotaDestinoNome');
+        const elRotaKm = document.getElementById('rotaKm');
+        const elResumoKm = document.getElementById('resumoKm');
+        const elResumoPedagio = document.getElementById('resumoPedagio');
+        const containerPedagios = document.getElementById('rotaPedagios');
+        const modal = document.getElementById('modalRota');
 
-    // 1. Preencher Textos do Modal
-    const elDestino = document.getElementById('rotaDestinoNome');
-    const elRotaKm = document.getElementById('rotaKm');
-    const elResumoKm = document.getElementById('resumoKm');
-    const elResumoPedagio = document.getElementById('resumoPedagio');
-    const containerPedagios = document.getElementById('rotaPedagios');
-    const modal = document.getElementById('modalRota');
+        // SE ALGUM DESSES FALTAR, O CÓDIGO AVISA E PARA (Evita tela travada)
+        if (!modal) throw new Error("Elemento 'modalRota' não encontrado no HTML");
+        if (!elDestino) throw new Error("Elemento 'rotaDestinoNome' não encontrado");
+        if (!containerPedagios) throw new Error("Elemento 'rotaPedagios' não encontrado");
 
-    // Verificação de segurança (caso o HTML não tenha carregado o modal ainda)
-    if (!elDestino || !modal) {
-        console.error("Elementos do modal não encontrados no HTML!");
-        alert("Erro: O modal de rota não foi encontrado na página.");
-        return;
-    }
+        // 4. Preencher HTML
+        elDestino.textContent = destinoNome;
+        elRotaKm.textContent = formatarNumero(kmTotal) + ' km (Estimado)';
+        elResumoKm.textContent = formatarNumero(kmTotal) + ' km';
+        
+        // Formata o valor com cor vermelha se for > 0
+        elResumoPedagio.textContent = formatarMoeda(infoPedagio.total);
+        elResumoPedagio.style.color = infoPedagio.total > 0 ? '#dc3545' : 'var(--cor-texto)';
 
-    elDestino.textContent = destinoNome;
-    elRotaKm.textContent = formatarNumero(kmTotal) + ' km (Estimado)';
-    elResumoKm.textContent = formatarNumero(kmTotal) + ' km';
-    elResumoPedagio.textContent = formatarMoeda(infoPedagio.total);
-
-    // 2. Preencher Lista de Pedágios
-    containerPedagios.innerHTML = ''; 
-
-    if (infoPedagio.total > 0) {
+        // 5. Lista de Pedágios (Visual)
+        containerPedagios.innerHTML = ''; 
         infoPedagio.lista.forEach(item => {
             const badge = document.createElement('span');
             badge.className = 'toll-badge';
+            // Se for "Rota local...", usa cor cinza, senão amarelo
+            const isInfo = item.includes("Rota local");
+            badge.style.background = isInfo ? '#e9ecef' : '#ffc107';
+            badge.style.color = isInfo ? '#666' : '#333';
+            
             badge.innerHTML = `<i class="fas fa-ticket-alt"></i> ${item}`;
             containerPedagios.appendChild(badge);
         });
-    } else {
-        containerPedagios.innerHTML = `<span style="font-size:0.8rem; color:var(--cor-texto-sec)">${infoPedagio.lista[0]}</span>`;
-    }
 
-    // 3. Abrir Modal
-    modal.style.display = 'flex';
+        // 6. FORÇAR ABERTURA (Display Flex)
+        modal.style.display = 'flex';
+        console.log("✅ Modal aberto com sucesso!");
+
+    } catch (erro) {
+        console.error("❌ Erro ao abrir modal:", erro);
+        alert("Erro técnico ao abrir rota: " + erro.message);
+    }
 }
