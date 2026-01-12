@@ -400,7 +400,7 @@ function mostrarRelatorioRotas(resumo) {
                                 <td class="money">${formatarMoeda(mediaKM)}/km</td>
                                 <td class="center">
                                     <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.7rem;" 
-                                        onclick="abrirDetalhesRota('${rotaSegura}', ${kmMedio.toFixed(2)})">
+                                        onclick="window.abrirDetalhesRota('${encodeURIComponent(rota)}', ${kmMedio})">
                                         <i class="fas fa-route"></i> Ver Rota
                                     </button>
                                 </td>
@@ -813,14 +813,42 @@ function calcularCustoPedagio(destino) {
     return { total: custo, lista: detalhes };
 }
 
-function abrirDetalhesRota(destinoNome, kmTotal) {
-    const infoPedagio = calcularCustoPedagio(destinoNome);
-    document.getElementById('rotaDestinoNome').textContent = destinoNome;
-    document.getElementById('rotaKm').textContent = formatarNumero(kmTotal) + ' km (Estimado da planilha)';
-    document.getElementById('resumoKm').textContent = formatarNumero(kmTotal) + ' km';
-    document.getElementById('resumoPedagio').textContent = formatarMoeda(infoPedagio.total);
+// =============================================================
+// TROQUE A FUNÇÃO abrirDetalhesRota INTEIRA POR ESTA VERSÃO:
+// =============================================================
+
+window.abrirDetalhesRota = function(rotaCodificada, kmTotal) {
+    // Decodifica o nome (resolve problemas de aspas e acentos)
+    const destinoNome = decodeURIComponent(rotaCodificada);
+
+    console.log("Botão clicado:", destinoNome, kmTotal); // Para debug no console
+
+    // Chama a função de cálculo (garantindo que o nome seja string)
+    const infoPedagio = calcularCustoPedagio(String(destinoNome));
+
+    // 1. Preencher Textos do Modal
+    const elDestino = document.getElementById('rotaDestinoNome');
+    const elRotaKm = document.getElementById('rotaKm');
+    const elResumoKm = document.getElementById('resumoKm');
+    const elResumoPedagio = document.getElementById('resumoPedagio');
     const containerPedagios = document.getElementById('rotaPedagios');
-    containerPedagios.innerHTML = '';
+    const modal = document.getElementById('modalRota');
+
+    // Verificação de segurança (caso o HTML não tenha carregado o modal ainda)
+    if (!elDestino || !modal) {
+        console.error("Elementos do modal não encontrados no HTML!");
+        alert("Erro: O modal de rota não foi encontrado na página.");
+        return;
+    }
+
+    elDestino.textContent = destinoNome;
+    elRotaKm.textContent = formatarNumero(kmTotal) + ' km (Estimado)';
+    elResumoKm.textContent = formatarNumero(kmTotal) + ' km';
+    elResumoPedagio.textContent = formatarMoeda(infoPedagio.total);
+
+    // 2. Preencher Lista de Pedágios
+    containerPedagios.innerHTML = ''; 
+
     if (infoPedagio.total > 0) {
         infoPedagio.lista.forEach(item => {
             const badge = document.createElement('span');
@@ -831,5 +859,7 @@ function abrirDetalhesRota(destinoNome, kmTotal) {
     } else {
         containerPedagios.innerHTML = `<span style="font-size:0.8rem; color:var(--cor-texto-sec)">${infoPedagio.lista[0]}</span>`;
     }
-    document.getElementById('modalRota').style.display = 'flex';
+
+    // 3. Abrir Modal
+    modal.style.display = 'flex';
 }
