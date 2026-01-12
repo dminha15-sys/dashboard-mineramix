@@ -233,26 +233,52 @@ function mostrarVisaoGeral(resumo) {
             <div class="metric-card"><div class="metric-icon"><i class="fas fa-truck"></i></div><div class="metric-value">${Object.keys(resumo.veiculos).length}</div><div class="metric-label">Veículos</div></div>
         </div>
     `;
-    const topMotoristas = resumo.motoristasOrdenados.slice(0, 5);
-    const topVeiculos = resumo.veiculosOrdenados.slice(0, 5);
-    const summaryHTML = `
-        <div class="summary-cards">
-            <div class="summary-card">
-                <div class="summary-header"><div class="summary-title">Top 5 Motoristas</div><div class="summary-icon"><i class="fas fa-user-tie"></i></div></div>
-                <table class="summary-table"><thead><tr><th>Motorista</th><th>Viagens</th><th>Total</th></tr></thead><tbody>
-                    ${topMotoristas.map(([nome, dados]) => `<tr><td>${nome}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
-                </tbody></table>
-            </div>
-            <div class="summary-card">
-                <div class="summary-header"><div class="summary-title">Top 5 Veículos</div><div class="summary-icon"><i class="fas fa-truck"></i></div></div>
-                <table class="summary-table"><thead><tr><th>Placa</th><th>Viagens</th><th>Total</th></tr></thead><tbody>
-                    ${topVeiculos.map(([placa, dados]) => `<tr><td>${placa}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
-                </tbody></table>
-            </div>
-        </div>
-    `;
-    elementos.contentArea.innerHTML = metricsHTML + summaryHTML;
-}
+// 1. Prepara os dados (Motoristas e Veículos já existiam)
+const topMotoristas = resumo.motoristasOrdenados.slice(0, 5);
+const topVeiculos = resumo.veiculosOrdenados.slice(0, 5);
+
+// 2. NOVO: Calcula o Top 5 Meses agrupando os dias
+const mesesMap = {};
+Object.entries(resumo.dias || {}).forEach(([data, info]) => {
+    // A data vem como "dd/mm/aaaa", pegamos só "mm/aaaa"
+    const partes = data.split('/'); 
+    if(partes.length === 3) {
+        const mesAno = `${partes[1]}/${partes[2]}`;
+        if(!mesesMap[mesAno]) mesesMap[mesAno] = { valor: 0, viagens: 0 };
+        mesesMap[mesAno].valor += info.valor;
+        mesesMap[mesAno].viagens += info.viagens;
+    }
+});
+// Ordena do maior valor para o menor e pega os 5 primeiros
+const topMeses = Object.entries(mesesMap)
+    .sort((a,b) => b[1].valor - a[1].valor)
+    .slice(0, 5);
+
+// 3. Gera o HTML com os 3 Cards (Motorista, Veículo e AGORA Meses)
+const summaryHTML = `
+<div class="summary-cards">
+    <div class="summary-card">
+        <div class="summary-header"><div class="summary-title">Top 5 Motoristas</div><div class="summary-icon"><i class="fas fa-user-tie"></i></div></div>
+        <table class="summary-table"><thead><tr><th>Motorista</th><th>Viagens</th><th>Total</th></tr></thead><tbody>
+            ${topMotoristas.map(([nome, dados]) => `<tr><td>${nome}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
+        </tbody></table>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-header"><div class="summary-title">Top 5 Veículos</div><div class="summary-icon"><i class="fas fa-truck"></i></div></div>
+        <table class="summary-table"><thead><tr><th>Placa</th><th>Viagens</th><th>Total</th></tr></thead><tbody>
+            ${topVeiculos.map(([placa, dados]) => `<tr><td>${placa}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
+        </tbody></table>
+    </div>
+
+    <div class="summary-card">
+        <div class="summary-header"><div class="summary-title">Top 5 Meses</div><div class="summary-icon"><i class="fas fa-calendar-alt"></i></div></div>
+        <table class="summary-table"><thead><tr><th>Mês/Ano</th><th>Viagens</th><th>Total</th></tr></thead><tbody>
+            ${topMeses.map(([mes, dados]) => `<tr><td>${mes}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
+        </tbody></table>
+    </div>
+</div>
+`;
 
 function mostrarRelatorioMotoristas(resumo) {
     const gerarClick = (nome) => `onclick="abrirDetalhesMotorista('${nome}')" style="cursor:pointer"`;
