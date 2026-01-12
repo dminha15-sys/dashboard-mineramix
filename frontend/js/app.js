@@ -1435,7 +1435,7 @@ function abrirDetalhesVeiculo(placa) {
         }
 
         // --- 3. PREENCHER HTML ---
-        document.getElementById('tituloModalVeiculo').textContent = `Veículo: ${placa}`;
+        document.getElementById('textoPlaca').textContent = placa;
         
         // Resumo
         document.getElementById('modalFaturamento').textContent = formatarMoeda(faturamento);
@@ -1461,6 +1461,10 @@ function abrirDetalhesVeiculo(placa) {
         console.error("Erro detalhes veiculo", e);
         alert("Erro ao processar dados: " + e.message);
     }
+}
+// Adicione esta função no seu app.js para o botão "X" funcionar
+function fecharModalVeiculo() {
+    document.getElementById('modalVeiculo').style.display = 'none';
 }
 
 // Helper para detectar colunas dentro da função (para garantir contexto)
