@@ -280,6 +280,10 @@ const summaryHTML = `
 </div>
 `;
 
+    // AQUI ESTÁ O PULO DO GATO QUE FALTAVA:
+    elementos.contentArea.innerHTML = metricsHTML + summaryHTML;
+} 
+
 function mostrarRelatorioMotoristas(resumo) {
     const gerarClick = (nome) => `onclick="abrirDetalhesMotorista('${nome}')" style="cursor:pointer"`;
     if (window.innerWidth < 768) {
@@ -305,12 +309,8 @@ function mostrarRelatorioMotoristas(resumo) {
                         <td>${nome}</td><td class="center">${dados.viagens}</td><td class="center">${formatarNumero(dados.km)}</td><td class="money">${formatarMoeda(dados.valor)}</td><td class="money">${formatarMoeda(dados.valor / dados.viagens)}</td><td class="money">${formatarMoeda(dados.km > 0 ? dados.valor / dados.km : 0)}/km</td><td class="center"><i class="fas fa-file-invoice-dollar" style="color:var(--cor-secundaria)"></i></td>
                     </tr>`).join('')}</tbody>
             </table>
-       </div>
-`;
-
-    // ADICIONE ESTAS DUAS LINHAS:
-    elementos.contentArea.innerHTML = metricsHTML + summaryHTML;
-} 
+        </div>`;
+}
 
 function mostrarRelatorioMotoristas(resumo) {
 // ...
