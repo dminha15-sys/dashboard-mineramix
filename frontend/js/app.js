@@ -330,48 +330,88 @@ function mostrarRelatorioClientes(resumo) {
         </div>`;
 }
 
+// Relatório de Rotas (CORRIGIDO)
 function mostrarRelatorioRotas(resumo) {
+    // VERSÃO MOBILE
     if (window.innerWidth < 768) {
         const lista = resumo.rotasOrdenadas; 
-        // CORREÇÃO AQUI: Adicionado onclick para funcionar no Mobile
-        const cards = lista.map(([rota, dados]) => {
-             const kmMedio = dados.km / dados.viagens;
-             // Escapar aspas simples para não quebrar o HTML
-             const rotaSafe = rota.replace(/'/g, "\\'");
-             
-             return `
-            <div class="mobile-card" onclick="abrirDetalhesRota('${rotaSafe}', ${kmMedio})" style="cursor:pointer">
+
+        const cards = lista.map(([rota, dados]) => `
+            <div class="mobile-card">
                 <strong style="font-size: 0.9rem;">${rota}</strong>
                 <div style="display:flex; justify-content:space-between; margin-top:5px;">
                     <span>Viagens: ${dados.viagens}</span>
-                    <span>KM Médio: ${formatarNumero(kmMedio)}</span>
+                    <span>KM Médio: ${formatarNumero(dados.km / dados.viagens)}</span>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
-                    <span class="money">${formatarMoeda(dados.valor)}</span>
-                    <small style="color:var(--cor-secundaria)">Ver <i class="fas fa-chevron-right"></i></small>
-                </div>
+                <span class="money" style="margin-top:5px;">${formatarMoeda(dados.valor)}</span>
             </div>
-        `}).join('');
-        elementos.contentArea.innerHTML = `<h3 class="mobile-title">Rotas Mais Frequentes</h3><div class="mobile-card-list">${cards}</div>`;
+        `).join('');
+
+        elementos.contentArea.innerHTML = `
+            <h3 class="mobile-title">Rotas Mais Frequentes</h3>
+            <div class="mobile-card-list">${cards}</div>
+        `;
         return;
     }
+
+    // VERSÃO DESKTOP
     elementos.contentArea.innerHTML = `
         <div class="summary-card">
-            <div class="summary-header"><div class="summary-title">Rotas Mais Frequentes</div><div class="summary-icon"><i class="fas fa-route"></i></div></div>
-            <table class="summary-table"><thead><tr><th>Rota (Origem → Destino)</th><th class="center">Viagens</th><th class="center">KM Médio</th><th class="money">Faturamento Total</th><th class="money">Média por Viagem</th><th class="money">Média por KM</th><th class="center">Ação</th></tr></thead><tbody>
-                ${resumo.rotasOrdenadas.map(([rota, dados]) => {
-                    const kmMedio = dados.km / dados.viagens;
-                    return `
-                        <tr>
-                            <td><div style="display:flex; align-items:center; gap:8px;"><i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria)"></i>${rota}</div></td>
-                            <td class="center">${dados.viagens}</td><td class="center">${formatarNumero(kmMedio)}</td><td class="money">${formatarMoeda(dados.valor)}</td><td class="money">${formatarMoeda(dados.valor / dados.viagens)}</td><td class="money">${formatarMoeda(dados.km > 0 ? dados.valor / dados.km : 0)}/km</td>
-                            <td class="center"><button class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.7rem;" onclick="abrirDetalhesRota('${rota.replace(/'/g, "\\'")}', ${kmMedio})"><i class="fas fa-route"></i> Ver Rota</button></td>
-                        </tr>`;
-                }).join('')}
-            </tbody></table>
-        </div>`;
-}
+            <div class="summary-header">
+                <div class="summary-title">Rotas Mais Frequentes</div>
+                <div class="summary-icon"><i class="fas fa-route"></i></div>
+            </div>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Rota (Origem → Destino)</th>
+                        <th class="center">Viagens</th>
+                        <th class="center">KM Médio</th>
+                        <th class="money">Faturamento Total</th>
+                        <th class="money">Média por Viagem</th>
+                        <th class="money">Média por KM</th>
+                         <th class="center">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${resumo.rotasOrdenadas.map(([rota, dados]) => {
+                        const kmMedio = dados.km / dados.viagens;
+                        const mediaViagem = dados.valor / dados.viagens;
+                        const mediaKM = dados.km > 0 ? dados.valor / dados.km : 0;
+                        
+                        // --- CORREÇÃO AQUI: Tratamento seguro de aspas ---
+                        // Substitui aspas duplas por &quot; e simples por \'
+                        const rotaSegura = rota
+                            .replace(/"/g, '&quot;')
+                            .replace(/'/g, "\\'");
 
+                        return `
+                            <tr>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria)"></i>
+                                        ${rota}
+                                    </div>
+                                </td>
+                                <td class="center">${dados.viagens}</td>
+                                <td class="center">${formatarNumero(kmMedio)}</td>
+                                <td class="money">${formatarMoeda(dados.valor)}</td>
+                                <td class="money">${formatarMoeda(mediaViagem)}</td>
+                                <td class="money">${formatarMoeda(mediaKM)}/km</td>
+                                <td class="center">
+                                    <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.7rem;" 
+                                        onclick="abrirDetalhesRota('${rotaSegura}', ${kmMedio.toFixed(2)})">
+                                        <i class="fas fa-route"></i> Ver Rota
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
 function mostrarRelatorioDiario(resumo) {
     const listaDias = resumo.diasOrdenados;
     const gerarClick = (dia) => `onclick="abrirDetalhesDia('${dia}')" style="cursor:pointer"`;
@@ -748,7 +788,11 @@ window.onclick = function(event) {
 function calcularCustoPedagio(destino) {
     let custo = 0;
     let detalhes = [];
-    const dest = destino.toUpperCase();
+    
+    // --- CORREÇÃO: Força virar texto antes de dar UpperCase ---
+    const dest = String(destino || "").toUpperCase(); 
+
+    // ... (o resto do código continua igual)
     if (dest.includes('CABO FRIO') || dest.includes('BUZIOS') || dest.includes('ARRAIAL') || dest.includes('SAO PEDRO')) {
         custo += CUSTO_PEDAGIOS.VIA_LAGOS;
         detalhes.push(`Via Lagos (R$ ${formatarMoeda(CUSTO_PEDAGIOS.VIA_LAGOS)})`);
