@@ -210,6 +210,7 @@ function mostrarRelatorio(tipo) {
     if (elementos.reportTitle) elementos.reportTitle.textContent = titulos[tipo] || 'Dashboard Mineramix';
     if (elementos.reportSubtitle) elementos.reportSubtitle.textContent = `${resumo.totalLinhas} viagens analisadas | ${formatarMoeda(resumo.totalValor)} total`;
 
+    // AQUI GARANTIMOS QUE O NOME CHAME A FUNÇÃO CERTA
     switch (tipo) {
         case 'overview': mostrarVisaoGeral(resumo); break;
         case 'motoristas': mostrarRelatorioMotoristas(resumo); break;
@@ -233,60 +234,50 @@ function mostrarVisaoGeral(resumo) {
             <div class="metric-card"><div class="metric-icon"><i class="fas fa-truck"></i></div><div class="metric-value">${Object.keys(resumo.veiculos).length}</div><div class="metric-label">Veículos</div></div>
         </div>
     `;
-// 1. Prepara os dados (Motoristas e Veículos já existiam)
-const topMotoristas = resumo.motoristasOrdenados.slice(0, 5);
-const topVeiculos = resumo.veiculosOrdenados.slice(0, 5);
 
-// 2. NOVO: Calcula o Top 5 Meses agrupando os dias
-const mesesMap = {};
-Object.entries(resumo.dias || {}).forEach(([data, info]) => {
-    // A data vem como "dd/mm/aaaa", pegamos só "mm/aaaa"
-    const partes = data.split('/'); 
-    if(partes.length === 3) {
-        const mesAno = `${partes[1]}/${partes[2]}`;
-        if(!mesesMap[mesAno]) mesesMap[mesAno] = { valor: 0, viagens: 0 };
-        mesesMap[mesAno].valor += info.valor;
-        mesesMap[mesAno].viagens += info.viagens;
-    }
-});
-// Ordena do maior valor para o menor e pega os 5 primeiros
-const topMeses = Object.entries(mesesMap)
-    .sort((a,b) => b[1].valor - a[1].valor)
-    .slice(0, 5);
+    const topMotoristas = resumo.motoristasOrdenados.slice(0, 5);
+    const topVeiculos = resumo.veiculosOrdenados.slice(0, 5);
 
-// 3. Gera o HTML com os 3 Cards (Motorista, Veículo e AGORA Meses)
-const summaryHTML = `
-<div class="summary-cards">
-    <div class="summary-card">
-        <div class="summary-header"><div class="summary-title">Top 5 Motoristas</div><div class="summary-icon"><i class="fas fa-user-tie"></i></div></div>
-        <table class="summary-table"><thead><tr><th>Motorista</th><th>Viagens</th><th>Total</th></tr></thead><tbody>
-            ${topMotoristas.map(([nome, dados]) => `<tr><td>${nome}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
-        </tbody></table>
+    // Top 5 Meses
+    const mesesMap = {};
+    Object.entries(resumo.dias || {}).forEach(([data, info]) => {
+        const partes = data.split('/'); 
+        if(partes.length === 3) {
+            const mesAno = `${partes[1]}/${partes[2]}`;
+            if(!mesesMap[mesAno]) mesesMap[mesAno] = { valor: 0, viagens: 0 };
+            mesesMap[mesAno].valor += info.valor;
+            mesesMap[mesAno].viagens += info.viagens;
+        }
+    });
+    const topMeses = Object.entries(mesesMap).sort((a,b) => b[1].valor - a[1].valor).slice(0, 5);
+
+    const summaryHTML = `
+    <div class="summary-cards">
+        <div class="summary-card">
+            <div class="summary-header"><div class="summary-title">Top 5 Motoristas</div><div class="summary-icon"><i class="fas fa-user-tie"></i></div></div>
+            <table class="summary-table"><thead><tr><th>Motorista</th><th>Viagens</th><th>Total</th></tr></thead><tbody>
+                ${topMotoristas.map(([nome, dados]) => `<tr><td>${nome}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
+            </tbody></table>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-header"><div class="summary-title">Top 5 Veículos</div><div class="summary-icon"><i class="fas fa-truck"></i></div></div>
+            <table class="summary-table"><thead><tr><th>Placa</th><th>Viagens</th><th>Total</th></tr></thead><tbody>
+                ${topVeiculos.map(([placa, dados]) => `<tr><td>${placa}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
+            </tbody></table>
+        </div>
+
+        <div class="summary-card">
+            <div class="summary-header"><div class="summary-title">Top 5 Meses</div><div class="summary-icon"><i class="fas fa-calendar-alt"></i></div></div>
+            <table class="summary-table"><thead><tr><th>Mês/Ano</th><th>Viagens</th><th>Total</th></tr></thead><tbody>
+                ${topMeses.map(([mes, dados]) => `<tr><td>${mes}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
+            </tbody></table>
+        </div>
     </div>
-
-    <div class="summary-card">
-        <div class="summary-header"><div class="summary-title">Top 5 Veículos</div><div class="summary-icon"><i class="fas fa-truck"></i></div></div>
-        <table class="summary-table"><thead><tr><th>Placa</th><th>Viagens</th><th>Total</th></tr></thead><tbody>
-            ${topVeiculos.map(([placa, dados]) => `<tr><td>${placa}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
-        </tbody></table>
-    </div>
-
-    <div class="summary-card">
-        <div class="summary-header"><div class="summary-title">Top 5 Meses</div><div class="summary-icon"><i class="fas fa-calendar-alt"></i></div></div>
-        <table class="summary-table"><thead><tr><th>Mês/Ano</th><th>Viagens</th><th>Total</th></tr></thead><tbody>
-            ${topMeses.map(([mes, dados]) => `<tr><td>${mes}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
-        </tbody></table>
-    </div>
-</div>
-`;
-
-    // AQUI ESTÁ O PULO DO GATO QUE FALTAVA:
+    `;
     elementos.contentArea.innerHTML = metricsHTML + summaryHTML;
 } 
 
-// ==========================================
-// 1. RELATÓRIO DE MOTORISTAS (CORRETO)
-// ==========================================
 function mostrarRelatorioMotoristas(resumo) {
     const gerarClick = (nome) => `onclick="abrirDetalhesMotorista('${nome}')" style="cursor:pointer"`;
     
@@ -319,13 +310,9 @@ function mostrarRelatorioMotoristas(resumo) {
         </div>`;
 }
 
-// ==========================================
-// 2. RELATÓRIO DE VEÍCULOS (CORRETO)
-// ==========================================
-function mostrarRelatorioVeiculos(resumo) { 
+function mostrarRelatorioVeiculos(resumo) {
     // Versão Mobile
-    const isMobile = window.innerWidth < 768;
-    if (isMobile) {
+    if (window.innerWidth < 768) {
         let html = `<h3 class="mobile-title">Veículos (Toque para ver Detalhes)</h3><div class="mobile-card-list">`;
         html += resumo.veiculosOrdenados.map(([placa, d]) => `
             <div class="mobile-card" onclick="abrirDetalhesVeiculo('${placa}')" style="border-left: 4px solid var(--cor-primaria);">
@@ -336,36 +323,8 @@ function mostrarRelatorioVeiculos(resumo) {
         elementos.contentArea.innerHTML = html;
         return;
     }
-
+    
     // Versão Desktop
-    let html = `
-    <div class="summary-card" style="overflow-x: auto;">
-        <div class="summary-header"><div class="summary-title">Resumo Faturamento por Veículo</div><div class="summary-icon" style="background:rgba(255,107,53,0.1); color:#FF6B35; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:4px;"><i class="fas fa-truck"></i></div></div>
-        <table class="summary-table" style="width: 100%; border-collapse: collapse; min-width: 800px;">
-            <thead><tr><th style="text-align: left; padding: 12px;">Placa</th><th class="center" style="padding: 12px;">Viagens</th><th class="center" style="padding: 12px;">KM Total</th><th class="money" style="padding: 12px;">Faturamento Total</th><th class="money" style="padding: 12px;">Média/Viagem</th><th class="money" style="padding: 12px;">Renda/KM</th><th class="center" style="padding: 12px;">Ação</th></tr></thead>
-            <tbody>`;
-    html += resumo.veiculosOrdenados.map(([placa, d]) => `
-        <tr onclick="abrirDetalhesVeiculo('${placa}')" style="cursor:pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.02)'" onmouseout="this.style.background='transparent'">
-            <td style="padding: 12px; font-weight:bold;">${placa}</td><td class="center" style="padding: 12px;">${d.viagens}</td><td class="center" style="padding: 12px;">${formatarNumero(d.km)}</td><td class="money" style="padding: 12px;">${formatarMoeda(d.valor)}</td><td class="money" style="padding: 12px;">${formatarMoeda(d.valor / d.viagens)}</td><td class="money" style="padding: 12px;">${formatarMoeda(d.km > 0 ? d.valor / d.km : 0)}/km</td><td class="center" style="padding: 12px;"><i class="fas fa-search-plus" style="color:var(--cor-primaria);"></i></td>
-        </tr>`).join('');
-    html += `</tbody></table></div>`;
-    elementos.contentArea.innerHTML = html;
-}
-
-function mostrarRelatorioMotoristas(resumo) {
-// ...
-    const isMobile = window.innerWidth < 768;
-    if (isMobile) {
-        let html = `<h3 class="mobile-title">Veículos (Toque para ver Detalhes)</h3><div class="mobile-card-list">`;
-        html += resumo.veiculosOrdenados.map(([placa, d]) => `
-            <div class="mobile-card" onclick="abrirDetalhesVeiculo('${placa}')" style="border-left: 4px solid var(--cor-primaria);">
-                <div style="display:flex; justify-content:space-between; align-items:center;"><strong style="color:var(--cor-primaria); font-size:1.1rem;">${placa}</strong><span class="status-badge" style="background:rgba(0,0,0,0.05); color:var(--cor-texto-sec);">${d.viagens} viagens</span></div>
-                <div style="display:flex; justify-content:space-between; margin-top:8px; color:var(--cor-texto-sec); font-size:0.9rem;"><span>${formatarNumero(d.km)} km</span><span class="money" style="color:var(--cor-pago); font-weight:bold; font-size:1.1rem;">${formatarMoeda(d.valor)}</span></div>
-            </div>`).join('');
-        html += `</div>`;
-        elementos.contentArea.innerHTML = html;
-        return;
-    }
     let html = `
     <div class="summary-card" style="overflow-x: auto;">
         <div class="summary-header"><div class="summary-title">Resumo Faturamento por Veículo</div><div class="summary-icon" style="background:rgba(255,107,53,0.1); color:#FF6B35; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:4px;"><i class="fas fa-truck"></i></div></div>
@@ -401,7 +360,6 @@ function mostrarRelatorioClientes(resumo) {
         </div>`;
 }
 
-// Relatório de Rotas (CORRIGIDO)
 function mostrarRelatorioRotas(resumo) {
     // VERSÃO MOBILE
     if (window.innerWidth < 768) {
@@ -449,12 +407,7 @@ function mostrarRelatorioRotas(resumo) {
                         const kmMedio = dados.km / dados.viagens;
                         const mediaViagem = dados.valor / dados.viagens;
                         const mediaKM = dados.km > 0 ? dados.valor / dados.km : 0;
-                        
-                        // --- CORREÇÃO AQUI: Tratamento seguro de aspas ---
-                        // Substitui aspas duplas por &quot; e simples por \'
-                        const rotaSegura = rota
-                            .replace(/"/g, '&quot;')
-                            .replace(/'/g, "\\'");
+                        const rotaSegura = rota.replace(/"/g, '&quot;').replace(/'/g, "\\'");
 
                         return `
                             <tr>
@@ -483,6 +436,7 @@ function mostrarRelatorioRotas(resumo) {
         </div>
     `;
 }
+
 function mostrarRelatorioDiario(resumo) {
     const listaDias = resumo.diasOrdenados;
     const gerarClick = (dia) => `onclick="abrirDetalhesDia('${dia}')" style="cursor:pointer"`;
