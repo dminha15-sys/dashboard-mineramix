@@ -755,7 +755,7 @@ function abrirDetalhesVeiculo(placa) {
         elLucroLiq.textContent = formatarMoeda(lucroLiquido);
         elLucroLiq.style.color = lucroLiquido >= 0 ? 'var(--cor-pago)' : '#dc3545';
         document.getElementById('textoMotoristaVeiculo').textContent = motoristaPrincipal;
-        document.getElementById('modalRota').textContent = rotaPrincipal;
+        document.getElementById('textoRotaVeiculo').textContent = rotaPrincipal;
         document.getElementById('modalMedia').textContent = formatarMoeda(d.viagens > 0 ? faturamento/d.viagens : 0);
         document.getElementById('modalVeiculo').style.display = 'flex';
     } catch (e) {
