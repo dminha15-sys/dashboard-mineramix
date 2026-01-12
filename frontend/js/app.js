@@ -897,3 +897,22 @@ window.abrirDetalhesRota = function(rotaCodificada, kmTotal) {
         console.error(erro);
     }
 }
+
+
+// --- FUNÇÕES DO MODAL DE ROTA ---
+
+function abrirModalRota() {
+    // Mostra o modal mudando o display para Flex (para centralizar)
+    document.getElementById('modalRotaContainer').style.display = 'flex';
+}
+
+function fecharModalRota() {
+    document.getElementById('modalRotaContainer').style.display = 'none';
+}
+
+// Opcional: Fechar se clicar fora do modal (no fundo escuro)
+document.getElementById('modalRotaContainer').addEventListener('click', function(e) {
+    if (e.target === this) {
+        fecharModalRota();
+    }
+});    
