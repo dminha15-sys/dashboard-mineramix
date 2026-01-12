@@ -9,7 +9,7 @@ const CUSTOS = {
 const CONFIG = {
     API_URL: 'https://dashboard-mineramix-backend.onrender.com/api/dados'
 };
-
+ 
 // ==========================================
 // CONFIGURAÇÃO DE PEDÁGIOS (BR-101 / VIA LAGOS)
 // ==========================================
