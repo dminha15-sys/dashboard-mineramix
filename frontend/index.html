@@ -139,57 +139,50 @@
 </div>
 
 <div id="modalMotorista" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 500px;">
         <div class="modal-header">
             <div>
                 <h3 id="modalMotTitulo" style="color:var(--cor-primaria)">Motorista</h3>
-                <small style="color:var(--cor-texto-sec)">Análise de Rentabilidade Estimada</small>
+                <small style="color:var(--cor-texto-sec)">Dados do período selecionado</small>
             </div>
             <button class="modal-close" onclick="fecharModalMotorista()">&times;</button>
         </div>
-        <div class="driver-metrics-grid">
-            <div class="metric-column">
-                <h4 style="margin-bottom:1rem; color:var(--cor-secundaria); border-bottom:1px solid var(--cor-borda); padding-bottom:5px;">
-                    <i class="fas fa-truck"></i> Operacional
-                </h4>
-                <div class="metric-item">
-                    <span class="metric-label">Viagens Realizadas</span>
-                    <strong class="metric-value" id="motViagens">--</strong>
-                </div>
-                <div class="metric-item">
-                    <span class="metric-label">Distância Total Percorrida</span>
-                    <strong class="metric-value" id="motKm">-- km</strong>
-                </div>
-                <div class="metric-item">
-                    <span class="metric-label">Média KM por Viagem</span>
-                    <strong class="metric-value" id="motMediaKm">-- km</strong>
-                </div>
+        
+        <div class="metrics-grid" style="grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+            <div class="metric-card" style="padding: 1rem;">
+                <div class="metric-label">Faturamento Total</div>
+                <div class="metric-value money" id="motFaturamento" style="font-size: 1.2rem;">R$ 0,00</div>
             </div>
-            <div class="metric-column">
-                <h4 style="margin-bottom:1rem; color:var(--cor-pago); border-bottom:1px solid var(--cor-borda); padding-bottom:5px;">
-                    <i class="fas fa-coins"></i> Financeiro (Est.)
-                </h4>
-                <div class="metric-item">
-                    <span class="metric-label">Faturamento Bruto (+)</span>
-                    <strong class="metric-value money-positive" id="motFaturamento">R$ 0,00</strong>
+
+            <div class="metric-card" style="padding: 1rem;">
+                <div class="metric-label">KM Percorrido</div>
+                <div class="metric-value" id="motKm" style="font-size: 1.2rem;">0 km</div>
+            </div>
+        </div>
+
+        <div class="summary-card" style="margin-top: 1rem; border-left: 4px solid var(--cor-secundaria);">
+            <div class="summary-header" style="margin-bottom: 0.5rem; border-bottom: none;">
+                <div class="summary-title">Análise de Rentabilidade</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                
+                <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                    <span style="color: var(--cor-texto-sec);">Gasto Est. Combustível <small>(R$ 6,00/L)</small></span>
+                    <strong style="color: #dc3545;" id="motCustoDiesel">- R$ 0,00</strong>
                 </div>
-                <div class="metric-item">
-                    <span class="metric-label">Consumo Diesel Est. (-) <small>(2km/l a R$6,00)</small></span>
-                    <strong class="metric-value money-negative" id="motDiesel">R$ 0,00</strong>
+
+                <div style="border-top: 1px dashed var(--cor-borda); margin: 0.2rem 0;"></div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600; color: var(--cor-primaria);">LUCRO OPERACIONAL</span>
+                    <strong style="font-size: 1.4rem; color: var(--cor-pago);" id="motLucro">R$ 0,00</strong>
                 </div>
-                <div class="metric-item">
-                    <span class="metric-label">Manutenção Est. (-) <small>(12%)</small></span>
-                    <strong class="metric-value money-negative" id="motManutencao">R$ 0,00</strong>
-                </div>
-                <div class="metric-divisor"></div>
-                <div class="metric-item highlight">
-                    <span class="metric-label">LUCRO LÍQUIDO PREVISTO (=)</span>
-                    <strong class="metric-value" id="motLucro" style="font-size:1.3rem;">R$ 0,00</strong>
-                </div>
+                <small style="text-align: right; font-size: 0.7rem; color: var(--cor-texto-sec);">*Baseado na média do veículo (2km/l)</small>
             </div>
         </div>
     </div>
 </div>
+
 <div id="modalVeiculo" class="modal-overlay" style="display: none;">
     <div class="modal-card">
         <div class="modal-header">
@@ -197,20 +190,39 @@
             <button class="close-btn" onclick="fecharModal()">&times;</button>
         </div>
         <div class="modal-body">
-            <div class="modal-stats">
+            
+            <div class="modal-stats" style="grid-template-columns: 1fr 1fr;">
                 <div class="stat-box">
                     <span class="stat-label">Faturamento Total</span>
                     <strong class="stat-value money" id="modalFaturamento">R$ 0,00</strong>
-                </div>
-                <div class="stat-box destaque">
-                    <span class="stat-label">Rentabilidade</span>
-                    <strong class="stat-value" id="modalRentabilidade">R$ 0,00/km</strong>
                 </div>
                 <div class="stat-box">
                     <span class="stat-label">KM Total</span>
                     <strong class="stat-value" id="modalKM">0 km</strong>
                 </div>
             </div>
+
+            <div style="background: var(--cor-fundo); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--cor-borda);">
+                <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--cor-texto-sec); margin-bottom: 0.8rem;">Custos Estimados</h4>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                    <span><i class="fas fa-gas-pump" style="color: #dc3545; margin-right: 5px;"></i> Combustível</span>
+                    <strong style="color: #dc3545;" id="modalCustoCombustivel">- R$ 0,00</strong>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                    <span><i class="fas fa-tools" style="color: #ffc107; margin-right: 5px;"></i> Manutenção (12%)</span>
+                    <strong style="color: #dc3545;" id="modalCustoManutencao">- R$ 0,00</strong>
+                </div>
+
+                <div style="border-top: 1px solid var(--cor-borda); margin: 0.8rem 0;"></div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 700;">LUCRO LÍQUIDO PREVISTO</span>
+                    <strong style="font-size: 1.2rem; color: var(--cor-pago);" id="modalLucroLiquido">R$ 0,00</strong>
+                </div>
+            </div>
+
             <div class="modal-details-list">
                 <div class="detail-item">
                     <i class="fas fa-user-tie"></i>
@@ -229,7 +241,7 @@
                 <div class="detail-item">
                     <i class="fas fa-chart-line"></i>
                     <div>
-                        <span class="detail-label">Média por Viagem</span>
+                        <span class="detail-label">Média Faturamento/Viagem</span>
                         <strong id="modalMedia">R$ 0,00</strong>
                     </div>
                 </div>
