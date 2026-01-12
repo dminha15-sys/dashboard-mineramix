@@ -952,3 +952,197 @@
     border: 1px solid var(--cor-borda);
 }
 
+
+
+.modal-overlay-rota {
+    display: none; /* Começa invisível */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7); /* Fundo escurecido atrás */
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+}
+
+/* MODAL */
+  .route-card {
+    background-color: var(--theme-card-bg);
+    width: 380px;
+    border-radius: 8px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    border: 1px solid var(--theme-border);
+    color: var(--theme-text-main);
+    overflow: hidden;
+  }
+
+  /* CABEÇALHO */
+  .card-header {
+    background-color: #252525;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--theme-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .header-title h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .header-title span {
+    font-size: 12px;
+    color: var(--theme-text-muted);
+    margin-top: 4px;
+    display: block;
+  }
+
+  .close-btn {
+    background: none;
+    border: none;
+    color: var(--theme-text-muted);
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  /* CORPO / TIMELINE */
+  .card-body {
+    padding: 25px 20px;
+    position: relative;
+  }
+
+  /* Linha tracejada */
+  .timeline-line {
+    position: absolute;
+    left: 28px;
+    top: 40px;
+    bottom: 60px;
+    border-left: 2px dashed #444;
+    z-index: 0;
+  }
+
+  .stop-point {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 25px;
+    z-index: 1;
+  }
+
+  /* Bolinha da origem */
+  .dot-origin {
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    border-radius: 50%;
+    margin-top: 5px;
+    margin-right: 15px;
+    box-shadow: 0 0 0 4px var(--theme-card-bg);
+  }
+
+  /* Pin do destino (Laranja igual imagem) */
+  .pin-dest {
+    color: var(--theme-accent);
+    font-size: 18px;
+    margin-right: 12px;
+    margin-left: -4px;
+    background: var(--theme-card-bg);
+  }
+
+  .info-text strong {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 3px;
+  }
+
+  .info-text span {
+    font-size: 12px;
+    color: var(--theme-text-muted);
+  }
+
+  /* TAGS DE PEDÁGIO (Estilo Dark) */
+  .toll-container {
+    margin-left: 26px; /* Alinhado ao texto */
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .toll-badge {
+    background-color: rgba(255, 193, 7, 0.1); /* Fundo amarelo bem suave */
+    border: 1px solid rgba(255, 193, 7, 0.4);
+    color: var(--theme-yellow);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    width: fit-content;
+    display: flex;
+    align-items: center;
+  }
+  
+  .toll-badge i { margin-right: 6px; }
+
+  /* BOX ESCURO DE TOTAIS */
+  .summary-box {
+    background-color: #121212; /* Mais escuro que o card, destaque */
+    margin: 0 15px 15px 15px;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid var(--theme-border);
+  }
+
+  .summary-line {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: var(--theme-text-muted);
+  }
+
+  .summary-line strong {
+    color: #fff;
+  }
+  
+  .cost-highlight {
+    color: var(--theme-accent); /* Laranja */
+    font-weight: bold;
+    font-size: 14px;
+  }
+
+  /* GRID DE EIXOS (O PEDIDO EXTRA) */
+  .axle-section {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #333;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .axle-card {
+    background: #252525;
+    text-align: center;
+    padding: 8px;
+    border-radius: 4px;
+  }
+
+  .axle-label {
+    font-size: 10px;
+    color: var(--theme-text-muted);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .axle-value {
+    font-size: 14px;
+    color: #fff;
+    font-weight: 700;
+  }
