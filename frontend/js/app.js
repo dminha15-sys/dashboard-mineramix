@@ -1,6 +1,3 @@
-// ==========================================
-// 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS
-// ==========================================
 const CUSTOS = {
     DIESEL_PRECO: 6.00,
     CONSUMO_MEDIO: 2.0, // km/L
