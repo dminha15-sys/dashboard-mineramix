@@ -1,18 +1,16 @@
-'// Adicione isso no topo do app.js
+// ==========================================
+// 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS
+// ==========================================
 const CUSTOS = {
     DIESEL_PRECO: 6.00,
     CONSUMO_MEDIO: 2.0, // km/L
     MANUTENCAO_PCT: 0.12 // 12% sobre o faturamento
 };
 
-// Configuração
 const CONFIG = {
-    API_URL: 'https://dashboard-mineramix-backend.onrender.com/api/dados'
+    API_URL: '[https://dashboard-mineramix-backend.onrender.com/api/dados](https://dashboard-mineramix-backend.onrender.com/api/dados)'
 };
- 
-// ==========================================
-// CONFIGURAÇÃO DE PEDÁGIOS (BR-101 / VIA LAGOS)
-// ==========================================
+
 const CUSTO_PEDAGIOS = {
     'AUTOPISTA_FLUMINENSE': 6.90, // Pedágio BR-101
     'VIA_LAGOS': 27.00,           // Pedágio Via Lagos
@@ -20,12 +18,13 @@ const CUSTO_PEDAGIOS = {
     'OUTROS': 0.00
 };
 
-// Variáveis globais
+// Variáveis de Estado
 let dadosAnalisados = null;
 let dadosOriginais = null;
 let indiceColunaData = null;
+let chartInstance = null; // Para o gráfico
 
-// Elementos
+// Elementos do DOM
 const elementos = {
     contentArea: document.getElementById('contentArea'),
     reportTitle: document.getElementById('reportTitle'),
@@ -35,7 +34,20 @@ const elementos = {
     lastUpdate: document.getElementById('lastUpdate'),
 };
 
-// ========== FUNÇÕES DE ANÁLISE ESPECÍFICA ==========
+// ==========================================
+// 2. FUNÇÕES DE LEITURA E PARSEAMENTO
+// ==========================================
+
+function detectColumnsGlobal(cabecalhos) {
+    const map = {};
+    cabecalhos.forEach((c, i) => {
+        const t = c.toString().toLowerCase();
+        if(t.includes('motorista')) map.motorista = i;
+        if(t.includes('origem')) map.origem = i;
+        if(t.includes('destino')) map.destino = i;
+    });
+    return map;
+}
 
 function detectarColunas(cabecalhos) {
     console.log("🔍 Cabeçalhos recebidos:", cabecalhos);
@@ -64,6 +76,7 @@ function detectarColunas(cabecalhos) {
             mapeamento['STATUS'] = { indice: index, tipo: 'status' };
         }
     });
+    
     const colunas = [];
     Object.keys(mapeamento).forEach(nome => {
         colunas.push({ nome: nome, indice: mapeamento[nome].indice, tipo: mapeamento[nome].tipo });
@@ -95,9 +108,12 @@ function parsearDataBR(dataStr) {
     }
 }
 
+// === CORREÇÃO CRÍTICA DO UNDEFINED AQUI ===
 function analisarDadosMineramix(dados) {
     if (!dados || dados.length < 5) return null;
     let indiceCabecalho = -1;
+    
+    // Procura a linha de cabeçalho
     for (let i = 0; i < 10; i++) {
         const linhaStr = dados[i].join(' ').toUpperCase();
         if (linhaStr.includes('DATA') && linhaStr.includes('MOTORISTA')) {
@@ -123,6 +139,8 @@ function analisarDadosMineramix(dados) {
     for (let i = 0; i < linhasBrutas.length; i++) {
         const linha = linhasBrutas[i];
         const linhaTexto = linha.join(' ').toUpperCase();
+        
+        // Pula linhas de totalização do Excel
         if (linhaTexto.includes('TOTAL A RECEBER') || linhaTexto.includes('TOTAL PAGO') || linhaTexto.includes('SALDO')) break;
 
         const dataRaw = idx.data !== undefined ? linha[idx.data] : null;
@@ -133,26 +151,27 @@ function analisarDadosMineramix(dados) {
         const valor = idx.valor !== undefined ? extrairNumero(linha[idx.valor]) : 0;
         const km = idx.km !== undefined ? extrairNumero(linha[idx.km]) : 0;
         
-        // --- CORREÇÃO DE MOTORISTA ---
+        // Tratamento de Motorista
         let motorista = idx.motorista !== undefined ? linha[idx.motorista] : 'NÃO IDENTIFICADO';
         if (!motorista || motorista.toString().trim() === '') motorista = 'NÃO IDENTIFICADO';
 
-        // --- CORREÇÃO DE VEÍCULO (O ERRO ESTAVA AQUI) ---
+        // Tratamento de Veículo (Correção do Undefined)
         let veiculo = idx.veiculo !== undefined ? linha[idx.veiculo] : 'NÃO IDENTIFICADO';
-        // Agora verificamos se veio vazio ou nulo
-        if (!veiculo || veiculo.toString().trim() === '') veiculo = 'NÃO IDENTIFICADO';
-
-        resumo.totalLinhas++;
-        resumo.totalValor += valor;
-        resumo.totalKM += km;
-        resumo.valores.push(valor);
-        resumo.kms.push(km);
+        if (!veiculo || veiculo.toString().trim() === '' || veiculo === 'undefined') veiculo = 'NÃO IDENTIFICADO';
 
         const cliente = idx.cliente !== undefined ? linha[idx.cliente] : 'Não informado';
         const origem = idx.origem !== undefined ? linha[idx.origem] : '';
         const destino = idx.destino !== undefined ? linha[idx.destino] : '';
         const status = idx.status !== undefined ? linha[idx.status] : 'Não informado';
 
+        // Computando dados
+        resumo.totalLinhas++;
+        resumo.totalValor += valor;
+        resumo.totalKM += km;
+        resumo.valores.push(valor);
+        resumo.kms.push(km);
+
+        // Agregações
         if (!resumo.motoristas[motorista]) resumo.motoristas[motorista] = { viagens: 0, valor: 0, km: 0 };
         resumo.motoristas[motorista].viagens++; resumo.motoristas[motorista].valor += valor; resumo.motoristas[motorista].km += km;
 
@@ -173,6 +192,7 @@ function analisarDadosMineramix(dados) {
         const mes = `${dataObj.getMonth() + 1}/${dataObj.getFullYear()}`;
         if (!resumo.dias[dia]) resumo.dias[dia] = { viagens: 0, valor: 0 };
         resumo.dias[dia].viagens++; resumo.dias[dia].valor += valor;
+        
         if (!resumo.meses[mes]) resumo.meses[mes] = { viagens: 0, valor: 0 };
         resumo.meses[mes].viagens++; resumo.meses[mes].valor += valor;
     }
@@ -180,6 +200,7 @@ function analisarDadosMineramix(dados) {
     resumo.mediaValor = resumo.totalLinhas > 0 ? resumo.totalValor / resumo.totalLinhas : 0;
     resumo.mediaKM = resumo.totalLinhas > 0 ? resumo.totalKM / resumo.totalLinhas : 0;
 
+    // Ordenações
     resumo.motoristasOrdenados = Object.entries(resumo.motoristas).sort((a, b) => b[1].valor - a[1].valor);
     resumo.veiculosOrdenados = Object.entries(resumo.veiculos).sort((a, b) => b[1].valor - a[1].valor);
     resumo.clientesOrdenados = Object.entries(resumo.clientes).sort((a, b) => b[1].valor - a[1].valor);
@@ -189,18 +210,49 @@ function analisarDadosMineramix(dados) {
     return resumo;
 }
 
-// ========== FUNÇÕES DE VISUALIZAÇÃO ==========
+// ==========================================
+// 3. FUNÇÕES DE VISUALIZAÇÃO E UI
+// ==========================================
 
 function formatarMoeda(valor) {
     return 'R$ ' + valor.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
+
 function formatarNumero(numero) {
     return numero.toFixed(0).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
+
 function atualizarStatus(online, mensagem) {
     elementos.statusText.textContent = mensagem;
     elementos.statusDot.className = online ? 'status-dot online' : 'status-dot offline';
 }
+
+function mostrarNotificacao(mensagem, tipo) {
+    const notificacao = document.createElement('div');
+    notificacao.style.cssText = `position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: 8px; color: white; font-weight: 500; z-index: 1000; animation: slideIn 0.3s ease-out; box-shadow: 0 5px 15px rgba(0,0,0,0.1); background: ${tipo === 'success' ? '#28a745' : '#dc3545'};`;
+    notificacao.textContent = mensagem;
+    document.body.appendChild(notificacao);
+    setTimeout(() => {
+        notificacao.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => { if (notificacao.parentNode) document.body.removeChild(notificacao); }, 300);
+    }, 5000);
+}
+
+function toggleDarkMode() {
+    document.body.classList.toggle('dark');
+    const icon = document.querySelector('#btnDark i');
+    if (document.body.classList.contains('dark')) {
+        icon.className = 'fas fa-sun';
+        localStorage.setItem('darkMode', 'on');
+    } else {
+        icon.className = 'fas fa-moon';
+        localStorage.setItem('darkMode', 'off');
+    }
+}
+
+// ==========================================
+// 4. LÓGICA DE RELATÓRIOS
+// ==========================================
 
 function mostrarRelatorio(tipo) {
     if (!dadosAnalisados) {
@@ -216,11 +268,10 @@ function mostrarRelatorio(tipo) {
     if (elementos.reportTitle) elementos.reportTitle.textContent = titulos[tipo] || 'Dashboard Mineramix';
     if (elementos.reportSubtitle) elementos.reportSubtitle.textContent = `${resumo.totalLinhas} viagens analisadas | ${formatarMoeda(resumo.totalValor)} total`;
 
-    // AQUI GARANTIMOS QUE O NOME CHAME A FUNÇÃO CERTA
     switch (tipo) {
         case 'overview': mostrarVisaoGeral(resumo); break;
         case 'motoristas': mostrarRelatorioMotoristas(resumo); break;
-        case 'veiculos': mostrarRelatorioVeiculos(resumo); break;
+        case 'veiculos': mostrarRelatorioVeiculos(resumo); break; // Agora aponta para a função certa
         case 'clientes': mostrarRelatorioClientes(resumo); break;
         case 'rotas': mostrarRelatorioRotas(resumo); break;
         case 'diario': mostrarRelatorioDiario(resumo); break;
@@ -243,8 +294,8 @@ function mostrarVisaoGeral(resumo) {
 
     const topMotoristas = resumo.motoristasOrdenados.slice(0, 5);
     const topVeiculos = resumo.veiculosOrdenados.slice(0, 5);
-
-    // Top 5 Meses
+    
+    // Top Meses
     const mesesMap = {};
     Object.entries(resumo.dias || {}).forEach(([data, info]) => {
         const partes = data.split('/'); 
@@ -281,13 +332,13 @@ function mostrarVisaoGeral(resumo) {
         </div>
     </div>
     `;
+
     elementos.contentArea.innerHTML = metricsHTML + summaryHTML;
-} 
+}
 
 function mostrarRelatorioMotoristas(resumo) {
     const gerarClick = (nome) => `onclick="abrirDetalhesMotorista('${nome}')" style="cursor:pointer"`;
     
-    // Versão Mobile
     if (window.innerWidth < 768) {
         const lista = resumo.motoristasOrdenados.slice(0, 10);
         const cards = lista.map(([nome, dados]) => `
@@ -302,7 +353,6 @@ function mostrarRelatorioMotoristas(resumo) {
         return;
     }
 
-    // Versão Desktop
     elementos.contentArea.innerHTML = `
         <div class="summary-card">
             <div class="summary-header"><div class="summary-title">Resumo Faturamento por Motorista</div><div class="summary-icon"><i class="fas fa-user-tie"></i></div></div>
@@ -317,7 +367,6 @@ function mostrarRelatorioMotoristas(resumo) {
 }
 
 function mostrarRelatorioVeiculos(resumo) {
-    // Versão Mobile
     if (window.innerWidth < 768) {
         let html = `<h3 class="mobile-title">Veículos (Toque para ver Detalhes)</h3><div class="mobile-card-list">`;
         html += resumo.veiculosOrdenados.map(([placa, d]) => `
@@ -330,7 +379,6 @@ function mostrarRelatorioVeiculos(resumo) {
         return;
     }
     
-    // Versão Desktop
     let html = `
     <div class="summary-card" style="overflow-x: auto;">
         <div class="summary-header"><div class="summary-title">Resumo Faturamento por Veículo</div><div class="summary-icon" style="background:rgba(255,107,53,0.1); color:#FF6B35; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:4px;"><i class="fas fa-truck"></i></div></div>
@@ -367,10 +415,8 @@ function mostrarRelatorioClientes(resumo) {
 }
 
 function mostrarRelatorioRotas(resumo) {
-    // VERSÃO MOBILE
     if (window.innerWidth < 768) {
         const lista = resumo.rotasOrdenadas; 
-
         const cards = lista.map(([rota, dados]) => `
             <div class="mobile-card">
                 <strong style="font-size: 0.9rem;">${rota}</strong>
@@ -389,7 +435,6 @@ function mostrarRelatorioRotas(resumo) {
         return;
     }
 
-    // VERSÃO DESKTOP
     elementos.contentArea.innerHTML = `
         <div class="summary-card">
             <div class="summary-header">
@@ -446,6 +491,7 @@ function mostrarRelatorioRotas(resumo) {
 function mostrarRelatorioDiario(resumo) {
     const listaDias = resumo.diasOrdenados;
     const gerarClick = (dia) => `onclick="abrirDetalhesDia('${dia}')" style="cursor:pointer"`;
+    
     if (window.innerWidth < 768) {
         const cards = listaDias.map(([dia, dados]) => {
             const dataObj = parsearDataBR(dia);
@@ -459,6 +505,7 @@ function mostrarRelatorioDiario(resumo) {
         elementos.contentArea.innerHTML = `<h3 class="mobile-title">Histórico Diário (${listaDias.length} dias)</h3><div class="mobile-card-list">${cards}</div>`;
         return;
     }
+    
     elementos.contentArea.innerHTML = `
         <div class="summary-card">
             <div class="summary-header"><div class="summary-title">Histórico Completo por Dia</div><div class="summary-icon"><i class="fas fa-calendar-day"></i></div></div>
@@ -479,6 +526,7 @@ function mostrarRelatorioKM(resumo) {
             <div class="metric-card"><div class="metric-icon"><i class="fas fa-calculator"></i></div><div class="metric-value">${formatarNumero(resumo.mediaKM)}</div><div class="metric-label">KM Médio/Viagem</div></div>
             <div class="metric-card"><div class="metric-icon"><i class="fas fa-money-bill-wave"></i></div><div class="metric-value">${formatarMoeda(resumo.totalValor / (resumo.totalKM || 1))}</div><div class="metric-label">Receita por KM</div></div>
         </div>`;
+    
     if (window.innerWidth < 768) {
         const topVeiculos = resumo.veiculosOrdenados.slice(0, 10);
         const listCards = topVeiculos.map(([placa, dados]) => `
@@ -489,6 +537,7 @@ function mostrarRelatorioKM(resumo) {
         elementos.contentArea.innerHTML = metricsHTML + `<h3 class="mobile-title" style="margin-top:1.5rem;">KM por Veículo</h3><div class="mobile-card-list">${listCards}</div>`;
         return;
     }
+    
     elementos.contentArea.innerHTML = `
         <div class="summary-card">
             <div class="summary-header"><div class="summary-title">Análise de Quilometragem</div><div class="summary-icon"><i class="fas fa-road"></i></div></div>
@@ -501,7 +550,293 @@ function mostrarRelatorioKM(resumo) {
         </div>`;
 }
 
-// ========== FUNÇÕES PRINCIPAIS ==========
+// ==========================================
+// 5. MODAIS E INTERAÇÕES
+// ==========================================
+
+function abrirDetalhesDia(diaClicado) {
+    if(!dadosOriginais) return;
+    const cabecalho = dadosOriginais[0];
+    const colunas = detectarColunas(cabecalho);
+    const idxData = colunas.find(c => c.tipo === 'data')?.indice;
+    const idxMotorista = colunas.find(c => c.tipo === 'motorista')?.indice;
+    const idxValor = colunas.find(c => c.tipo === 'valor')?.indice;
+    
+    if(idxData === undefined) return alert('Erro ao identificar data');
+
+    const registrosDia = dadosOriginais.slice(1).filter(linha => {
+        const dataLinha = linha[idxData];
+        if(!dataLinha) return false;
+        const dObj = parsearDataBR(dataLinha);
+        if(!dObj) return false;
+        return dObj.toLocaleDateString('pt-BR') === diaClicado;
+    });
+
+    const porMotorista = {};
+    let totalDia = 0;
+    
+    registrosDia.forEach(linha => {
+        const mot = linha[idxMotorista] || 'Indefinido';
+        const val = extrairNumero(linha[idxValor]);
+        if(!porMotorista[mot]) porMotorista[mot] = { valor: 0, viagens: 0 };
+        porMotorista[mot].valor += val;
+        porMotorista[mot].viagens++;
+        totalDia += val;
+    });
+
+    const arrayMotoristas = Object.entries(porMotorista).sort((a,b) => b[1].valor - a[1].valor);
+    document.getElementById('tituloModalDia').textContent = `Resumo: ${diaClicado}`;
+    document.getElementById('modalSubtitulo').textContent = `${registrosDia.length} viagens totais | ${formatarMoeda(totalDia)}`;
+
+    const listaHTML = arrayMotoristas.map(([nome, dados]) => `
+        <div class="driver-list-item">
+            <div><strong style="color:var(--cor-primaria)">${nome}</strong><br><small style="color:var(--cor-texto-sec)">${dados.viagens} viagens</small></div>
+            <div class="money" style="color:var(--cor-secundaria)">${formatarMoeda(dados.valor)}</div>
+        </div>`).join('');
+    document.getElementById('modalListaMotoristas').innerHTML = listaHTML;
+    gerarGraficoModal(arrayMotoristas);
+    document.getElementById('modalDia').style.display = 'flex';
+}
+
+function gerarGraficoModal(dadosMotoristas) {
+    const ctx = document.getElementById('graficoDia').getContext('2d');
+    if(chartInstance) chartInstance.destroy();
+    const labels = dadosMotoristas.map(d => d[0].split(' ')[0]);
+    const valores = dadosMotoristas.map(d => d[1].valor);
+    const viagens = dadosMotoristas.map(d => d[1].viagens);
+    const maiorValor = Math.max(...valores);
+    const tetoGrafico = maiorValor > 0 ? maiorValor * 1.2 : 100;
+    const isDark = document.body.classList.contains('dark');
+    const corTexto = isDark ? '#e9ecef' : '#1f2933';
+
+    chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{ data: valores, backgroundColor: '#FF6B35', hoverBackgroundColor: '#e55a2b', borderRadius: 4, barPercentage: 0.6, categoryPercentage: 0.8 }]
+        },
+        plugins: [ChartDataLabels],
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            layout: { padding: { top: 30, left: 10, right: 10, bottom: 10 } },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (ctx) => `${formatarMoeda(ctx.raw)} (${viagens[ctx.dataIndex]} viagens)` } },
+                datalabels: { align: 'end', anchor: 'end', formatter: (value) => value.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}), color: corTexto, font: { weight: 'bold', size: 11 }, offset: 4 }
+            },
+            scales: {
+                y: { display: false, beginAtZero: true, max: tetoGrafico, grid: { display: false } },
+                x: { grid: { display: false }, ticks: { color: corTexto, font: { size: 11, weight: '500' } } }
+            }
+        }
+    });
+}
+
+function abrirDetalhesMotorista(nomeMotorista) {
+    if(!dadosAnalisados) return;
+    const dadosMot = dadosAnalisados.motoristas[nomeMotorista];
+    if(!dadosMot) return alert('Dados não encontrados para este motorista.');
+    const faturamento = dadosMot.valor;
+    const kmTotal = dadosMot.km;
+    const litros = kmTotal > 0 ? kmTotal / CUSTOS.CONSUMO_MEDIO : 0;
+    const custoDiesel = litros * CUSTOS.DIESEL_PRECO;
+    const lucroOperacional = faturamento - custoDiesel;
+
+    document.getElementById('modalMotTitulo').textContent = nomeMotorista;
+    document.getElementById('motFaturamento').textContent = formatarMoeda(faturamento);
+    document.getElementById('motKm').textContent = formatarNumero(kmTotal) + ' km';
+    document.getElementById('motCustoDiesel').textContent = `- ${formatarMoeda(custoDiesel)}`;
+    const elLucro = document.getElementById('motLucro');
+    elLucro.textContent = formatarMoeda(lucroOperacional);
+    elLucro.style.color = lucroOperacional >= 0 ? 'var(--cor-pago)' : '#dc3545';
+    document.getElementById('modalMotorista').style.display = 'flex';
+}
+
+function abrirDetalhesVeiculo(placa) {
+    if (!dadosAnalisados || !dadosAnalisados.veiculos[placa]) {
+        alert("Dados não encontrados para este veículo no período selecionado.");
+        return;
+    }
+    try {
+        const d = dadosAnalisados.veiculos[placa];
+        const faturamento = d.valor;
+        const kmTotal = d.km;
+        const litros = kmTotal > 0 ? kmTotal / CUSTOS.CONSUMO_MEDIO : 0;
+        const custoDiesel = litros * CUSTOS.DIESEL_PRECO;
+        const custoManutencao = faturamento * CUSTOS.MANUTENCAO_PCT;
+        const lucroLiquido = faturamento - custoDiesel - custoManutencao;
+
+        let motoristaPrincipal = "Analisando...";
+        let rotaPrincipal = "Analisando...";
+        
+        if(dadosOriginais && indiceColunaData !== null) {
+             const inicioInput = document.getElementById('dataInicio').value;
+             const fimInput = document.getElementById('dataFim').value;
+             let viagensFiltradas = [];
+             if(inicioInput && fimInput) {
+                 const dInicio = new Date(inicioInput);
+                 const dFim = new Date(fimInput);
+                 dFim.setHours(23,59,59);
+                 viagensFiltradas = dadosOriginais.slice(1).filter(linha => {
+                     const dt = parsearDataBR(linha[indiceColunaData]);
+                     return dt >= dInicio && dt <= dFim && linha.toString().includes(placa);
+                 });
+             } else {
+                 viagensFiltradas = dadosOriginais.slice(1).filter(l => l.toString().includes(placa));
+             }
+             const contMot = {};
+             const contRota = {};
+             const cols = detectColumnsGlobal(dadosOriginais[0]); 
+             const idxMot = cols.motorista;
+             const idxOrig = cols.origem;
+             const idxDest = cols.destino;
+
+             viagensFiltradas.forEach(v => {
+                 if(idxMot !== undefined) { const m = v[idxMot] || 'Desconhecido'; contMot[m] = (contMot[m] || 0) + 1; }
+                 if(idxOrig !== undefined && idxDest !== undefined) { const r = `${v[idxOrig]} -> ${v[idxDest]}`; contRota[r] = (contRota[r] || 0) + 1; }
+             });
+             const sortMot = Object.entries(contMot).sort((a,b)=>b[1]-a[1]);
+             if(sortMot.length > 0) motoristaPrincipal = `${sortMot[0][0]} (${Math.round(sortMot[0][1]/viagensFiltradas.length*100)}%)`;
+             const sortRota = Object.entries(contRota).sort((a,b)=>b[1]-a[1]);
+             if(sortRota.length > 0) rotaPrincipal = sortRota[0][0];
+        }
+
+        document.getElementById('textoPlaca').textContent = placa;
+        document.getElementById('modalFaturamento').textContent = formatarMoeda(faturamento);
+        document.getElementById('modalKM').textContent = formatarNumero(kmTotal) + ' km';
+        document.getElementById('modalCustoCombustivel').textContent = `- ${formatarMoeda(custoDiesel)}`;
+        document.getElementById('modalCustoManutencao').textContent = `- ${formatarMoeda(custoManutencao)}`;
+        const elLucroLiq = document.getElementById('modalLucroLiquido');
+        elLucroLiq.textContent = formatarMoeda(lucroLiquido);
+        elLucroLiq.style.color = lucroLiquido >= 0 ? 'var(--cor-pago)' : '#dc3545';
+        document.getElementById('textoMotoristaVeiculo').textContent = motoristaPrincipal;
+        document.getElementById('textoRotaVeiculo').textContent = rotaPrincipal;
+        document.getElementById('modalMedia').textContent = formatarMoeda(d.viagens > 0 ? faturamento/d.viagens : 0);
+        document.getElementById('modalVeiculo').style.display = 'flex';
+    } catch (e) {
+        console.error("Erro detalhes veiculo", e);
+        alert("Erro ao processar dados: " + e.message);
+    }
+}
+
+function fecharModal() {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+}
+
+function fecharModalMotorista() {
+    document.getElementById('modalMotorista').style.display = 'none';
+}
+
+function fecharModalVeiculo() {
+    document.getElementById('modalVeiculo').style.display = 'none';
+}
+
+// ---------------------------
+// LÓGICA DE ROTAS E PEDÁGIOS
+// ---------------------------
+function calcularCustoPedagio(destino) {
+    let destLimpo = String(destino || "").toUpperCase();
+    if (destLimpo.includes('→')) {
+        destLimpo = destLimpo.split('→')[1] || destLimpo; 
+    }
+    destLimpo = destLimpo.trim(); 
+
+    let custo = 0;
+    let detalhes = [];
+
+    // Rota 1: Região dos Lagos
+    if (destLimpo.includes('CABO FRIO') || destLimpo.includes('BUZIOS') || destLimpo.includes('ARRAIAL') || destLimpo.includes('SAO PEDRO') || destLimpo.includes('IGUABA')) {
+        custo += CUSTO_PEDAGIOS.VIA_LAGOS;
+        detalhes.push(`Via Lagos (R$ ${formatarMoeda(CUSTO_PEDAGIOS.VIA_LAGOS)})`);
+    }
+
+    // Rota 2: BR-101 Norte (Macaé/Campos)
+    if (destLimpo.includes('MACAE') || destLimpo.includes('RIO DAS OSTRAS') || destLimpo.includes('CAMPOS') || destLimpo.includes('CASIMIRO')) {
+        custo += CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE;
+        detalhes.push(`Praça BR-101 (R$ ${formatarMoeda(CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE)})`);
+    }
+
+    // Rota 3: Rio/Niterói
+    if (destLimpo.includes('RIO DE JANEIRO') || destLimpo.includes('NITEROI') || destLimpo.includes('SAO GONCALO') || destLimpo.includes('ITABORAI') || destLimpo.includes('DUQUE')) {
+        custo += CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE; 
+        detalhes.push(`Pedágio Manilha (R$ ${formatarMoeda(CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE)})`);
+        
+        if(destLimpo.includes('RIO DE JANEIRO') || destLimpo.includes('DUQUE')) {
+            custo += CUSTO_PEDAGIOS.PONTE_RIO_NITEROI;
+            detalhes.push(`Ponte Rio-Niterói (R$ ${formatarMoeda(CUSTO_PEDAGIOS.PONTE_RIO_NITEROI)})`);
+        }
+    }
+
+    if (custo === 0) {
+        detalhes.push("Rota local ou sem pedágio mapeado");
+    }
+
+    return { total: custo, lista: detalhes };
+}
+
+window.abrirDetalhesRota = function(rotaCodificada, kmTotal) {
+    try {
+        const destinoBruto = decodeURIComponent(rotaCodificada);
+        const destinoNome = destinoBruto.replace(/.*→/, '').trim(); 
+        console.log("🚀 Abrindo rota para:", destinoNome);
+
+        const infoPedagio = calcularCustoPedagio(destinoNome);
+
+        const elDestino = document.getElementById('rotaDestinoNome');
+        const elRotaKm = document.getElementById('rotaKm');
+        const elResumoKm = document.getElementById('resumoKm');
+        const elResumoPedagio = document.getElementById('resumoPedagio');
+        const containerPedagios = document.getElementById('rotaPedagios');
+        const modal = document.getElementById('modalRota');
+
+        if (!modal) {
+            alert("ERRO CRÍTICO: O Modal não existe no HTML!");
+            return;
+        }
+
+        elDestino.textContent = destinoNome;
+        elRotaKm.textContent = formatarNumero(kmTotal) + ' km (Estimado)';
+        elResumoKm.textContent = formatarNumero(kmTotal) + ' km';
+        elResumoPedagio.textContent = formatarMoeda(infoPedagio.total);
+        elResumoPedagio.style.color = infoPedagio.total > 0 ? '#dc3545' : '#333';
+
+        if(containerPedagios) {
+            containerPedagios.innerHTML = ''; 
+            infoPedagio.lista.forEach(item => {
+                const badge = document.createElement('span');
+                badge.style.cssText = "background:#ffc107; color:#000; padding:4px 8px; border-radius:10px; font-size:12px; margin-right:5px; display:inline-block;";
+                badge.innerHTML = `<i class="fas fa-ticket-alt"></i> ${item}`;
+                containerPedagios.appendChild(badge);
+            });
+        }
+        
+        // CSS Forçado para garantir visualização
+        modal.style.cssText = "display: flex !important; position: fixed !important; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 99999; align-items: center; justify-content: center;";
+
+        const card = modal.querySelector('.modal-content');
+        if(card) {
+            card.style.cssText = "background-color: #ffffff !important; display: block !important; width: 90%; max-width: 500px; padding: 20px; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.5); position: relative; z-index: 100000; color: #333;";
+        }
+
+        console.log("✅ Modal forçado via JS Inline!");
+
+    } catch (erro) {
+        alert("Erro no Script: " + erro.message);
+        console.error(erro);
+    }
+}
+
+function fecharModalRota() {
+    document.getElementById('modalRotaContainer').style.display = 'none';
+    if(document.getElementById('modalRota')) {
+         document.getElementById('modalRota').style.display = 'none';
+    }
+}
+
+
+// ==========================================
+// 6. FUNÇÕES PRINCIPAIS E INICIALIZAÇÃO
+// ==========================================
 
 async function carregarDados() {
     try {
@@ -567,29 +902,7 @@ async function testarConexao() {
     }
 }
 
-function mostrarNotificacao(mensagem, tipo) {
-    const notificacao = document.createElement('div');
-    notificacao.style.cssText = `position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: 8px; color: white; font-weight: 500; z-index: 1000; animation: slideIn 0.3s ease-out; box-shadow: 0 5px 15px rgba(0,0,0,0.1); background: ${tipo === 'success' ? '#28a745' : '#dc3545'};`;
-    notificacao.textContent = mensagem;
-    document.body.appendChild(notificacao);
-    setTimeout(() => {
-        notificacao.style.animation = 'slideOut 0.3s ease-in';
-        setTimeout(() => { if (notificacao.parentNode) document.body.removeChild(notificacao); }, 300);
-    }, 5000);
-}
-
-function toggleDarkMode() {
-    document.body.classList.toggle('dark');
-    const icon = document.querySelector('#btnDark i');
-    if (document.body.classList.contains('dark')) {
-        icon.className = 'fas fa-sun';
-        localStorage.setItem('darkMode', 'on');
-    } else {
-        icon.className = 'fas fa-moon';
-        localStorage.setItem('darkMode', 'off');
-    }
-}
-
+// Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     const menuItems = document.querySelectorAll('.menu-item[data-report]');
     menuItems.forEach(item => { item.style.display = 'flex'; item.style.visibility = 'visible'; item.style.opacity = '1'; });
@@ -619,331 +932,10 @@ window.addEventListener('resize', function() {
     }
 });
 
-let chartInstance = null;
-
-function abrirDetalhesDia(diaClicado) {
-    if(!dadosOriginais) return;
-    const cabecalho = dadosOriginais[0];
-    const colunas = detectarColunas(cabecalho);
-    const idxData = colunas.find(c => c.tipo === 'data')?.indice;
-    const idxMotorista = colunas.find(c => c.tipo === 'motorista')?.indice;
-    const idxValor = colunas.find(c => c.tipo === 'valor')?.indice;
-    
-    if(idxData === undefined) return alert('Erro ao identificar data');
-
-    const registrosDia = dadosOriginais.slice(1).filter(linha => {
-        const dataLinha = linha[idxData];
-        if(!dataLinha) return false;
-        const dObj = parsearDataBR(dataLinha);
-        if(!dObj) return false;
-        return dObj.toLocaleDateString('pt-BR') === diaClicado;
-    });
-
-    const porMotorista = {};
-    let totalDia = 0;
-    
-    registrosDia.forEach(linha => {
-        const mot = linha[idxMotorista] || 'Indefinido';
-        const val = extrairNumero(linha[idxValor]);
-        if(!porMotorista[mot]) porMotorista[mot] = { valor: 0, viagens: 0 };
-        porMotorista[mot].valor += val;
-        porMotorista[mot].viagens++;
-        totalDia += val;
-    });
-
-    const arrayMotoristas = Object.entries(porMotorista).sort((a,b) => b[1].valor - a[1].valor);
-    document.getElementById('tituloModalDia').textContent = `Resumo: ${diaClicado}`;
-    document.getElementById('modalSubtitulo').textContent = `${registrosDia.length} viagens totais | ${formatarMoeda(totalDia)}`;
-
-    const listaHTML = arrayMotoristas.map(([nome, dados]) => `
-        <div class="driver-list-item">
-            <div><strong style="color:var(--cor-primaria)">${nome}</strong><br><small style="color:var(--cor-texto-sec)">${dados.viagens} viagens</small></div>
-            <div class="money" style="color:var(--cor-secundaria)">${formatarMoeda(dados.valor)}</div>
-        </div>`).join('');
-    document.getElementById('modalListaMotoristas').innerHTML = listaHTML;
-    gerarGraficoModal(arrayMotoristas);
-    document.getElementById('modalDia').style.display = 'flex';
-}
-
-function fecharModal() {
-    const modals = document.querySelectorAll('.modal-overlay');
-    modals.forEach(m => m.style.display = 'none');
-}
-
-function gerarGraficoModal(dadosMotoristas) {
-    const ctx = document.getElementById('graficoDia').getContext('2d');
-    if(chartInstance) chartInstance.destroy();
-    const labels = dadosMotoristas.map(d => d[0].split(' ')[0]);
-    const valores = dadosMotoristas.map(d => d[1].valor);
-    const viagens = dadosMotoristas.map(d => d[1].viagens);
-    const maiorValor = Math.max(...valores);
-    const tetoGrafico = maiorValor > 0 ? maiorValor * 1.2 : 100;
-    const isDark = document.body.classList.contains('dark');
-    const corTexto = isDark ? '#e9ecef' : '#1f2933';
-
-    chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{ data: valores, backgroundColor: '#FF6B35', hoverBackgroundColor: '#e55a2b', borderRadius: 4, barPercentage: 0.6, categoryPercentage: 0.8 }]
-        },
-        plugins: [ChartDataLabels],
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            layout: { padding: { top: 30, left: 10, right: 10, bottom: 10 } },
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: (ctx) => `${formatarMoeda(ctx.raw)} (${viagens[ctx.dataIndex]} viagens)` } },
-                datalabels: { align: 'end', anchor: 'end', formatter: (value) => value.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}), color: corTexto, font: { weight: 'bold', size: 11 }, offset: 4 }
-            },
-            scales: {
-                y: { display: false, beginAtZero: true, max: tetoGrafico, grid: { display: false } },
-                x: { grid: { display: false }, ticks: { color: corTexto, font: { size: 11, weight: '500' } } }
-            }
-        }
-    });
-}
-
-function abrirDetalhesMotorista(nomeMotorista) {
-    if(!dadosAnalisados) return;
-    const dadosMot = dadosAnalisados.motoristas[nomeMotorista];
-    if(!dadosMot) return alert('Dados não encontrados para este motorista.');
-    const faturamento = dadosMot.valor;
-    const kmTotal = dadosMot.km;
-    const litros = kmTotal > 0 ? kmTotal / CUSTOS.CONSUMO_MEDIO : 0;
-    const custoDiesel = litros * CUSTOS.DIESEL_PRECO;
-    const lucroOperacional = faturamento - custoDiesel;
-
-    document.getElementById('modalMotTitulo').textContent = nomeMotorista;
-    document.getElementById('motFaturamento').textContent = formatarMoeda(faturamento);
-    document.getElementById('motKm').textContent = formatarNumero(kmTotal) + ' km';
-    document.getElementById('motCustoDiesel').textContent = `- ${formatarMoeda(custoDiesel)}`;
-    const elLucro = document.getElementById('motLucro');
-    elLucro.textContent = formatarMoeda(lucroOperacional);
-    elLucro.style.color = lucroOperacional >= 0 ? 'var(--cor-pago)' : '#dc3545';
-    document.getElementById('modalMotorista').style.display = 'flex';
-}
-
-function fecharModalMotorista() {
-    document.getElementById('modalMotorista').style.display = 'none';
-}
-
-function abrirDetalhesVeiculo(placa) {
-    if (!dadosAnalisados || !dadosAnalisados.veiculos[placa]) {
-        alert("Dados não encontrados para este veículo no período selecionado.");
-        return;
-    }
-    try {
-        const d = dadosAnalisados.veiculos[placa];
-        const faturamento = d.valor;
-        const kmTotal = d.km;
-        const litros = kmTotal > 0 ? kmTotal / CUSTOS.CONSUMO_MEDIO : 0;
-        const custoDiesel = litros * CUSTOS.DIESEL_PRECO;
-        const custoManutencao = faturamento * CUSTOS.MANUTENCAO_PCT;
-        const lucroLiquido = faturamento - custoDiesel - custoManutencao;
-
-        let motoristaPrincipal = "Analisando...";
-        let rotaPrincipal = "Analisando...";
-        
-        if(dadosOriginais && indiceColunaData !== null) {
-             const inicioInput = document.getElementById('dataInicio').value;
-             const fimInput = document.getElementById('dataFim').value;
-             let viagensFiltradas = [];
-             if(inicioInput && fimInput) {
-                 const dInicio = new Date(inicioInput);
-                 const dFim = new Date(fimInput);
-                 dFim.setHours(23,59,59);
-                 viagensFiltradas = dadosOriginais.slice(1).filter(linha => {
-                     const dt = parsearDataBR(linha[indiceColunaData]);
-                     return dt >= dInicio && dt <= dFim && linha.toString().includes(placa);
-                 });
-             } else {
-                 viagensFiltradas = dadosOriginais.slice(1).filter(l => l.toString().includes(placa));
-             }
-             const contMot = {};
-             const contRota = {};
-             const cols = detectingColumnsGlobal(dadosOriginais[0]); 
-             const idxMot = cols.motorista;
-             const idxOrig = cols.origem;
-             const idxDest = cols.destino;
-
-             viagensFiltradas.forEach(v => {
-                 if(idxMot !== undefined) { const m = v[idxMot] || 'Desconhecido'; contMot[m] = (contMot[m] || 0) + 1; }
-                 if(idxOrig !== undefined && idxDest !== undefined) { const r = `${v[idxOrig]} -> ${v[idxDest]}`; contRota[r] = (contRota[r] || 0) + 1; }
-             });
-             const sortMot = Object.entries(contMot).sort((a,b)=>b[1]-a[1]);
-             if(sortMot.length > 0) motoristaPrincipal = `${sortMot[0][0]} (${Math.round(sortMot[0][1]/viagensFiltradas.length*100)}%)`;
-             const sortRota = Object.entries(contRota).sort((a,b)=>b[1]-a[1]);
-             if(sortRota.length > 0) rotaPrincipal = sortRota[0][0];
-        }
-
-        document.getElementById('textoPlaca').textContent = placa;
-        document.getElementById('modalFaturamento').textContent = formatarMoeda(faturamento);
-        document.getElementById('modalKM').textContent = formatarNumero(kmTotal) + ' km';
-        document.getElementById('modalCustoCombustivel').textContent = `- ${formatarMoeda(custoDiesel)}`;
-        document.getElementById('modalCustoManutencao').textContent = `- ${formatarMoeda(custoManutencao)}`;
-        const elLucroLiq = document.getElementById('modalLucroLiquido');
-        elLucroLiq.textContent = formatarMoeda(lucroLiquido);
-        elLucroLiq.style.color = lucroLiquido >= 0 ? 'var(--cor-pago)' : '#dc3545';
-        document.getElementById('textoMotoristaVeiculo').textContent = motoristaPrincipal;
-        document.getElementById('textoRotaVeiculo').textContent = rotaPrincipal;
-        document.getElementById('modalMedia').textContent = formatarMoeda(d.viagens > 0 ? faturamento/d.viagens : 0);
-        document.getElementById('modalVeiculo').style.display = 'flex';
-    } catch (e) {
-        console.error("Erro detalhes veiculo", e);
-        alert("Erro ao processar dados: " + e.message);
-    }
-}
-
-function fecharModalVeiculo() {
-    document.getElementById('modalVeiculo').style.display = 'none';
-}
-
-function detectingColumnsGlobal(cabecalhos) {
-    const map = {};
-    cabecalhos.forEach((c, i) => {
-        const t = c.toString().toLowerCase();
-        if(t.includes('motorista')) map.motorista = i;
-        if(t.includes('origem')) map.origem = i;
-        if(t.includes('destino')) map.destino = i;
-    });
-    return map;
-}
-
+// Fechar modais ao clicar fora
 window.onclick = function(event) {
     if (event.target.classList.contains('modal-overlay')) {
         fecharModal();
-    }
-}
-
-function calcularCustoPedagio(destino) {
-    // 1. Limpeza de segurança: Converte para texto e Remove a seta "→" se existir
-    let destLimpo = String(destino || "").toUpperCase();
-    if (destLimpo.includes('→')) {
-        destLimpo = destLimpo.split('→')[1] || destLimpo; // Pega o que vem depois da seta
-    }
-    destLimpo = destLimpo.trim(); // Remove espaços extras
-
-    console.log("🔍 Calculando pedágio para:", destLimpo); // Debug para você ver
-
-    let custo = 0;
-    let detalhes = [];
-
-    // --- LÓGICA DE ROTAS ---
-    
-    // Rota 1: Região dos Lagos
-    if (destLimpo.includes('CABO FRIO') || destLimpo.includes('BUZIOS') || destLimpo.includes('ARRAIAL') || destLimpo.includes('SAO PEDRO') || destLimpo.includes('IGUABA')) {
-        custo += CUSTO_PEDAGIOS.VIA_LAGOS;
-        detalhes.push(`Via Lagos (R$ ${formatarMoeda(CUSTO_PEDAGIOS.VIA_LAGOS)})`);
-    }
-
-    // Rota 2: BR-101 Norte (Macaé/Campos)
-    if (destLimpo.includes('MACAE') || destLimpo.includes('RIO DAS OSTRAS') || destLimpo.includes('CAMPOS') || destLimpo.includes('CASIMIRO')) {
-        custo += CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE;
-        detalhes.push(`Praça BR-101 (R$ ${formatarMoeda(CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE)})`);
-    }
-
-    // Rota 3: Rio/Niterói
-    if (destLimpo.includes('RIO DE JANEIRO') || destLimpo.includes('NITEROI') || destLimpo.includes('SAO GONCALO') || destLimpo.includes('ITABORAI') || destLimpo.includes('DUQUE')) {
-        custo += CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE; 
-        detalhes.push(`Pedágio Manilha (R$ ${formatarMoeda(CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE)})`);
-        
-        if(destLimpo.includes('RIO DE JANEIRO') || destLimpo.includes('DUQUE')) {
-            custo += CUSTO_PEDAGIOS.PONTE_RIO_NITEROI;
-            detalhes.push(`Ponte Rio-Niterói (R$ ${formatarMoeda(CUSTO_PEDAGIOS.PONTE_RIO_NITEROI)})`);
-        }
-    }
-
-    // Se não achou nada, retorna zerado mas sem erro
-    if (custo === 0) {
-        detalhes.push("Rota local ou sem pedágio mapeado");
-    }
-
-    return { total: custo, lista: detalhes };
-}
-// =============================================================
-// TROQUE A FUNÇÃO abrirDetalhesRota INTEIRA POR ESTA VERSÃO:
-// =============================================================
-
-window.abrirDetalhesRota = function(rotaCodificada, kmTotal) {
-    try {
-        // 1. Decodificar e Limpar
-        const destinoBruto = decodeURIComponent(rotaCodificada);
-        const destinoNome = destinoBruto.replace(/.*→/, '').trim(); 
-        console.log("🚀 Abrindo rota para:", destinoNome);
-
-        // 2. Calcular Pedágio
-        const infoPedagio = calcularCustoPedagio(destinoNome);
-
-        // 3. Pegar Elementos
-        const elDestino = document.getElementById('rotaDestinoNome');
-        const elRotaKm = document.getElementById('rotaKm');
-        const elResumoKm = document.getElementById('resumoKm');
-        const elResumoPedagio = document.getElementById('resumoPedagio');
-        const containerPedagios = document.getElementById('rotaPedagios');
-        const modal = document.getElementById('modalRota');
-
-        if (!modal) {
-            alert("ERRO CRÍTICO: O Modal não existe no HTML!");
-            return;
-        }
-
-        // 4. Preencher Dados
-        elDestino.textContent = destinoNome;
-        elRotaKm.textContent = formatarNumero(kmTotal) + ' km (Estimado)';
-        elResumoKm.textContent = formatarNumero(kmTotal) + ' km';
-        elResumoPedagio.textContent = formatarMoeda(infoPedagio.total);
-        elResumoPedagio.style.color = infoPedagio.total > 0 ? '#dc3545' : '#333';
-
-        // 5. Preencher Pedágios
-        if(containerPedagios) {
-            containerPedagios.innerHTML = ''; 
-            infoPedagio.lista.forEach(item => {
-                const badge = document.createElement('span');
-                badge.style.cssText = "background:#ffc107; color:#000; padding:4px 8px; border-radius:10px; font-size:12px; margin-right:5px; display:inline-block;";
-                badge.innerHTML = `<i class="fas fa-ticket-alt"></i> ${item}`;
-                containerPedagios.appendChild(badge);
-            });
-        }
-
-        // ============================================================
-        // 6. FORÇA BRUTA VISUAL (AQUI ESTÁ A CORREÇÃO MÁGICA)
-        // Isso obriga o navegador a desenhar o modal ignorando o CSS externo
-        // ============================================================
-        
-        // Fundo Preto Transparente
-        modal.style.cssText = "display: flex !important; position: fixed !important; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 99999; align-items: center; justify-content: center;";
-
-        // O Cartão Branco (Conteúdo)
-        // Procuramos o filho direto (modal-content) para pintar de branco
-        const card = modal.querySelector('.modal-content');
-        if(card) {
-            card.style.cssText = "background-color: #ffffff !important; display: block !important; width: 90%; max-width: 500px; padding: 20px; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.5); position: relative; z-index: 100000; color: #333;";
-        }
-
-        console.log("✅ Modal forçado via JS Inline!");
-
-    } catch (erro) {
-        alert("Erro no Script: " + erro.message);
-        console.error(erro);
-    }
-}
-
-
-// --- FUNÇÕES DO MODAL DE ROTA ---
-
-function abrirModalRota() {
-    // Mostra o modal mudando o display para Flex (para centralizar)
-    document.getElementById('modalRotaContainer').style.display = 'flex';
-}
-
-function fecharModalRota() {
-    document.getElementById('modalRotaContainer').style.display = 'none';
-}
-
-// Opcional: Fechar se clicar fora do modal (no fundo escuro)
-document.getElementById('modalRotaContainer').addEventListener('click', function(e) {
-    if (e.target === this) {
         fecharModalRota();
     }
-});    
+}
