@@ -1,4 +1,4 @@
-// Adicione isso no topo do app.js
+'// Adicione isso no topo do app.js
 const CUSTOS = {
     DIESEL_PRECO: 6.00,
     CONSUMO_MEDIO: 2.0, // km/L
@@ -132,8 +132,15 @@ function analisarDadosMineramix(dados) {
 
         const valor = idx.valor !== undefined ? extrairNumero(linha[idx.valor]) : 0;
         const km = idx.km !== undefined ? extrairNumero(linha[idx.km]) : 0;
+        
+        // --- CORREÇÃO DE MOTORISTA ---
         let motorista = idx.motorista !== undefined ? linha[idx.motorista] : 'NÃO IDENTIFICADO';
         if (!motorista || motorista.toString().trim() === '') motorista = 'NÃO IDENTIFICADO';
+
+        // --- CORREÇÃO DE VEÍCULO (O ERRO ESTAVA AQUI) ---
+        let veiculo = idx.veiculo !== undefined ? linha[idx.veiculo] : 'NÃO IDENTIFICADO';
+        // Agora verificamos se veio vazio ou nulo
+        if (!veiculo || veiculo.toString().trim() === '') veiculo = 'NÃO IDENTIFICADO';
 
         resumo.totalLinhas++;
         resumo.totalValor += valor;
@@ -142,7 +149,6 @@ function analisarDadosMineramix(dados) {
         resumo.kms.push(km);
 
         const cliente = idx.cliente !== undefined ? linha[idx.cliente] : 'Não informado';
-        const veiculo = idx.veiculo !== undefined ? linha[idx.veiculo] : 'Não informado';
         const origem = idx.origem !== undefined ? linha[idx.origem] : '';
         const destino = idx.destino !== undefined ? linha[idx.destino] : '';
         const status = idx.status !== undefined ? linha[idx.status] : 'Não informado';
