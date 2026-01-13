@@ -741,7 +741,7 @@ function calcularCustoPedagio(destino) {
     // Rota 1: Região dos Lagos
     if (destLimpo.includes('CABO FRIO') || destLimpo.includes('BUZIOS') || destLimpo.includes('ARRAIAL') || destLimpo.includes('SAO PEDRO') || destLimpo.includes('IGUABA')) {
         custo += CUSTO_PEDAGIOS.VIA_LAGOS;
-        detalhes.push(`Via Lagos (R$ ${formatarMoeda(CUSTO_PEDAGIOS.VIA_LAGOS)})`);
+        detalhes.push(`Via Lagos (${formatarMoeda(CUSTO_PEDAGIOS.VIA_LAGOS)})`);
     }
 
     // Rota 2: BR-101 Norte (Macaé/Campos)
