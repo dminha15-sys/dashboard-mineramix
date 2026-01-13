@@ -5,7 +5,7 @@ const CUSTOS = {
 };
 
 const CONFIG = {
-    API_URL: '[https://dashboard-mineramix-backend.onrender.com/api/dados](https://dashboard-mineramix-backend.onrender.com/api/dados)'
+    API_URL: 'https://dashboard-mineramix-backend.onrender.com/api/dados'
 };
 
 const CUSTO_PEDAGIOS = {
