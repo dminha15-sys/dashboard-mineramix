@@ -1,7 +1,7 @@
 // Configurações do frontend
 const CONFIG = {
     // Mude para sua URL do Render quando hospedar
-    API_URL: 'https://dashboard-mineramix-backend.onrender.com/API/DADOS',
+    API_URL: 'https://dashboard-mineramix-backend.onrender.com',
        
     UPDATE_INTERVAL: 300000, // 5 minutos
     ITEMS_PER_PAGE: 10,
