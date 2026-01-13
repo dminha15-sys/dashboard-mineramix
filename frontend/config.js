@@ -16,6 +16,35 @@ const CONFIG = {
     }
 };
 
+async function carregarDados() {
+    try {
+        atualizarStatus(false, '🔄 Conectando e analisando dados...');
+        const resposta = await fetch(CONFIG.API_URL);
+        if (!resposta.ok) throw new Error(`Erro ${resposta.status}: ${resposta.statusText}`);
+        const resultado = await resposta.json();
+        if (resultado.status === 'erro') throw new Error(resultado.mensagem);
+        dadosOriginais = resultado.dados;
+        const cabecalhos = dadosOriginais[0];
+        const colunasDetectadas = detectarColunas(cabecalhos);
+        const colunaData = colunasDetectadas.find(c => c.tipo === 'data');
+        indiceColunaData = colunaData ? colunaData.indice : null;
+        console.log('📅 Índice da coluna de data:', indiceColunaData);
+        dadosAnalisados = analisarDadosMineramix(dadosOriginais);
+        mostrarRelatorio('overview');
+        const agora = new Date().toLocaleTimeString('pt-BR');
+        elementos.lastUpdate.textContent = `Última atualização: ${agora}`;
+        atualizarStatus(true, `✅ ${dadosAnalisados.totalLinhas} registros analisados`);
+        mostrarNotificacao('✅ Dados carregados com sucesso', 'success');
+    } catch (erro) {
+        console.error(erro);
+        atualizarStatus(false, `❌ ${erro.message}`);
+        mostrarNotificacao(`❌ Erro: ${erro.message}`, 'error');
+        elementos.contentArea.innerHTML = `<div class="loading"><i class="fas fa-exclamation-triangle"></i><p>Erro ao analisar dados: ${erro.message}</p><button class="btn btn-primary" onclick="carregarDados()" style="margin-top: 1rem;">Tentar Novamente</button></div>`;
+    }
+}
+
+
+
 let cacheDados = null;
 let cacheAtualizadoEm = null;
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
