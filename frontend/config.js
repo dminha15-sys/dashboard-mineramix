@@ -15,3 +15,33 @@ const CONFIG = {
         danger: '#dc3545'
     }
 };
+
+let cacheDados = null;
+let cacheAtualizadoEm = null;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+
+app.get('/api/dados', async (req, res) => {
+  const agora = Date.now();
+  if (cacheDados && cacheAtualizadoEm && agora - cacheAtualizadoEm < CACHE_TTL_MS) {
+    return res.json(cacheDados);
+  }
+
+  try {
+    // ... mesma lógica atual para buscar no Sheets ...
+    const resposta = await sheets.spreadsheets.values.get({ ... });
+    const dados = resposta.data.values || [];
+
+    cacheDados = {
+      status: 'sucesso',
+      mensagem: 'Dados carregados do Google Sheets',
+      totalLinhas: dados.length - 1,
+      dados,
+      atualizadoEm: new Date().toISOString(),
+    };
+    cacheAtualizadoEm = agora;
+
+    return res.json(cacheDados);
+  } catch (error) {
+    // ...
+  }
+});
