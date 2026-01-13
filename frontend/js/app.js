@@ -4,9 +4,6 @@ const CUSTOS = {
     MANUTENCAO_PCT: 0.12 // 12% sobre o faturamento
 };
 
-const CONFIG = {
-    API_URL: 'https://dashboard-mineramix-backend.onrender.com/api/dados'
-};
 
 const CUSTO_PEDAGIOS = {
     'AUTOPISTA_FLUMINENSE': 6.90, // Pedágio BR-101
