@@ -6,6 +6,12 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// === CACHE EM MEMÓRIA PARA /api/dados ===
+let cacheDados = null;           // último resultado retornado
+let cacheAtualizadoEm = null;    // timestamp em ms
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+// =======================================a
+
 // Permitir acesso de qualquer lugar (para testes)
 app.use(cors());
 app.use(express.json());
@@ -16,12 +22,6 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 // ID da SUA planilha
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID || '1Abns0jqPZ5ebcA5vOyg2FIJPApbnjah3HOk3rddepZU';
 
-// ====================================================
-// SISTEMA DE CACHE (Memória RAM)
-// ====================================================
-let cacheDados = null;
-let cacheUltimaAtualizacao = 0;
-const CACHE_TEMPO_MS = 5 * 60 * 1000; // 5 minutos em milissegundos
 
 // ROTA PRINCIPAL
 app.get('/', (req, res) => {
@@ -50,76 +50,96 @@ app.get('/api/teste', (req, res) => {
 });
 
 // ROTA INTELIGENTE COM CACHE
+// ROTA PARA BUSCAR DADOS DA PLANILHA (COM CACHE)
 app.get('/api/dados', async (req, res) => {
+  try {
     const agora = Date.now();
 
-    // 1. Verifica se tem cache válido (menos de 5 minutos)
-    if (cacheDados && (agora - cacheUltimaAtualizacao < CACHE_TEMPO_MS)) {
-        console.log('⚡ Cache Válido! Entregando dados instantâneos.');
-        return res.json(cacheDados);
+    // 1) Se já temos cache recente, devolve direto
+    if (cacheDados && cacheAtualizadoEm && (agora - cacheAtualizadoEm) < CACHE_TTL_MS) {
+      console.log('✅ Devolvendo dados do CACHE (sem chamar Google Sheets)');
+      return res.json(cacheDados);
     }
 
-    console.log('🔄 Cache expirado ou vazio. Conectando ao Google Sheets...');
+    console.log('🔍 Cache vencido ou vazio. Buscando dados no Google Sheets...');
 
-    try {
-        let auth;
-        if (process.env.GOOGLE_CREDENTIALS) {
-            const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-            auth = new google.auth.GoogleAuth({
-                credentials: credentials,
-                scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly']
-            });
-        } else {
-            auth = new google.auth.GoogleAuth({
-                keyFile: path.join(__dirname, '../dashboard-service-key.json'),
-                scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly']
-            });
-        }
-        
-        const sheets = google.sheets({ version: 'v4', auth });
-        
-        const response = await sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'API_DADOS!A:K'
-        });
-        
-        const dados = response.data.values || [];
-        
-        console.log(`✅ Google respondeu! ${dados.length} linhas recebidas.`);
-        
-        // Monta a resposta
-        const resultadoFinal = {
-            status: 'sucesso',
-            mensagem: 'Dados carregados do Google Sheets',
-            origem: 'google_sheets_live',
-            totalLinhas: dados.length - 1,
-            dados: dados,
-            atualizadoEm: new Date().toISOString()
-        };
-
-        // 2. Salva no Cache
-        cacheDados = { ...resultadoFinal, origem: 'cache_memoria' }; // Marca como cache para a próxima vez
-        cacheUltimaAtualizacao = agora;
-        
-        // Entrega o resultado fresco
-        res.json(resultadoFinal);
-        
-    } catch (error) {
-        console.error('❌ ERRO ao buscar dados no Google:', error.message);
-        
-        // 3. Fallback: Se o Google falhar, tenta entregar o cache antigo se existir
-        if (cacheDados) {
-            console.log('⚠️ Usando cache antigo para evitar queda do sistema.');
-            return res.json(cacheDados);
-        }
-
-        res.status(500).json({
-            status: 'erro',
-            mensagem: 'Falha ao conectar com Google Sheets e sem cache disponível',
-            erro: error.message
-        });
+    // 2) Autenticação com Google (igual você já tinha)
+    let auth;
+    if (process.env.GOOGLE_CREDENTIALS) {
+      const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+      auth = new google.auth.GoogleAuth({
+        credentials,
+        scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+      });
+    } else {
+      auth = new google.auth.GoogleAuth({
+        keyFile: path.join(__dirname, '../dashboard-service-key.json'),
+        scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+      });
     }
+
+    const sheets = google.sheets({ version: 'v4', auth });
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: 'API_DADOS!A:K',
+    });
+
+    const dados = response.data.values || [];
+    console.log(`✅ Dados recebidos do Google Sheets: ${dados.length} linhas`);
+
+    // 3) Monta objeto de resposta
+    const payload = {
+      status: 'sucesso',
+      mensagem: 'Dados carregados do Google Sheets',
+      totalLinhas: dados.length - 1,  // sem cabeçalho
+      dados,
+      atualizadoEm: new Date().toISOString(),
+      origem: 'google',
+    };
+
+    // 4) Atualiza o cache
+    cacheDados = payload;
+    cacheAtualizadoEm = agora;
+
+    // 5) Retorna para o cliente
+    return res.json(payload);
+
+  } catch (error) {
+    console.error('❌ ERRO ao buscar dados:', error.message);
+
+    // Se der erro, mas temos cache antigo, devolve o cache como fallback
+    if (cacheDados) {
+      console.warn('⚠️ Erro no Google Sheets, devolvendo dados do cache antigo');
+      return res.json({
+        ...cacheDados,
+        origem: 'cache-antigo',
+        aviso: 'Erro ao atualizar do Google Sheets. Dados do cache antigo.',
+        erroOriginal: error.message,
+      });
+    }
+
+    // Sem cache, erro normal
+    return res.status(500).json({
+      status: 'erro',
+      mensagem: 'Falha ao conectar com Google Sheets',
+      erro: error.message,
+      dica: 'Verifique: 1) ID da planilha, 2) Compartilhamento com a conta de serviço, 3) Chave da API',
+    });
+  }
 });
+
+
+// ROTA PARA LIMPAR O CACHE MANUALMENTE (ex: /api/dados/refresh)
+app.post('/api/dados/refresh', (req, res) => {
+  cacheDados = null;
+  cacheAtualizadoEm = null;
+  console.log('♻️ Cache de /api/dados foi limpo manualmente');
+  res.json({ status: 'ok', mensagem: 'Cache limpo. Próxima chamada vai buscar no Google.' });
+});
+
+
+
 
 // Iniciar servidor
 app.listen(PORT, () => {
