@@ -240,6 +240,44 @@
                 </div>
             </div>
 
+                <div id="containerDadosReais" style="background: #eef2ff; padding: 1.2rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #c7d2fe; display: none;">
+                <h4 style="font-size: 0.85rem; text-transform: uppercase; color: #4f46e5; margin: 0 0 1rem 0; text-align: center; font-weight: 700;">
+                    <i class="fas fa-gas-pump"></i> Consumo Real (Abastecimentos)
+                </h4>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; border-right: 1px dashed #a5b4fc; padding-right: 0.8rem;">
+                        <span style="font-size: 0.8rem; font-weight: 700; color: #4338ca; text-align: center; display: block; margin-bottom: 5px;">DIESEL</span>
+                        
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span style="color: var(--cor-texto-sec);">Litros</span>
+                            <strong style="color: var(--cor-primaria);" id="realLitrosDiesel">0 L</strong>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span style="color: var(--cor-texto-sec);">Gasto</span>
+                            <strong style="color: #dc3545;" id="realGastoDiesel">R$ 0,00</strong>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; padding-left: 0.5rem;">
+                        <span style="font-size: 0.8rem; font-weight: 700; color: #059669; text-align: center; display: block; margin-bottom: 5px;">ARLA 32</span>
+                        
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span style="color: var(--cor-texto-sec);">Litros</span>
+                            <strong style="color: var(--cor-primaria);" id="realLitrosArla">0 L</strong>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span style="color: var(--cor-texto-sec);">Gasto</span>
+                            <strong style="color: #dc3545;" id="realGastoArla">R$ 0,00</strong>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; text-align: center; border-top: 1px solid var(--cor-borda); padding-top: 1.5rem;">
                 <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
                     <i class="fas fa-user-tie" style="font-size: 1.2rem; color: var(--cor-primaria);"></i>
