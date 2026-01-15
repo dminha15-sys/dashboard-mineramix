@@ -7,11 +7,11 @@ const CUSTOS = {
     MANUTENCAO_PCT: 0.12 // 12% sobre o faturamento
 };
 
-// CONFIG vem do config.js
+// A constante CONFIG vem do arquivo config.js
 
 const CUSTO_PEDAGIOS = {
-    'AUTOPISTA_FLUMINENSE': 6.90,
-    'VIA_LAGOS': 27.00,
+    'AUTOPISTA_FLUMINENSE': 6.90, // Pedágio BR-101
+    'VIA_LAGOS': 27.00,           // Pedágio Via Lagos
     'PONTE_RIO_NITEROI': 6.20,
     'OUTROS': 0.00
 };
@@ -19,9 +19,9 @@ const CUSTO_PEDAGIOS = {
 // Variáveis de Estado
 let dadosAnalisados = null;
 let dadosOriginais = null;
-let dadosCombustivelOriginais = null; // COMBUSTÍVEL AQUI
+let dadosCombustivelOriginais = null; // DADOS DA ABA COMBUSTÍVEL
 let indiceColunaData = null;
-let chartInstance = null;
+let chartInstance = null; // Para o gráfico
 
 // Elementos do DOM
 const elementos = {
@@ -34,7 +34,7 @@ const elementos = {
 };
 
 // ==========================================
-// 2. FUNÇÕES DE LEITURA
+// 2. FUNÇÕES DE LEITURA E PARSEAMENTO
 // ==========================================
 
 function detectColumnsGlobal(cabecalhos) {
@@ -51,21 +51,41 @@ function detectColumnsGlobal(cabecalhos) {
 function detectarColunas(cabecalhos) {
     console.log("🔍 Cabeçalhos recebidos:", cabecalhos);
     const mapeamento = {};
+    
     cabecalhos.forEach((cabecalho, index) => {
+        if (cabecalho == null) return;
+        
+        // Remove acentos e converte para minúsculas
         const limpo = String(cabecalho).toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
         
-        if (limpo.includes('data') && !limpo.includes('pgto')) mapeamento['DATA'] = { indice: index, tipo: 'data' };
-        else if (limpo.includes('cliente')) mapeamento['CLIENTE'] = { indice: index, tipo: 'cliente' };
-        else if (limpo.includes('motorista')) mapeamento['MOTORISTA'] = { indice: index, tipo: 'motorista' };
-        else if (limpo.includes('placa') || limpo.includes('veiculo') || limpo.includes('cavalo') || limpo.includes('frota')) mapeamento['PLACA'] = { indice: index, tipo: 'veiculo' };
-        else if (limpo.includes('origem')) mapeamento['ORIGEM'] = { indice: index, tipo: 'origem' };
-        else if (limpo.includes('destino')) mapeamento['DESTINO'] = { indice: index, tipo: 'destino' };
-        else if (limpo.includes('km') || limpo.includes('quilometragem')) mapeamento['KM'] = { indice: index, tipo: 'km' };
-        else if (limpo.includes('valor') || limpo.includes('total') || limpo.includes('preco')) mapeamento['VALOR'] = { indice: index, tipo: 'valor' };
-        else if (limpo.includes('forma') && limpo.includes('pgto')) mapeamento['FORMA_PGTO'] = { indice: index, tipo: 'pagamento' };
-        else if (limpo.includes('status')) mapeamento['STATUS'] = { indice: index, tipo: 'status' };
+        if (limpo.includes('data') && !limpo.includes('pgto')) {
+            mapeamento['DATA'] = { indice: index, tipo: 'data' };
+        } else if (limpo.includes('cliente')) {
+            mapeamento['CLIENTE'] = { indice: index, tipo: 'cliente' };
+        } else if (limpo.includes('motorista')) {
+            mapeamento['MOTORISTA'] = { indice: index, tipo: 'motorista' };
+        } else if (limpo.includes('placa') || limpo.includes('veiculo') || limpo.includes('cavalo') || limpo.includes('frota') || limpo.includes('equipamento') || limpo.includes('caminhao')) {
+            mapeamento['PLACA'] = { indice: index, tipo: 'veiculo' };
+        } else if (limpo.includes('origem')) {
+            mapeamento['ORIGEM'] = { indice: index, tipo: 'origem' };
+        } else if (limpo.includes('destino')) {
+            mapeamento['DESTINO'] = { indice: index, tipo: 'destino' };
+        } else if (limpo.includes('km') || limpo.includes('quilometragem')) {
+            mapeamento['KM'] = { indice: index, tipo: 'km' };
+        } else if (limpo.includes('valor') || limpo.includes('total') || limpo.includes('preco') || limpo.includes('faturamento')) {
+            mapeamento['VALOR'] = { indice: index, tipo: 'valor' };
+        } else if (limpo.includes('forma') && limpo.includes('pgto')) {
+            mapeamento['FORMA_PGTO'] = { indice: index, tipo: 'pagamento' };
+        } else if (limpo.includes('status')) {
+            mapeamento['STATUS'] = { indice: index, tipo: 'status' };
+        }
     });
-    return Object.keys(mapeamento).map(nome => ({ nome: nome, indice: mapeamento[nome].indice, tipo: mapeamento[nome].tipo }));
+    
+    const colunas = [];
+    Object.keys(mapeamento).forEach(nome => {
+        colunas.push({ nome: nome, indice: mapeamento[nome].indice, tipo: mapeamento[nome].tipo });
+    });
+    return colunas;
 }
 
 function extrairNumero(texto) {
@@ -87,12 +107,15 @@ function parsearDataBR(dataStr) {
             return new Date(anoCompleto, mes, dia);
         }
         return new Date(dataStr);
-    } catch (e) { return null; }
+    } catch (e) {
+        return null;
+    }
 }
 
 function analisarDadosMineramix(dados) {
     if (!dados || dados.length < 5) return null;
     let indiceCabecalho = -1;
+    
     for (let i = 0; i < 10; i++) {
         const linhaStr = dados[i].join(' ').toUpperCase();
         if (linhaStr.includes('DATA') && (linhaStr.includes('MOTORISTA') || linhaStr.includes('CLIENTE'))) {
@@ -118,6 +141,7 @@ function analisarDadosMineramix(dados) {
     for (let i = 0; i < linhasBrutas.length; i++) {
         const linha = linhasBrutas[i];
         const linhaTexto = linha.join(' ').toUpperCase();
+        
         if (linhaTexto.includes('TOTAL A RECEBER') || linhaTexto.includes('TOTAL PAGO') || linhaTexto.includes('SALDO')) break;
 
         const dataRaw = idx.data !== undefined ? linha[idx.data] : null;
@@ -154,6 +178,9 @@ function analisarDadosMineramix(dados) {
         if (!resumo.clientes[cliente]) resumo.clientes[cliente] = { viagens: 0, valor: 0 };
         resumo.clientes[cliente].viagens++; resumo.clientes[cliente].valor += valor;
 
+        if (!resumo.status[status]) resumo.status[status] = { viagens: 0, valor: 0 };
+        resumo.status[status].viagens++; resumo.status[status].valor += valor;
+
         const rota = `${origem} → ${destino}`;
         if (!resumo.rotas[rota]) resumo.rotas[rota] = { viagens: 0, valor: 0, km: 0 };
         resumo.rotas[rota].viagens++; resumo.rotas[rota].valor += valor; resumo.rotas[rota].km += km;
@@ -185,9 +212,11 @@ function analisarDadosMineramix(dados) {
 function formatarMoeda(valor) {
     return 'R$ ' + valor.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
+
 function formatarNumero(numero) {
     return numero.toFixed(0).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
+
 function atualizarStatus(online, mensagem) {
     if(elementos.statusText) elementos.statusText.textContent = mensagem;
     if(elementos.statusDot) elementos.statusDot.className = online ? 'status-dot online' : 'status-dot offline';
@@ -217,7 +246,7 @@ function toggleDarkMode() {
 }
 
 // ==========================================
-// 4. RELATÓRIOS
+// 4. LÓGICA DE RELATÓRIOS
 // ==========================================
 
 function mostrarRelatorio(tipo) {
@@ -226,13 +255,18 @@ function mostrarRelatorio(tipo) {
         return;
     }
     const resumo = dadosAnalisados;
-    if (elementos.reportTitle) elementos.reportTitle.textContent = 'Dashboard Mineramix';
-    if (elementos.reportSubtitle) elementos.reportSubtitle.textContent = `${resumo.totalLinhas} viagens analisadas`;
+    const titulos = {
+        overview: 'Visão Geral', status: 'Análise por Status', pagamento: 'Formas de Pagamento',
+        motoristas: 'Resumo por Motorista', veiculos: 'Resumo por Veículo', clientes: 'Resumo por Cliente',
+        rotas: 'Rotas Mais Frequentes', diario: 'Análise Diária', km: 'Análise de Quilometragem'
+    };
+    if (elementos.reportTitle) elementos.reportTitle.textContent = titulos[tipo] || 'Dashboard Mineramix';
+    if (elementos.reportSubtitle) elementos.reportSubtitle.textContent = `${resumo.totalLinhas} viagens analisadas | ${formatarMoeda(resumo.totalValor)} total`;
 
     switch (tipo) {
         case 'overview': mostrarVisaoGeral(resumo); break;
         case 'motoristas': mostrarRelatorioMotoristas(resumo); break;
-        case 'veiculos': mostrarRelatorioVeiculos(resumo); break;
+        case 'veiculos': mostrarRelatorioVeiculos(resumo); break; 
         case 'clientes': mostrarRelatorioClientes(resumo); break;
         case 'rotas': mostrarRelatorioRotas(resumo); break;
         case 'diario': mostrarRelatorioDiario(resumo); break;
@@ -252,8 +286,23 @@ function mostrarVisaoGeral(resumo) {
             <div class="metric-card"><div class="metric-icon"><i class="fas fa-truck"></i></div><div class="metric-value">${Object.keys(resumo.veiculos).length}</div><div class="metric-label">Veículos</div></div>
         </div>
     `;
+
     const topMotoristas = resumo.motoristasOrdenados.slice(0, 5);
     const topVeiculos = resumo.veiculosOrdenados.slice(0, 5);
+    
+    // Top Meses
+    const mesesMap = {};
+    Object.entries(resumo.dias || {}).forEach(([data, info]) => {
+        const partes = data.split('/'); 
+        if(partes.length === 3) {
+            const mesAno = `${partes[1]}/${partes[2]}`;
+            if(!mesesMap[mesAno]) mesesMap[mesAno] = { valor: 0, viagens: 0 };
+            mesesMap[mesAno].valor += info.valor;
+            mesesMap[mesAno].viagens += info.viagens;
+        }
+    });
+    const topMeses = Object.entries(mesesMap).sort((a,b) => b[1].valor - a[1].valor).slice(0, 5);
+
     const summaryHTML = `
     <div class="summary-cards">
         <div class="summary-card">
@@ -262,80 +311,178 @@ function mostrarVisaoGeral(resumo) {
                 ${topMotoristas.map(([nome, dados]) => `<tr><td>${nome}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
             </tbody></table>
         </div>
+
         <div class="summary-card">
             <div class="summary-header"><div class="summary-title">Top 5 Veículos</div><div class="summary-icon"><i class="fas fa-truck"></i></div></div>
             <table class="summary-table"><thead><tr><th>Placa</th><th>Viagens</th><th>Total</th></tr></thead><tbody>
                 ${topVeiculos.map(([placa, dados]) => `<tr><td>${placa}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
             </tbody></table>
         </div>
-    </div>`;
+
+        <div class="summary-card">
+            <div class="summary-header"><div class="summary-title">Top 5 Meses</div><div class="summary-icon"><i class="fas fa-calendar-alt"></i></div></div>
+            <table class="summary-table"><thead><tr><th>Mês/Ano</th><th>Viagens</th><th>Total</th></tr></thead><tbody>
+                ${topMeses.map(([mes, dados]) => `<tr><td>${mes}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
+            </tbody></table>
+        </div>
+    </div>
+    `;
+
     elementos.contentArea.innerHTML = metricsHTML + summaryHTML;
 }
 
 function mostrarRelatorioMotoristas(resumo) {
     const gerarClick = (nome) => `onclick="abrirDetalhesMotorista('${nome}')" style="cursor:pointer"`;
+    
     if (window.innerWidth < 768) {
-        const list = resumo.motoristasOrdenados.slice(0, 10).map(([nome, d]) => 
-            `<div class="mobile-card" ${gerarClick(nome)}><strong>${nome}</strong><span>${d.viagens} viagens - ${formatarMoeda(d.valor)}</span></div>`).join('');
-        elementos.contentArea.innerHTML = `<h3 class="mobile-title">Motoristas</h3><div class="mobile-card-list">${list}</div>`;
+        const lista = resumo.motoristasOrdenados.slice(0, 10);
+        const cards = lista.map(([nome, dados]) => `
+            <div class="mobile-card" ${gerarClick(nome)}>
+                <div style="display:flex; justify-content:space-between;"><strong>${nome}</strong><span class="status-badge status-analise">${dados.viagens} viagens</span></div>
+                <div style="display:flex; justify-content:space-between; margin-top:5px; align-items:flex-end;">
+                     <div style="font-size:0.85rem; color:var(--cor-texto-sec);">KM Total: ${formatarNumero(dados.km)}</div>
+                     <div style="text-align:right;"><span class="money" style="font-size:1.2rem; display:block;">${formatarMoeda(dados.valor)}</span><small style="font-size:0.7rem; color:var(--cor-secundaria);">Ver Raio-X <i class="fas fa-chevron-right"></i></small></div>
+                </div>
+            </div>`).join('');
+        elementos.contentArea.innerHTML = `<h3 class="mobile-title">Motoristas (Toque para ver lucros)</h3><div class="mobile-card-list">${cards}</div>`;
         return;
     }
+
     elementos.contentArea.innerHTML = `
-    <div class="summary-card">
-        <div class="summary-header"><div class="summary-title">Resumo por Motorista</div></div>
-        <table class="summary-table"><thead><tr><th>Motorista</th><th class="center">Viagens</th><th class="money">Total</th><th class="center">Detalhes</th></tr></thead><tbody>
-        ${resumo.motoristasOrdenados.map(([nome, d]) => `<tr ${gerarClick(nome)}><td>${nome}</td><td class="center">${d.viagens}</td><td class="money">${formatarMoeda(d.valor)}</td><td class="center"><i class="fas fa-search"></i></td></tr>`).join('')}
-        </tbody></table>
-    </div>`;
+        <div class="summary-card">
+            <div class="summary-header"><div class="summary-title">Resumo Faturamento por Motorista</div><div class="summary-icon"><i class="fas fa-user-tie"></i></div></div>
+            <table class="summary-table">
+                <thead><tr><th>Motorista</th><th class="center">Viagens</th><th class="center">KM Total</th><th class="money">Faturamento Total</th><th class="money">Média/Viagem</th><th class="money">Renda/KM</th><th class="center">Detalhes</th></tr></thead>
+                <tbody>${resumo.motoristasOrdenados.map(([nome, dados]) => `
+                    <tr ${gerarClick(nome)} class="hover-row">
+                        <td>${nome}</td><td class="center">${dados.viagens}</td><td class="center">${formatarNumero(dados.km)}</td><td class="money">${formatarMoeda(dados.valor)}</td><td class="money">${formatarMoeda(dados.valor / dados.viagens)}</td><td class="money">${formatarMoeda(dados.km > 0 ? dados.valor / dados.km : 0)}/km</td><td class="center"><i class="fas fa-file-invoice-dollar" style="color:var(--cor-secundaria)"></i></td>
+                    </tr>`).join('')}</tbody>
+            </table>
+        </div>`;
 }
 
 function mostrarRelatorioVeiculos(resumo) {
     if (window.innerWidth < 768) {
-        const list = resumo.veiculosOrdenados.map(([placa, d]) => 
-            `<div class="mobile-card" onclick="abrirDetalhesVeiculo('${placa}')"><strong>${placa}</strong><span>${d.viagens} viagens - ${formatarMoeda(d.valor)}</span></div>`).join('');
-        elementos.contentArea.innerHTML = `<h3 class="mobile-title">Veículos</h3><div class="mobile-card-list">${list}</div>`;
+        let html = `<h3 class="mobile-title">Veículos (Toque para ver Detalhes)</h3><div class="mobile-card-list">`;
+        html += resumo.veiculosOrdenados.map(([placa, d]) => `
+            <div class="mobile-card" onclick="abrirDetalhesVeiculo('${placa}')" style="border-left: 4px solid var(--cor-primaria);">
+                <div style="display:flex; justify-content:space-between; align-items:center;"><strong style="color:var(--cor-primaria); font-size:1.1rem;">${placa}</strong><span class="status-badge" style="background:rgba(0,0,0,0.05); color:var(--cor-texto-sec);">${d.viagens} viagens</span></div>
+                <div style="display:flex; justify-content:space-between; margin-top:8px; color:var(--cor-texto-sec); font-size:0.9rem;"><span>${formatarNumero(d.km)} km</span><span class="money" style="color:var(--cor-pago); font-weight:bold; font-size:1.1rem;">${formatarMoeda(d.valor)}</span></div>
+            </div>`).join('');
+        html += `</div>`;
+        elementos.contentArea.innerHTML = html;
         return;
     }
-    elementos.contentArea.innerHTML = `
-    <div class="summary-card">
-        <div class="summary-header"><div class="summary-title">Resumo por Veículo</div></div>
-        <table class="summary-table"><thead><tr><th>Placa</th><th class="center">Viagens</th><th class="center">KM Total</th><th class="money">Total</th><th class="center">Ação</th></tr></thead><tbody>
-        ${resumo.veiculosOrdenados.map(([placa, d]) => `<tr onclick="abrirDetalhesVeiculo('${placa}')" style="cursor:pointer"><td>${placa}</td><td class="center">${d.viagens}</td><td class="center">${formatarNumero(d.km)}</td><td class="money">${formatarMoeda(d.valor)}</td><td class="center"><i class="fas fa-search"></i></td></tr>`).join('')}
-        </tbody></table>
-    </div>`;
+    
+    let html = `
+    <div class="summary-card" style="overflow-x: auto;">
+        <div class="summary-header"><div class="summary-title">Resumo Faturamento por Veículo</div><div class="summary-icon" style="background:rgba(255,107,53,0.1); color:#FF6B35; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:4px;"><i class="fas fa-truck"></i></div></div>
+        <table class="summary-table" style="width: 100%; border-collapse: collapse; min-width: 800px;">
+            <thead><tr><th style="text-align: left; padding: 12px;">Placa</th><th class="center" style="padding: 12px;">Viagens</th><th class="center" style="padding: 12px;">KM Total</th><th class="money" style="padding: 12px;">Faturamento Total</th><th class="money" style="padding: 12px;">Média/Viagem</th><th class="money" style="padding: 12px;">Renda/KM</th><th class="center" style="padding: 12px;">Ação</th></tr></thead>
+            <tbody>`;
+    html += resumo.veiculosOrdenados.map(([placa, d]) => `
+        <tr onclick="abrirDetalhesVeiculo('${placa}')" style="cursor:pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.02)'" onmouseout="this.style.background='transparent'">
+            <td style="padding: 12px; font-weight:bold;">${placa}</td><td class="center" style="padding: 12px;">${d.viagens}</td><td class="center" style="padding: 12px;">${formatarNumero(d.km)}</td><td class="money" style="padding: 12px;">${formatarMoeda(d.valor)}</td><td class="money" style="padding: 12px;">${formatarMoeda(d.valor / d.viagens)}</td><td class="money" style="padding: 12px;">${formatarMoeda(d.km > 0 ? d.valor / d.km : 0)}/km</td><td class="center" style="padding: 12px;"><i class="fas fa-search-plus" style="color:var(--cor-primaria);"></i></td>
+        </tr>`).join('');
+    html += `</tbody></table></div>`;
+    elementos.contentArea.innerHTML = html;
 }
 
 function mostrarRelatorioClientes(resumo) {
     if (window.innerWidth < 768) {
-        const list = resumo.clientesOrdenados.slice(0, 10).map(([c, d]) => `<div class="mobile-card"><strong>${c}</strong><span>${d.viagens} viagens</span><span class="money">${formatarMoeda(d.valor)}</span></div>`).join('');
-        elementos.contentArea.innerHTML = `<h3 class="mobile-title">Clientes</h3><div class="mobile-card-list">${list}</div>`;
+        const lista = resumo.clientesOrdenados.slice(0, 10);
+        const cards = lista.map(([cliente, dados]) => `
+            <div class="mobile-card"><strong>${cliente}</strong>
+                <div style="display:flex; justify-content:space-between;"><span>Viagens: ${dados.viagens}</span><span>Ticket: ${formatarMoeda(dados.valor / dados.viagens)}</span></div>
+                <span class="money" style="font-size: 1.1rem; color: var(--cor-secundaria);">${formatarMoeda(dados.valor)}</span>
+            </div>`).join('');
+        elementos.contentArea.innerHTML = `<h3 class="mobile-title">Resumo por Cliente</h3><div class="mobile-card-list">${cards}</div>`;
         return;
     }
     elementos.contentArea.innerHTML = `
-    <div class="summary-card">
-        <div class="summary-header"><div class="summary-title">Resumo por Cliente</div></div>
-        <table class="summary-table"><thead><tr><th>Cliente</th><th class="center">Viagens</th><th class="money">Total</th><th class="money">Média</th></tr></thead><tbody>
-        ${resumo.clientesOrdenados.map(([c, d]) => `<tr><td>${c}</td><td class="center">${d.viagens}</td><td class="money">${formatarMoeda(d.valor)}</td><td class="money">${formatarMoeda(d.valor/d.viagens)}</td></tr>`).join('')}
-        </tbody></table>
-    </div>`;
+        <div class="summary-card">
+            <div class="summary-header"><div class="summary-title">Resumo por Cliente</div><div class="summary-icon"><i class="fas fa-users"></i></div></div>
+            <table class="summary-table"><thead><tr><th>Cliente</th><th class="center">Viagens</th><th class="money">Faturamento Total</th><th class="center">% do Total</th><th class="money">Média por Viagem</th><th class="center">Ticket Médio</th></tr></thead><tbody>
+                ${resumo.clientesOrdenados.map(([cliente, dados]) => `
+                    <tr><td>${cliente}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td><td class="center">${((dados.valor / resumo.totalValor) * 100).toFixed(1)}%</td><td class="money">${formatarMoeda(dados.valor / dados.viagens)}</td><td class="money">${formatarMoeda(dados.valor / dados.viagens)}</td></tr>`).join('')}
+            </tbody></table>
+        </div>`;
 }
 
 function mostrarRelatorioRotas(resumo) {
     if (window.innerWidth < 768) {
-        const list = resumo.rotasOrdenadas.map(([r, d]) => `<div class="mobile-card"><strong>${r}</strong><span>${d.viagens} viagens</span><span class="money">${formatarMoeda(d.valor)}</span></div>`).join('');
-        elementos.contentArea.innerHTML = `<h3 class="mobile-title">Rotas</h3><div class="mobile-card-list">${list}</div>`;
+        const lista = resumo.rotasOrdenadas; 
+        const cards = lista.map(([rota, dados]) => `
+            <div class="mobile-card">
+                <strong style="font-size: 0.9rem;">${rota}</strong>
+                <div style="display:flex; justify-content:space-between; margin-top:5px;">
+                    <span>Viagens: ${dados.viagens}</span>
+                    <span>KM Médio: ${formatarNumero(dados.km / dados.viagens)}</span>
+                </div>
+                <span class="money" style="margin-top:5px;">${formatarMoeda(dados.valor)}</span>
+            </div>
+        `).join('');
+
+        elementos.contentArea.innerHTML = `
+            <h3 class="mobile-title">Rotas Mais Frequentes</h3>
+            <div class="mobile-card-list">${cards}</div>
+        `;
         return;
     }
+
     elementos.contentArea.innerHTML = `
-    <div class="summary-card">
-        <div class="summary-header"><div class="summary-title">Rotas Frequentes</div></div>
-        <table class="summary-table"><thead><tr><th>Rota</th><th class="center">Viagens</th><th class="money">Total</th></tr></thead><tbody>
-        ${resumo.rotasOrdenadas.map(([r, d]) => `<tr><td>${r}</td><td class="center">${d.viagens}</td><td class="money">${formatarMoeda(d.valor)}</td></tr>`).join('')}
-        </tbody></table>
-    </div>`;
+        <div class="summary-card">
+            <div class="summary-header">
+                <div class="summary-title">Rotas Mais Frequentes</div>
+                <div class="summary-icon"><i class="fas fa-route"></i></div>
+            </div>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Rota (Origem → Destino)</th>
+                        <th class="center">Viagens</th>
+                        <th class="center">KM Médio</th>
+                        <th class="money">Faturamento Total</th>
+                        <th class="money">Média por Viagem</th>
+                        <th class="money">Média por KM</th>
+                         <th class="center">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${resumo.rotasOrdenadas.map(([rota, dados]) => {
+                        const kmMedio = dados.km / dados.viagens;
+                        const mediaViagem = dados.valor / dados.viagens;
+                        const mediaKM = dados.km > 0 ? dados.valor / dados.km : 0;
+                        const rotaSegura = rota.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+
+                        return `
+                            <tr>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria)"></i>
+                                        ${rota}
+                                    </div>
+                                </td>
+                                <td class="center">${dados.viagens}</td>
+                                <td class="center">${formatarNumero(kmMedio)}</td>
+                                <td class="money">${formatarMoeda(dados.valor)}</td>
+                                <td class="money">${formatarMoeda(mediaViagem)}</td>
+                                <td class="money">${formatarMoeda(mediaKM)}/km</td>
+                                <td class="center">
+                                    <button class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.7rem;" 
+                                        onclick="window.abrirDetalhesRota('${encodeURIComponent(rota)}', ${kmMedio})">
+                                        <i class="fas fa-route"></i> Ver Rota
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
 }
 
-// RESTAURANDO FUNÇÃO DIARIO
 function mostrarRelatorioDiario(resumo) {
     const listaDias = resumo.diasOrdenados;
     const gerarClick = (dia) => `onclick="abrirDetalhesDia('${dia}')" style="cursor:pointer"`;
@@ -367,7 +514,6 @@ function mostrarRelatorioDiario(resumo) {
         </div>`;
 }
 
-// RESTAURANDO FUNÇÃO KM
 function mostrarRelatorioKM(resumo) {
     const metricsHTML = `
         <div class="metrics-grid">
@@ -400,7 +546,7 @@ function mostrarRelatorioKM(resumo) {
 }
 
 // ==========================================
-// 5. MODAIS (LÓGICA CORRIGIDA)
+// 5. MODAIS E INTERAÇÕES
 // ==========================================
 
 function abrirDetalhesDia(diaClicado) {
@@ -539,10 +685,12 @@ function abrirDetalhesVeiculo(placa) {
         const inicioInput = document.getElementById('dataInicio').value;
         const fimInput = document.getElementById('dataFim').value;
         
+        // Se a data estiver vazia, cria uma data muito antiga ou futura para pegar tudo
         let dInicio = inicioInput ? new Date(inicioInput + 'T00:00:00') : new Date(1900, 0, 1);
         let dFim = fimInput ? new Date(fimInput + 'T23:59:59') : new Date(2100, 0, 1);
 
         if (dadosCombustivelOriginais && dadosCombustivelOriginais.length > 1) {
+            // Mapeamento baseado na sua planilha (image_27287f.png)
             const idxC = { placa: 0, data: 1, litros: 3, tipo: 6, valor: 7 };
 
             dadosCombustivelOriginais.slice(1).forEach(linha => {
