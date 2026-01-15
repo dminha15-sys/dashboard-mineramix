@@ -1147,37 +1147,38 @@
     font-weight: 700;
   }
 
-/* CORREÇÃO DO MODAL NO MOBILE */
+/* --- CORREÇÃO DO MODAL NO MOBILE (FIXAR CABEÇALHO) --- */
 @media (max-width: 768px) {
-    .modal-content {
-        padding: 0; /* Remove padding geral para caber mais */
-        max-height: 95vh; /* Ocupa quase toda a altura */
-        display: flex;
-        flex-direction: column;
+    .modal-overlay {
+        align-items: flex-end; /* No celular, abre de baixo pra cima ou ocupa tudo */
+        padding: 0;
     }
 
-    /* Cabeçalho fixo no topo do modal */
+    .modal-content, .modal-card {
+        max-height: 100vh; /* Ocupa a altura total se precisar */
+        height: 100%; /* Força altura total no mobile para facilitar leitura */
+        border-radius: 0; /* Remove bordas arredondadas no full screen */
+        display: flex;
+        flex-direction: column;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Cabeçalho Fixo (Sticky) */
     .modal-header {
         position: sticky;
         top: 0;
-        z-index: 10;
+        z-index: 5000;
         background: var(--cor-card); /* Garante que o texto não passe por trás */
-        padding: 1rem;
         border-bottom: 1px solid var(--cor-borda);
-        flex-shrink: 0; /* Não deixa o cabeçalho encolher */
-    }
-
-    /* Onde o conteúdo rola */
-    .modal-body {
-        overflow-y: auto; /* Só o corpo rola */
+        flex-shrink: 0; /* Impede que o cabeçalho encolha */
         padding: 1rem;
     }
 
-    /* Botão de fechar maior para o dedo */
-    .close-btn {
-        font-size: 2rem;
-        padding: 0.5rem;
-        line-height: 0.5;
-        color: var(--cor-secundaria);
+    /* Corpo com Rolagem */
+    .modal-body {
+        overflow-y: auto; /* Permite rolar o conteúdo */
+        flex: 1; /* Ocupa o resto do espaço */
+        padding-bottom: 80px; /* Espaço extra no final para não cortar nada */
     }
 }
