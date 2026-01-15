@@ -55,7 +55,6 @@ function detectarColunas(cabecalhos) {
     cabecalhos.forEach((cabecalho, index) => {
         if (cabecalho == null) return;
         
-        // Remove acentos e converte para minúsculas
         const limpo = String(cabecalho).toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
         
         if (limpo.includes('data') && !limpo.includes('pgto')) {
@@ -254,6 +253,18 @@ function mostrarRelatorio(tipo) {
         elementos.contentArea.innerHTML = `<div class="loading"><i class="fas fa-exclamation-triangle"></i><p>Nenhum dado disponível. Clique em "Atualizar".</p></div>`;
         return;
     }
+
+    // --- CORREÇÃO DO MENU ATIVO (SINCRONIZAÇÃO) ---
+    // Remove 'active' de todos e adiciona apenas no que corresponde ao relatório atual
+    const menuItems = document.querySelectorAll('.menu-item');
+    menuItems.forEach(item => {
+        item.classList.remove('active');
+        if (item.getAttribute('data-report') === tipo) {
+            item.classList.add('active');
+        }
+    });
+    // ----------------------------------------------
+
     const resumo = dadosAnalisados;
     const titulos = {
         overview: 'Visão Geral', status: 'Análise por Status', pagamento: 'Formas de Pagamento',
@@ -685,12 +696,10 @@ function abrirDetalhesVeiculo(placa) {
         const inicioInput = document.getElementById('dataInicio').value;
         const fimInput = document.getElementById('dataFim').value;
         
-        // Se a data estiver vazia, cria uma data muito antiga ou futura para pegar tudo
         let dInicio = inicioInput ? new Date(inicioInput + 'T00:00:00') : new Date(1900, 0, 1);
         let dFim = fimInput ? new Date(fimInput + 'T23:59:59') : new Date(2100, 0, 1);
 
         if (dadosCombustivelOriginais && dadosCombustivelOriginais.length > 1) {
-            // Mapeamento baseado na sua planilha (image_27287f.png)
             const idxC = { placa: 0, data: 1, litros: 3, tipo: 6, valor: 7 };
 
             dadosCombustivelOriginais.slice(1).forEach(linha => {
