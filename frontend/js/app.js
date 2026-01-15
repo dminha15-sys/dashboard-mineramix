@@ -1,10 +1,14 @@
+// ==========================================
+// 1. CONFIGURAÇÕES E CONSTANTES GLOBAIS
+// ==========================================
 const CUSTOS = {
     DIESEL_PRECO: 6.00,
     CONSUMO_MEDIO: 2.0, // km/L
     MANUTENCAO_PCT: 0.12 // 12% sobre o faturamento
 };
 
-// CONFIG agora vem de config.js
+// A constante CONFIG vem do arquivo config.js
+// Se der erro de CONFIG is not defined, verifique se o config.js está carregado antes do app.js no HTML
 
 const CUSTO_PEDAGIOS = {
     'AUTOPISTA_FLUMINENSE': 6.90, // Pedágio BR-101
@@ -16,6 +20,7 @@ const CUSTO_PEDAGIOS = {
 // Variáveis de Estado
 let dadosAnalisados = null;
 let dadosOriginais = null;
+let dadosCombustivelOriginais = null; // DADOS DA ABA COMBUSTÍVEL
 let indiceColunaData = null;
 let chartInstance = null; // Para o gráfico
 
@@ -36,7 +41,7 @@ const elementos = {
 function detectColumnsGlobal(cabecalhos) {
     const map = {};
     cabecalhos.forEach((c, i) => {
-        const t = c.toString().toLowerCase();
+        const t = String(c).toLowerCase();
         if(t.includes('motorista')) map.motorista = i;
         if(t.includes('origem')) map.origem = i;
         if(t.includes('destino')) map.destino = i;
@@ -47,27 +52,32 @@ function detectColumnsGlobal(cabecalhos) {
 function detectarColunas(cabecalhos) {
     console.log("🔍 Cabeçalhos recebidos:", cabecalhos);
     const mapeamento = {};
+    
     cabecalhos.forEach((cabecalho, index) => {
-        const cabecalhoLower = cabecalho.toString().toLowerCase().trim();
-        if (cabecalhoLower.includes('data') && !cabecalhoLower.includes('pgto')) {
+        if (cabecalho == null) return;
+        
+        // Remove acentos e converte para minúsculas para evitar erros de digitação
+        const limpo = String(cabecalho).toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
+        
+        if (limpo.includes('data') && !limpo.includes('pgto')) {
             mapeamento['DATA'] = { indice: index, tipo: 'data' };
-        } else if (cabecalhoLower.includes('cliente')) {
+        } else if (limpo.includes('cliente')) {
             mapeamento['CLIENTE'] = { indice: index, tipo: 'cliente' };
-        } else if (cabecalhoLower.includes('motorista')) {
+        } else if (limpo.includes('motorista')) {
             mapeamento['MOTORISTA'] = { indice: index, tipo: 'motorista' };
-        } else if (cabecalhoLower.includes('placa') || cabecalhoLower.includes('veículo') || cabecalhoLower.includes('cavalo')) {
+        } else if (limpo.includes('placa') || limpo.includes('veiculo') || limpo.includes('cavalo') || limpo.includes('frota') || limpo.includes('equipamento') || limpo.includes('caminhao')) {
             mapeamento['PLACA'] = { indice: index, tipo: 'veiculo' };
-        } else if (cabecalhoLower.includes('origem')) {
+        } else if (limpo.includes('origem')) {
             mapeamento['ORIGEM'] = { indice: index, tipo: 'origem' };
-        } else if (cabecalhoLower.includes('destino')) {
+        } else if (limpo.includes('destino')) {
             mapeamento['DESTINO'] = { indice: index, tipo: 'destino' };
-        } else if (cabecalhoLower.includes('km') || cabecalhoLower.includes('quilometragem')) {
+        } else if (limpo.includes('km') || limpo.includes('quilometragem')) {
             mapeamento['KM'] = { indice: index, tipo: 'km' };
-        } else if (cabecalhoLower.includes('valor') || cabecalhoLower.includes('total') || cabecalhoLower.includes('preço')) {
+        } else if (limpo.includes('valor') || limpo.includes('total') || limpo.includes('preco') || limpo.includes('faturamento')) {
             mapeamento['VALOR'] = { indice: index, tipo: 'valor' };
-        } else if (cabecalhoLower.includes('forma') && cabecalhoLower.includes('pgto')) {
+        } else if (limpo.includes('forma') && limpo.includes('pgto')) {
             mapeamento['FORMA_PGTO'] = { indice: index, tipo: 'pagamento' };
-        } else if (cabecalhoLower.includes('status')) {
+        } else if (limpo.includes('status')) {
             mapeamento['STATUS'] = { indice: index, tipo: 'status' };
         }
     });
@@ -81,7 +91,7 @@ function detectarColunas(cabecalhos) {
 
 function extrairNumero(texto) {
     if (!texto) return 0;
-    const limpo = texto.toString().replace('R$', '').replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, '').trim();
+    const limpo = String(texto).replace('R$', '').replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, '').trim();
     const numero = parseFloat(limpo);
     return isNaN(numero) ? 0 : numero;
 }
@@ -103,15 +113,13 @@ function parsearDataBR(dataStr) {
     }
 }
 
-// === CORREÇÃO CRÍTICA DO UNDEFINED AQUI ===
 function analisarDadosMineramix(dados) {
     if (!dados || dados.length < 5) return null;
     let indiceCabecalho = -1;
     
-    // Procura a linha de cabeçalho
     for (let i = 0; i < 10; i++) {
         const linhaStr = dados[i].join(' ').toUpperCase();
-        if (linhaStr.includes('DATA') && linhaStr.includes('MOTORISTA')) {
+        if (linhaStr.includes('DATA') && (linhaStr.includes('MOTORISTA') || linhaStr.includes('CLIENTE'))) {
             indiceCabecalho = i;
             break;
         }
@@ -135,38 +143,33 @@ function analisarDadosMineramix(dados) {
         const linha = linhasBrutas[i];
         const linhaTexto = linha.join(' ').toUpperCase();
         
-        // Pula linhas de totalização do Excel
         if (linhaTexto.includes('TOTAL A RECEBER') || linhaTexto.includes('TOTAL PAGO') || linhaTexto.includes('SALDO')) break;
 
         const dataRaw = idx.data !== undefined ? linha[idx.data] : null;
-        if (!dataRaw || dataRaw.toString().trim() === '') continue;
+        if (!dataRaw || String(dataRaw).trim() === '') continue;
         const dataObj = parsearDataBR(dataRaw);
         if (!dataObj) continue;
 
         const valor = idx.valor !== undefined ? extrairNumero(linha[idx.valor]) : 0;
         const km = idx.km !== undefined ? extrairNumero(linha[idx.km]) : 0;
         
-        // Tratamento de Motorista
         let motorista = idx.motorista !== undefined ? linha[idx.motorista] : 'NÃO IDENTIFICADO';
-        if (!motorista || motorista.toString().trim() === '') motorista = 'NÃO IDENTIFICADO';
+        if (!motorista || String(motorista).trim() === '') motorista = 'NÃO IDENTIFICADO';
 
-        // Tratamento de Veículo (Correção do Undefined)
         let veiculo = idx.veiculo !== undefined ? linha[idx.veiculo] : 'NÃO IDENTIFICADO';
-        if (!veiculo || veiculo.toString().trim() === '' || veiculo === 'undefined') veiculo = 'NÃO IDENTIFICADO';
+        if (!veiculo || String(veiculo).trim() === '' || String(veiculo) === 'undefined') veiculo = 'NÃO IDENTIFICADO';
 
         const cliente = idx.cliente !== undefined ? linha[idx.cliente] : 'Não informado';
         const origem = idx.origem !== undefined ? linha[idx.origem] : '';
         const destino = idx.destino !== undefined ? linha[idx.destino] : '';
         const status = idx.status !== undefined ? linha[idx.status] : 'Não informado';
 
-        // Computando dados
         resumo.totalLinhas++;
         resumo.totalValor += valor;
         resumo.totalKM += km;
         resumo.valores.push(valor);
         resumo.kms.push(km);
 
-        // Agregações
         if (!resumo.motoristas[motorista]) resumo.motoristas[motorista] = { viagens: 0, valor: 0, km: 0 };
         resumo.motoristas[motorista].viagens++; resumo.motoristas[motorista].valor += valor; resumo.motoristas[motorista].km += km;
 
@@ -187,7 +190,6 @@ function analisarDadosMineramix(dados) {
         const mes = `${dataObj.getMonth() + 1}/${dataObj.getFullYear()}`;
         if (!resumo.dias[dia]) resumo.dias[dia] = { viagens: 0, valor: 0 };
         resumo.dias[dia].viagens++; resumo.dias[dia].valor += valor;
-        
         if (!resumo.meses[mes]) resumo.meses[mes] = { viagens: 0, valor: 0 };
         resumo.meses[mes].viagens++; resumo.meses[mes].valor += valor;
     }
@@ -195,7 +197,6 @@ function analisarDadosMineramix(dados) {
     resumo.mediaValor = resumo.totalLinhas > 0 ? resumo.totalValor / resumo.totalLinhas : 0;
     resumo.mediaKM = resumo.totalLinhas > 0 ? resumo.totalKM / resumo.totalLinhas : 0;
 
-    // Ordenações
     resumo.motoristasOrdenados = Object.entries(resumo.motoristas).sort((a, b) => b[1].valor - a[1].valor);
     resumo.veiculosOrdenados = Object.entries(resumo.veiculos).sort((a, b) => b[1].valor - a[1].valor);
     resumo.clientesOrdenados = Object.entries(resumo.clientes).sort((a, b) => b[1].valor - a[1].valor);
@@ -218,8 +219,8 @@ function formatarNumero(numero) {
 }
 
 function atualizarStatus(online, mensagem) {
-    elementos.statusText.textContent = mensagem;
-    elementos.statusDot.className = online ? 'status-dot online' : 'status-dot offline';
+    if(elementos.statusText) elementos.statusText.textContent = mensagem;
+    if(elementos.statusDot) elementos.statusDot.className = online ? 'status-dot online' : 'status-dot offline';
 }
 
 function mostrarNotificacao(mensagem, tipo) {
@@ -237,10 +238,10 @@ function toggleDarkMode() {
     document.body.classList.toggle('dark');
     const icon = document.querySelector('#btnDark i');
     if (document.body.classList.contains('dark')) {
-        icon.className = 'fas fa-sun';
+        if(icon) icon.className = 'fas fa-sun';
         localStorage.setItem('darkMode', 'on');
     } else {
-        icon.className = 'fas fa-moon';
+        if(icon) icon.className = 'fas fa-moon';
         localStorage.setItem('darkMode', 'off');
     }
 }
@@ -266,7 +267,7 @@ function mostrarRelatorio(tipo) {
     switch (tipo) {
         case 'overview': mostrarVisaoGeral(resumo); break;
         case 'motoristas': mostrarRelatorioMotoristas(resumo); break;
-        case 'veiculos': mostrarRelatorioVeiculos(resumo); break; // Agora aponta para a função certa
+        case 'veiculos': mostrarRelatorioVeiculos(resumo); break;
         case 'clientes': mostrarRelatorioClientes(resumo); break;
         case 'rotas': mostrarRelatorioRotas(resumo); break;
         case 'diario': mostrarRelatorioDiario(resumo); break;
@@ -453,8 +454,7 @@ function mostrarRelatorioRotas(resumo) {
                         const kmMedio = dados.km / dados.viagens;
                         const mediaViagem = dados.valor / dados.viagens;
                         const mediaKM = dados.km > 0 ? dados.valor / dados.km : 0;
-                        const rotaSegura = rota.replace(/"/g, '&quot;').replace(/'/g, "\\'");
-
+                        
                         return `
                             <tr>
                                 <td>
@@ -647,45 +647,130 @@ function abrirDetalhesMotorista(nomeMotorista) {
     document.getElementById('modalMotorista').style.display = 'flex';
 }
 
+// ------------------------------------------------------------------
+// LÓGICA ESPECIAL: VEÍCULO COM DADOS REAIS DE DIESEL/ARLA
+// ------------------------------------------------------------------
 function abrirDetalhesVeiculo(placa) {
     if (!dadosAnalisados || !dadosAnalisados.veiculos[placa]) {
-        alert("Dados não encontrados para este veículo no período selecionado.");
+        alert("Dados não encontrados para este veículo.");
         return;
     }
     try {
         const d = dadosAnalisados.veiculos[placa];
+        
+        // --- 1. DADOS ESTIMADOS (Mantido igual) ---
         const faturamento = d.valor;
-        const kmTotal = d.km;
-        const litros = kmTotal > 0 ? kmTotal / CUSTOS.CONSUMO_MEDIO : 0;
-        const custoDiesel = litros * CUSTOS.DIESEL_PRECO;
+        const kmTotalEstimado = d.km;
+        const litrosEstimados = kmTotalEstimado > 0 ? kmTotalEstimado / CUSTOS.CONSUMO_MEDIO : 0;
+        const custoDieselEstimado = litrosEstimados * CUSTOS.DIESEL_PRECO;
         const custoManutencao = faturamento * CUSTOS.MANUTENCAO_PCT;
-        const lucroLiquido = faturamento - custoDiesel - custoManutencao;
+        const lucroLiquidoEstimado = faturamento - custoDieselEstimado - custoManutencao;
 
+        // --- 2. DADOS REAIS (Separando Diesel e Arla) ---
+        let litrosDieselReal = 0;
+        let valorDieselReal = 0;
+        let litrosArlaReal = 0;
+        let valorArlaReal = 0;
+        let encontrouDadosReais = false;
+
+        if (dadosCombustivelOriginais && dadosCombustivelOriginais.length > 1) {
+            
+            // Mapeamento baseado na sua planilha
+            // Se as colunas mudarem, ajuste aqui
+            const cab = dadosCombustivelOriginais[0].map(c => String(c).toUpperCase());
+            const idxC = {
+                placa: 0,  // Coluna A
+                data: 1,   // Coluna B
+                litros: 3, // Coluna D (TOTAL ABASTECIDO)
+                tipo: 6,   // Coluna G (TIPO COMBUSTIVEL)
+                valor: 7   // Coluna H (TOTAL R$)
+            };
+
+            // Filtros de Data
+            const inicioInput = document.getElementById('dataInicio').value;
+            const fimInput = document.getElementById('dataFim').value;
+            let dInicio = inicioInput ? new Date(inicioInput) : new Date(0);
+            let dFim = fimInput ? new Date(fimInput) : new Date(2100, 0, 1);
+            if(fimInput) dFim.setHours(23,59,59);
+
+            // Loop para somar
+            dadosCombustivelOriginais.slice(1).forEach(linha => {
+                // Limpa placa para comparar (tira traço e espaço)
+                const placaLinha = String(linha[idxC.placa] || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+                const placaAlvo = placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+                if (placaLinha === placaAlvo) {
+                    const dataReal = parsearDataBR(linha[idxC.data]);
+                    
+                    if (dataReal && dataReal >= dInicio && dataReal <= dFim) {
+                        encontrouDadosReais = true;
+                        
+                        const qtd = extrairNumero(linha[idxC.litros]);
+                        const vlr = extrairNumero(linha[idxC.valor]);
+                        const tipo = String(linha[idxC.tipo] || '').toUpperCase();
+
+                        if (tipo.includes('ARLA')) {
+                            litrosArlaReal += qtd;
+                            valorArlaReal += vlr;
+                        } else {
+                            // Considera Diesel qualquer coisa que não seja Arla
+                            litrosDieselReal += qtd;
+                            valorDieselReal += vlr;
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- 3. ATUALIZAR A TELA ---
+        document.getElementById('textoPlaca').textContent = placa;
+        document.getElementById('modalFaturamento').textContent = formatarMoeda(faturamento);
+        document.getElementById('modalKM').textContent = formatarNumero(kmTotalEstimado) + ' km';
+        document.getElementById('modalCustoCombustivel').textContent = `- ${formatarMoeda(custoDieselEstimado)}`;
+        document.getElementById('modalCustoManutencao').textContent = `- ${formatarMoeda(custoManutencao)}`;
+        
+        const elLucroLiq = document.getElementById('modalLucroLiquido');
+        elLucroLiq.textContent = formatarMoeda(lucroLiquidoEstimado);
+        elLucroLiq.style.color = lucroLiquidoEstimado >= 0 ? 'var(--cor-pago)' : '#dc3545';
+
+        // --- EXIBIR DADOS REAIS SEPARADOS ---
+        const elRealContainer = document.getElementById('containerDadosReais');
+        
+        if (encontrouDadosReais) {
+            if(elRealContainer) elRealContainer.style.display = 'block';
+            
+            if(document.getElementById('realLitrosDiesel')) document.getElementById('realLitrosDiesel').textContent = formatarNumero(litrosDieselReal) + ' L';
+            if(document.getElementById('realGastoDiesel')) document.getElementById('realGastoDiesel').textContent = `- ${formatarMoeda(valorDieselReal)}`;
+            
+            if(document.getElementById('realLitrosArla')) document.getElementById('realLitrosArla').textContent = formatarNumero(litrosArlaReal) + ' L';
+            if(document.getElementById('realGastoArla')) document.getElementById('realGastoArla').textContent = `- ${formatarMoeda(valorArlaReal)}`;
+
+        } else {
+            if(elRealContainer) elRealContainer.style.display = 'none';
+        }
+
+        // Motorista e Rota
         let motoristaPrincipal = "Analisando...";
         let rotaPrincipal = "Analisando...";
         
         if(dadosOriginais && indiceColunaData !== null) {
-             const inicioInput = document.getElementById('dataInicio').value;
-             const fimInput = document.getElementById('dataFim').value;
-             let viagensFiltradas = [];
-             if(inicioInput && fimInput) {
-                 const dInicio = new Date(inicioInput);
-                 const dFim = new Date(fimInput);
-                 dFim.setHours(23,59,59);
-                 viagensFiltradas = dadosOriginais.slice(1).filter(linha => {
-                     const dt = parsearDataBR(linha[indiceColunaData]);
-                     return dt >= dInicio && dt <= dFim && linha.toString().includes(placa);
-                 });
-             } else {
-                 viagensFiltradas = dadosOriginais.slice(1).filter(l => l.toString().includes(placa));
-             }
-             const contMot = {};
-             const contRota = {};
              const cols = detectColumnsGlobal(dadosOriginais[0]); 
              const idxMot = cols.motorista;
              const idxOrig = cols.origem;
              const idxDest = cols.destino;
+             const inicioInput = document.getElementById('dataInicio').value;
+             const fimInput = document.getElementById('dataFim').value;
+             let dInicio = inicioInput ? new Date(inicioInput) : new Date(0);
+             let dFim = fimInput ? new Date(fimInput) : new Date(2100,0,1);
+             if(fimInput) dFim.setHours(23,59,59);
 
+             let viagensFiltradas = dadosOriginais.slice(1).filter(linha => {
+                 const dt = parsearDataBR(linha[indiceColunaData]);
+                 return dt >= dInicio && dt <= dFim && linha.toString().includes(placa);
+             });
+
+             const contMot = {};
+             const contRota = {};
              viagensFiltradas.forEach(v => {
                  if(idxMot !== undefined) { const m = v[idxMot] || 'Desconhecido'; contMot[m] = (contMot[m] || 0) + 1; }
                  if(idxOrig !== undefined && idxDest !== undefined) { const r = `${v[idxOrig]} -> ${v[idxDest]}`; contRota[r] = (contRota[r] || 0) + 1; }
@@ -695,18 +780,10 @@ function abrirDetalhesVeiculo(placa) {
              const sortRota = Object.entries(contRota).sort((a,b)=>b[1]-a[1]);
              if(sortRota.length > 0) rotaPrincipal = sortRota[0][0];
         }
-
-        document.getElementById('textoPlaca').textContent = placa;
-        document.getElementById('modalFaturamento').textContent = formatarMoeda(faturamento);
-        document.getElementById('modalKM').textContent = formatarNumero(kmTotal) + ' km';
-        document.getElementById('modalCustoCombustivel').textContent = `- ${formatarMoeda(custoDiesel)}`;
-        document.getElementById('modalCustoManutencao').textContent = `- ${formatarMoeda(custoManutencao)}`;
-        const elLucroLiq = document.getElementById('modalLucroLiquido');
-        elLucroLiq.textContent = formatarMoeda(lucroLiquido);
-        elLucroLiq.style.color = lucroLiquido >= 0 ? 'var(--cor-pago)' : '#dc3545';
         document.getElementById('textoMotoristaVeiculo').textContent = motoristaPrincipal;
         document.getElementById('textoRotaVeiculo').textContent = rotaPrincipal;
         document.getElementById('modalMedia').textContent = formatarMoeda(d.viagens > 0 ? faturamento/d.viagens : 0);
+
         document.getElementById('modalVeiculo').style.display = 'flex';
     } catch (e) {
         console.error("Erro detalhes veiculo", e);
@@ -742,7 +819,7 @@ function calcularCustoPedagio(destino) {
     // Rota 1: Região dos Lagos
     if (destLimpo.includes('CABO FRIO') || destLimpo.includes('BUZIOS') || destLimpo.includes('ARRAIAL') || destLimpo.includes('SAO PEDRO') || destLimpo.includes('IGUABA')) {
         custo += CUSTO_PEDAGIOS.VIA_LAGOS;
-        detalhes.push(`Via Lagos (${formatarMoeda(CUSTO_PEDAGIOS.VIA_LAGOS)})`);
+        detalhes.push(`Via Lagos (R$ ${formatarMoeda(CUSTO_PEDAGIOS.VIA_LAGOS)})`);
     }
 
     // Rota 2: BR-101 Norte (Macaé/Campos)
@@ -805,15 +882,13 @@ window.abrirDetalhesRota = function(rotaCodificada, kmTotal) {
             });
         }
         
-        // CSS Forçado para garantir visualização
+        // CSS Forçado
         modal.style.cssText = "display: flex !important; position: fixed !important; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 99999; align-items: center; justify-content: center;";
 
         const card = modal.querySelector('.modal-content');
         if(card) {
             card.style.cssText = "background-color: #ffffff !important; display: block !important; width: 90%; max-width: 500px; padding: 20px; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.5); position: relative; z-index: 100000; color: #333;";
         }
-
-        console.log("✅ Modal forçado via JS Inline!");
 
     } catch (erro) {
         alert("Erro no Script: " + erro.message);
@@ -833,7 +908,43 @@ function fecharModalRota() {
 // 6. FUNÇÕES PRINCIPAIS E INICIALIZAÇÃO
 // ==========================================
 
+async function carregarDados() {
+    try {
+        atualizarStatus(false, '🔄 Conectando e analisando dados...');
+        const resposta = await fetch(CONFIG.API_URL);
+        if (!resposta.ok) throw new Error(`Erro ${resposta.status}: ${resposta.statusText}`);
+        const resultado = await resposta.json();
+        if (resultado.status === 'erro') throw new Error(resultado.mensagem);
+        
+        // DADOS ANTIGOS (Mantido)
+        dadosOriginais = resultado.dados;
+        // DADOS NOVOS (Adicionado)
+        dadosCombustivelOriginais = resultado.dadosCombustivel;
 
+        const cabecalhos = dadosOriginais[0];
+        const colunasDetectadas = detectarColunas(cabecalhos);
+        const colunaData = colunasDetectadas.find(c => c.tipo === 'data');
+        indiceColunaData = colunaData ? colunaData.indice : null;
+        
+        console.log('📅 Índice da coluna de data:', indiceColunaData);
+        dadosAnalisados = analisarDadosMineramix(dadosOriginais);
+        mostrarRelatorio('overview');
+        
+        const agora = new Date().toLocaleTimeString('pt-BR');
+        if(elementos.lastUpdate) elementos.lastUpdate.textContent = `Última atualização: ${agora}`;
+        
+        // Mensagem de status
+        const msgOrigem = resultado.origem === 'cache_memoria' ? '⚡ (Rápido)' : '☁️ (Atualizado)';
+        atualizarStatus(true, `✅ ${dadosAnalisados.totalLinhas} registros analisados ${msgOrigem}`);
+        mostrarNotificacao(`✅ Dados carregados com sucesso ${msgOrigem}`, 'success');
+        
+    } catch (erro) {
+        console.error(erro);
+        atualizarStatus(false, `❌ ${erro.message}`);
+        mostrarNotificacao(`❌ Erro: ${erro.message}`, 'error');
+        elementos.contentArea.innerHTML = `<div class="loading"><i class="fas fa-exclamation-triangle"></i><p>Erro ao analisar dados: ${erro.message}</p><button class="btn btn-primary" onclick="carregarDados()" style="margin-top: 1rem;">Tentar Novamente</button></div>`;
+    }
+}
 
 function aplicarFiltroData() {
     if (!dadosOriginais) { mostrarNotificacao('❌ Dados ainda não carregados', 'error'); return; }
@@ -909,5 +1020,3 @@ window.onclick = function(event) {
         fecharModalRota();
     }
 }
-
-
