@@ -1146,3 +1146,38 @@
     color: #fff;
     font-weight: 700;
   }
+
+/* CORREÇÃO DO MODAL NO MOBILE */
+@media (max-width: 768px) {
+    .modal-content {
+        padding: 0; /* Remove padding geral para caber mais */
+        max-height: 95vh; /* Ocupa quase toda a altura */
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Cabeçalho fixo no topo do modal */
+    .modal-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--cor-card); /* Garante que o texto não passe por trás */
+        padding: 1rem;
+        border-bottom: 1px solid var(--cor-borda);
+        flex-shrink: 0; /* Não deixa o cabeçalho encolher */
+    }
+
+    /* Onde o conteúdo rola */
+    .modal-body {
+        overflow-y: auto; /* Só o corpo rola */
+        padding: 1rem;
+    }
+
+    /* Botão de fechar maior para o dedo */
+    .close-btn {
+        font-size: 2rem;
+        padding: 0.5rem;
+        line-height: 0.5;
+        color: var(--cor-secundaria);
+    }
+}
