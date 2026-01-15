@@ -55,6 +55,7 @@ function detectarColunas(cabecalhos) {
     cabecalhos.forEach((cabecalho, index) => {
         if (cabecalho == null) return;
         
+        // Remove acentos e converte para minúsculas
         const limpo = String(cabecalho).toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
         
         if (limpo.includes('data') && !limpo.includes('pgto')) {
@@ -254,8 +255,6 @@ function mostrarRelatorio(tipo) {
         return;
     }
 
-    // --- CORREÇÃO DO MENU ATIVO (SINCRONIZAÇÃO) ---
-    // Remove 'active' de todos e adiciona apenas no que corresponde ao relatório atual
     const menuItems = document.querySelectorAll('.menu-item');
     menuItems.forEach(item => {
         item.classList.remove('active');
@@ -263,7 +262,6 @@ function mostrarRelatorio(tipo) {
             item.classList.add('active');
         }
     });
-    // ----------------------------------------------
 
     const resumo = dadosAnalisados;
     const titulos = {
@@ -560,6 +558,43 @@ function mostrarRelatorioKM(resumo) {
 // 5. MODAIS E INTERAÇÕES
 // ==========================================
 
+// FUNÇÃO GENÉRICA DE FECHAR
+function fecharModalGlobal() {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+    document.querySelectorAll('.modal-overlay-rota').forEach(m => m.style.display = 'none');
+    
+    // Limpa o histórico se o modal for fechado manualmente
+    if (window.history.state && window.history.state.modalOpen) {
+        window.history.back();
+    }
+}
+
+// Escuta o botão VOLTAR do navegador (principalmente mobile)
+window.onpopstate = function(event) {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+    document.querySelectorAll('.modal-overlay-rota').forEach(m => m.style.display = 'none');
+};
+
+// Escuta a tecla ESC
+document.addEventListener('keydown', function(event) {
+    if (event.key === "Escape") {
+        fecharModalGlobal();
+    }
+});
+
+// FUNÇÃO PARA ABRIR MODAL COM HISTÓRICO
+function abrirModalComHistorico(idModal) {
+    const modal = document.getElementById(idModal);
+    if(modal) {
+        modal.style.display = 'flex';
+        // Adiciona estado no histórico para o botão voltar funcionar
+        window.history.pushState({modalOpen: true}, "", "#modal");
+    }
+}
+
+// ------------------------------------
+// ABRIR DIA
+// ------------------------------------
 function abrirDetalhesDia(diaClicado) {
     if(!dadosOriginais) return;
     const cabecalho = dadosOriginais[0];
@@ -601,7 +636,8 @@ function abrirDetalhesDia(diaClicado) {
         </div>`).join('');
     document.getElementById('modalListaMotoristas').innerHTML = listaHTML;
     gerarGraficoModal(arrayMotoristas);
-    document.getElementById('modalDia').style.display = 'flex';
+    
+    abrirModalComHistorico('modalDia');
 }
 
 function gerarGraficoModal(dadosMotoristas) {
@@ -655,19 +691,12 @@ function abrirDetalhesMotorista(nomeMotorista) {
     const elLucro = document.getElementById('motLucro');
     elLucro.textContent = formatarMoeda(lucroOperacional);
     elLucro.style.color = lucroOperacional >= 0 ? 'var(--cor-pago)' : '#dc3545';
-    document.getElementById('modalMotorista').style.display = 'flex';
+    
+    abrirModalComHistorico('modalMotorista');
 }
 
 // ------------------------------------
-// FUNÇÃO DE FECHAR MODAL (FIXADA)
-// ------------------------------------
-function fecharModalVeiculo() {
-    const modal = document.getElementById('modalVeiculo');
-    if(modal) modal.style.display = 'none';
-}
-
-// ------------------------------------
-// DETALHES DO VEÍCULO (CORRIGIDO)
+// DETALHES DO VEÍCULO
 // ------------------------------------
 function abrirDetalhesVeiculo(placa) {
     if (!dadosAnalisados || !dadosAnalisados.veiculos[placa]) {
@@ -801,15 +830,18 @@ function abrirDetalhesVeiculo(placa) {
         document.getElementById('textoRotaVeiculo').textContent = rotaPrincipal;
         document.getElementById('modalMedia').textContent = formatarMoeda(d.viagens > 0 ? faturamento/d.viagens : 0);
 
-        document.getElementById('modalVeiculo').style.display = 'flex';
+        abrirModalComHistorico('modalVeiculo');
     } catch (e) {
         console.error("Erro detalhes veiculo", e);
         alert("Erro: " + e.message);
     }
 }
 
-function fecharModalMotorista() { document.getElementById('modalMotorista').style.display = 'none'; }
-function fecharModal() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
+// Funções de Fechar Modal
+function fecharModalMotorista() { fecharModalGlobal(); }
+function fecharModal() { fecharModalGlobal(); }
+function fecharModalVeiculo() { fecharModalGlobal(); }
+function fecharModalRota() { fecharModalGlobal(); }
 
 // Lógica de Rotas e Pedágios
 function calcularCustoPedagio(destino) {
@@ -864,17 +896,9 @@ window.abrirDetalhesRota = function(rotaCodificada, kmTotal) {
                 containerPedagios.appendChild(badge);
             });
         }
-        modal.style.cssText = "display: flex !important; position: fixed !important; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 99999; align-items: center; justify-content: center;";
-        const card = modal.querySelector('.modal-content');
-        if(card) {
-            card.style.cssText = "background-color: #ffffff !important; display: block !important; width: 90%; max-width: 500px; padding: 20px; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.5); position: relative; z-index: 100000; color: #333;";
-        }
+        
+        abrirModalComHistorico('modalRotaContainer'); // Ajuste aqui para o seu container de rota
     } catch (erro) { console.error(erro); }
-}
-
-function fecharModalRota() {
-    document.getElementById('modalRotaContainer').style.display = 'none';
-    if(document.getElementById('modalRota')) document.getElementById('modalRota').style.display = 'none';
 }
 
 // ==========================================
@@ -917,7 +941,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => { carregarDados(); testarConexao(); }, 1000);
 });
 
-// EXPORTA FUNÇÕES PARA O HTML
+// Tornar funções globais
 window.fecharModalVeiculo = fecharModalVeiculo;
 window.abrirDetalhesVeiculo = abrirDetalhesVeiculo;
 window.abrirDetalhesMotorista = abrirDetalhesMotorista;
@@ -929,3 +953,10 @@ window.carregarDados = carregarDados;
 window.testarConexao = testarConexao;
 window.toggleDarkMode = toggleDarkMode;
 window.fecharModalRota = fecharModalRota;
+
+// Fechar modais ao clicar fora (ATUALIZADO)
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal-overlay') || event.target.classList.contains('modal-overlay-rota')) {
+        fecharModalGlobal();
+    }
+}
