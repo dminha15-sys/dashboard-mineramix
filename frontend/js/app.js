@@ -179,7 +179,7 @@ function analisarDadosMineramix(dados) {
 }
 
 // ==========================================
-// 3. FUNÇÕES VISUAIS
+// 3. FUNÇÕES DE VISUALIZAÇÃO E UI
 // ==========================================
 
 function formatarMoeda(valor) {
@@ -335,19 +335,183 @@ function mostrarRelatorioRotas(resumo) {
     </div>`;
 }
 
-function mostrarRelatorioDiario(resumo) { /* Simplificado */ mostrarVisaoGeral(resumo); }
-function mostrarRelatorioKM(resumo) { /* Simplificado */ mostrarVisaoGeral(resumo); }
+// RESTAURANDO FUNÇÃO DIARIO
+function mostrarRelatorioDiario(resumo) {
+    const listaDias = resumo.diasOrdenados;
+    const gerarClick = (dia) => `onclick="abrirDetalhesDia('${dia}')" style="cursor:pointer"`;
+    
+    if (window.innerWidth < 768) {
+        const cards = listaDias.map(([dia, dados]) => {
+            const dataObj = parsearDataBR(dia);
+            const diaSemana = dataObj ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][dataObj.getDay()] : '';
+            return `
+            <div class="mobile-card" ${gerarClick(dia)}>
+                <div style="display:flex; justify-content:space-between; align-items:center;"><strong>${dia} <small style="font-weight:400; color:var(--cor-texto-sec); font-size:0.8rem;">(${diaSemana})</small></strong><span class="status-badge status-analise" style="font-size:0.8rem;">${dados.viagens} viagens</span></div>
+                <div style="margin-top:0.5rem; text-align:right;"><span class="money" style="font-size:1.2rem;">${formatarMoeda(dados.valor)}</span><div style="font-size:0.7rem; color:var(--cor-secundaria); margin-top:2px;">Toque para ver detalhes <i class="fas fa-chevron-right"></i></div></div>
+            </div>`;
+        }).join('');
+        elementos.contentArea.innerHTML = `<h3 class="mobile-title">Histórico Diário (${listaDias.length} dias)</h3><div class="mobile-card-list">${cards}</div>`;
+        return;
+    }
+    
+    elementos.contentArea.innerHTML = `
+        <div class="summary-card">
+            <div class="summary-header"><div class="summary-title">Histórico Completo por Dia</div><div class="summary-icon"><i class="fas fa-calendar-day"></i></div></div>
+            <table class="summary-table"><thead><tr><th>Data</th><th class="center">Viagens</th><th class="money">Faturamento Total</th><th class="money">Média</th><th class="center">Dia da Semana</th><th class="center">Ação</th></tr></thead><tbody>
+                ${listaDias.map(([dia, dados]) => {
+                    const dataObj = parsearDataBR(dia);
+                    const diaSemana = dataObj ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][dataObj.getDay()] : '';
+                    return `<tr ${gerarClick(dia)} class="hover-row"><td>${dia}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td><td class="money">${formatarMoeda(dados.valor / dados.viagens)}</td><td class="center">${diaSemana}</td><td class="center"><i class="fas fa-chart-bar" style="color:var(--cor-secundaria)"></i></td></tr>`;
+                }).join('')}
+            </tbody></table>
+        </div>`;
+}
+
+// RESTAURANDO FUNÇÃO KM
+function mostrarRelatorioKM(resumo) {
+    const metricsHTML = `
+        <div class="metrics-grid">
+            <div class="metric-card"><div class="metric-icon"><i class="fas fa-road"></i></div><div class="metric-value">${formatarNumero(resumo.totalKM)}</div><div class="metric-label">KM Total</div></div>
+            <div class="metric-card"><div class="metric-icon"><i class="fas fa-calculator"></i></div><div class="metric-value">${formatarNumero(resumo.mediaKM)}</div><div class="metric-label">KM Médio/Viagem</div></div>
+            <div class="metric-card"><div class="metric-icon"><i class="fas fa-money-bill-wave"></i></div><div class="metric-value">${formatarMoeda(resumo.totalValor / (resumo.totalKM || 1))}</div><div class="metric-label">Receita por KM</div></div>
+        </div>`;
+    
+    if (window.innerWidth < 768) {
+        const topVeiculos = resumo.veiculosOrdenados.slice(0, 10);
+        const listCards = topVeiculos.map(([placa, dados]) => `
+            <div class="mobile-card">
+                <div style="display:flex; justify-content:space-between;"><strong>${placa}</strong><span>${dados.viagens} viagens</span></div>
+                <div style="display:flex; justify-content:space-between; margin-top:5px; color:var(--cor-texto-sec); font-size:0.85rem;"><span>Total: ${formatarNumero(dados.km)} km</span><span>R$ ${formatarNumero(dados.km > 0 ? dados.valor / dados.km : 0)}/km</span></div>
+            </div>`).join('');
+        elementos.contentArea.innerHTML = metricsHTML + `<h3 class="mobile-title" style="margin-top:1.5rem;">KM por Veículo</h3><div class="mobile-card-list">${listCards}</div>`;
+        return;
+    }
+    
+    elementos.contentArea.innerHTML = `
+        <div class="summary-card">
+            <div class="summary-header"><div class="summary-title">Análise de Quilometragem</div><div class="summary-icon"><i class="fas fa-road"></i></div></div>
+            <div style="margin-bottom: 1.5rem;">${metricsHTML}</div>
+            <h4 style="margin-bottom: 1rem; color: var(--cor-texto);">Veículos com Maior Quilometragem</h4>
+            <table class="summary-table"><thead><tr><th>Veículo</th><th class="center">Viagens</th><th class="center">KM Total</th><th class="center">KM Médio</th><th class="money">Faturamento Total</th><th class="money">Receita/KM</th></tr></thead><tbody>
+                ${resumo.veiculosOrdenados.slice(0, 10).map(([placa, dados]) => `
+                    <tr><td>${placa}</td><td class="center">${dados.viagens}</td><td class="center">${formatarNumero(dados.km)}</td><td class="center">${formatarNumero(dados.km / dados.viagens)}</td><td class="money">${formatarMoeda(dados.valor)}</td><td class="money">${formatarMoeda(dados.km > 0 ? dados.valor / dados.km : 0)}</td></tr>`).join('')}
+            </tbody></table>
+        </div>`;
+}
 
 // ==========================================
 // 5. MODAIS (LÓGICA CORRIGIDA)
 // ==========================================
 
-// FUNÇÃO GLOBAL DE FECHAR MODAL (Para botão funcionar)
+function abrirDetalhesDia(diaClicado) {
+    if(!dadosOriginais) return;
+    const cabecalho = dadosOriginais[0];
+    const colunas = detectarColunas(cabecalho);
+    const idxData = colunas.find(c => c.tipo === 'data')?.indice;
+    const idxMotorista = colunas.find(c => c.tipo === 'motorista')?.indice;
+    const idxValor = colunas.find(c => c.tipo === 'valor')?.indice;
+    
+    if(idxData === undefined) return alert('Erro ao identificar data');
+
+    const registrosDia = dadosOriginais.slice(1).filter(linha => {
+        const dataLinha = linha[idxData];
+        if(!dataLinha) return false;
+        const dObj = parsearDataBR(dataLinha);
+        if(!dObj) return false;
+        return dObj.toLocaleDateString('pt-BR') === diaClicado;
+    });
+
+    const porMotorista = {};
+    let totalDia = 0;
+    
+    registrosDia.forEach(linha => {
+        const mot = linha[idxMotorista] || 'Indefinido';
+        const val = extrairNumero(linha[idxValor]);
+        if(!porMotorista[mot]) porMotorista[mot] = { valor: 0, viagens: 0 };
+        porMotorista[mot].valor += val;
+        porMotorista[mot].viagens++;
+        totalDia += val;
+    });
+
+    const arrayMotoristas = Object.entries(porMotorista).sort((a,b) => b[1].valor - a[1].valor);
+    document.getElementById('tituloModalDia').textContent = `Resumo: ${diaClicado}`;
+    document.getElementById('modalSubtitulo').textContent = `${registrosDia.length} viagens totais | ${formatarMoeda(totalDia)}`;
+
+    const listaHTML = arrayMotoristas.map(([nome, dados]) => `
+        <div class="driver-list-item">
+            <div><strong style="color:var(--cor-primaria)">${nome}</strong><br><small style="color:var(--cor-texto-sec)">${dados.viagens} viagens</small></div>
+            <div class="money" style="color:var(--cor-secundaria)">${formatarMoeda(dados.valor)}</div>
+        </div>`).join('');
+    document.getElementById('modalListaMotoristas').innerHTML = listaHTML;
+    gerarGraficoModal(arrayMotoristas);
+    document.getElementById('modalDia').style.display = 'flex';
+}
+
+function gerarGraficoModal(dadosMotoristas) {
+    const ctx = document.getElementById('graficoDia').getContext('2d');
+    if(chartInstance) chartInstance.destroy();
+    const labels = dadosMotoristas.map(d => d[0].split(' ')[0]);
+    const valores = dadosMotoristas.map(d => d[1].valor);
+    const viagens = dadosMotoristas.map(d => d[1].viagens);
+    const maiorValor = Math.max(...valores);
+    const tetoGrafico = maiorValor > 0 ? maiorValor * 1.2 : 100;
+    const isDark = document.body.classList.contains('dark');
+    const corTexto = isDark ? '#e9ecef' : '#1f2933';
+
+    chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{ data: valores, backgroundColor: '#FF6B35', hoverBackgroundColor: '#e55a2b', borderRadius: 4, barPercentage: 0.6, categoryPercentage: 0.8 }]
+        },
+        plugins: [ChartDataLabels],
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            layout: { padding: { top: 30, left: 10, right: 10, bottom: 10 } },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: (ctx) => `${formatarMoeda(ctx.raw)} (${viagens[ctx.dataIndex]} viagens)` } },
+                datalabels: { align: 'end', anchor: 'end', formatter: (value) => value.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}), color: corTexto, font: { weight: 'bold', size: 11 }, offset: 4 }
+            },
+            scales: {
+                y: { display: false, beginAtZero: true, max: tetoGrafico, grid: { display: false } },
+                x: { grid: { display: false }, ticks: { color: corTexto, font: { size: 11, weight: '500' } } }
+            }
+        }
+    });
+}
+
+function abrirDetalhesMotorista(nomeMotorista) {
+    if(!dadosAnalisados) return;
+    const dadosMot = dadosAnalisados.motoristas[nomeMotorista];
+    if(!dadosMot) return alert('Dados não encontrados para este motorista.');
+    const faturamento = dadosMot.valor;
+    const kmTotal = dadosMot.km;
+    const litros = kmTotal > 0 ? kmTotal / CUSTOS.CONSUMO_MEDIO : 0;
+    const custoDiesel = litros * CUSTOS.DIESEL_PRECO;
+    const lucroOperacional = faturamento - custoDiesel;
+
+    document.getElementById('modalMotTitulo').textContent = nomeMotorista;
+    document.getElementById('motFaturamento').textContent = formatarMoeda(faturamento);
+    document.getElementById('motKm').textContent = formatarNumero(kmTotal) + ' km';
+    document.getElementById('motCustoDiesel').textContent = `- ${formatarMoeda(custoDiesel)}`;
+    const elLucro = document.getElementById('motLucro');
+    elLucro.textContent = formatarMoeda(lucroOperacional);
+    elLucro.style.color = lucroOperacional >= 0 ? 'var(--cor-pago)' : '#dc3545';
+    document.getElementById('modalMotorista').style.display = 'flex';
+}
+
+// ------------------------------------
+// FUNÇÃO DE FECHAR MODAL (FIXADA)
+// ------------------------------------
 function fecharModalVeiculo() {
     const modal = document.getElementById('modalVeiculo');
     if(modal) modal.style.display = 'none';
 }
 
+// ------------------------------------
+// DETALHES DO VEÍCULO (CORRIGIDO)
+// ------------------------------------
 function abrirDetalhesVeiculo(placa) {
     if (!dadosAnalisados || !dadosAnalisados.veiculos[placa]) {
         alert("Dados não encontrados.");
@@ -355,6 +519,8 @@ function abrirDetalhesVeiculo(placa) {
     }
     try {
         const d = dadosAnalisados.veiculos[placa];
+        
+        // 1. DADOS ESTIMADOS
         const faturamento = d.valor;
         const kmTotalEstimado = d.km;
         const litrosEstimados = kmTotalEstimado > 0 ? kmTotalEstimado / CUSTOS.CONSUMO_MEDIO : 0;
@@ -362,16 +528,17 @@ function abrirDetalhesVeiculo(placa) {
         const custoManutencao = faturamento * CUSTOS.MANUTENCAO_PCT;
         const lucroLiquidoEstimado = faturamento - custoDieselEstimado - custoManutencao;
 
-        // DADOS REAIS (Combustível)
+        // 2. DADOS REAIS (COMBUSTÍVEL)
         let litrosDieselReal = 0;
         let valorDieselReal = 0;
         let litrosArlaReal = 0;
         let valorArlaReal = 0;
         let encontrouDadosReais = false;
 
-        // Filtros de Data (CORRIGIDO)
+        // FILTRO DE DATA CORRIGIDO
         const inicioInput = document.getElementById('dataInicio').value;
         const fimInput = document.getElementById('dataFim').value;
+        
         let dInicio = inicioInput ? new Date(inicioInput + 'T00:00:00') : new Date(1900, 0, 1);
         let dFim = fimInput ? new Date(fimInput + 'T23:59:59') : new Date(2100, 0, 1);
 
@@ -384,6 +551,7 @@ function abrirDetalhesVeiculo(placa) {
 
                 if (placaLinha === placaAlvo) {
                     const dataReal = parsearDataBR(linha[idxC.data]);
+                    // Compara datas
                     if (dataReal && dataReal >= dInicio && dataReal <= dFim) {
                         encontrouDadosReais = true;
                         
@@ -403,7 +571,7 @@ function abrirDetalhesVeiculo(placa) {
             });
         }
 
-        // PREENCHER TELA
+        // 3. ATUALIZAR TELA
         document.getElementById('textoPlaca').textContent = placa;
         document.getElementById('modalFaturamento').textContent = formatarMoeda(faturamento);
         document.getElementById('modalKM').textContent = formatarNumero(kmTotalEstimado) + ' km';
@@ -413,13 +581,13 @@ function abrirDetalhesVeiculo(placa) {
         elLucroLiq.textContent = formatarMoeda(lucroLiquidoEstimado);
         elLucroLiq.style.color = lucroLiquidoEstimado >= 0 ? 'var(--cor-pago)' : '#dc3545';
 
-        // Atualizar Dados Reais (HTML NOVO E CORRIGIDO DE CORES)
+        // 4. ATUALIZAR HTML DOS DADOS REAIS (COM CORES CORRETAS)
         const elRealContainer = document.getElementById('containerDadosReais');
         if (encontrouDadosReais) {
-            elRealContainer.style.display = 'block';
-            
-            // Injeção de HTML Dinâmico para compatibilidade de cores
-            elRealContainer.innerHTML = `
+            if(elRealContainer) {
+                elRealContainer.style.display = 'block';
+                // Injeta o HTML dinamicamente para garantir as cores do tema
+                elRealContainer.innerHTML = `
                 <h4 style="font-size: 0.8rem; text-transform: uppercase; color: var(--cor-texto-sec); margin: 0 0 1rem 0; text-align: center; letter-spacing: 1px; border-bottom: 1px dashed var(--cor-borda); padding-bottom: 8px;">
                     <i class="fas fa-gas-pump" style="color: var(--cor-secundaria);"></i> Consumo Real (Abastecimentos)
                 </h4>
@@ -446,14 +614,15 @@ function abrirDetalhesVeiculo(placa) {
                             <strong style="color: #dc3545;">- ${formatarMoeda(valorArlaReal)}</strong>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
+            }
         } else {
-            elRealContainer.style.display = 'none';
+            if(elRealContainer) elRealContainer.style.display = 'none';
         }
 
-        // Motorista Principal
+        // Lógica Motorista/Rota
         let motoristaPrincipal = "---";
+        let rotaPrincipal = "---";
         if(dadosOriginais && indiceColunaData !== null) {
              let viagensFiltradas = dadosOriginais.slice(1).filter(linha => {
                  const dt = parsearDataBR(linha[indiceColunaData]);
@@ -461,13 +630,20 @@ function abrirDetalhesVeiculo(placa) {
              });
              const cols = detectColumnsGlobal(dadosOriginais[0]); 
              const contMot = {};
+             const contRota = {};
              viagensFiltradas.forEach(v => {
                  if(cols.motorista !== undefined) { const m = v[cols.motorista] || 'Desconhecido'; contMot[m] = (contMot[m] || 0) + 1; }
+                 if(cols.origem !== undefined && cols.destino !== undefined) { const r = `${v[cols.origem]} -> ${v[cols.destino]}`; contRota[r] = (contRota[r] || 0) + 1; }
              });
              const sortMot = Object.entries(contMot).sort((a,b)=>b[1]-a[1]);
              if(sortMot.length > 0) motoristaPrincipal = `${sortMot[0][0]} (${Math.round(sortMot[0][1]/viagensFiltradas.length*100)}%)`;
+             const sortRota = Object.entries(contRota).sort((a,b)=>b[1]-a[1]);
+             if(sortRota.length > 0) rotaPrincipal = sortRota[0][0];
         }
         document.getElementById('textoMotoristaVeiculo').textContent = motoristaPrincipal;
+        document.getElementById('textoRotaVeiculo').textContent = rotaPrincipal;
+        document.getElementById('modalMedia').textContent = formatarMoeda(d.viagens > 0 ? faturamento/d.viagens : 0);
+
         document.getElementById('modalVeiculo').style.display = 'flex';
     } catch (e) {
         console.error("Erro detalhes veiculo", e);
@@ -475,10 +651,74 @@ function abrirDetalhesVeiculo(placa) {
     }
 }
 
-// Outros modais
-function abrirDetalhesMotorista(nome) { /* Mantido */ }
 function fecharModalMotorista() { document.getElementById('modalMotorista').style.display = 'none'; }
 function fecharModal() { document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none'); }
+
+// Lógica de Rotas e Pedágios
+function calcularCustoPedagio(destino) {
+    let destLimpo = String(destino || "").toUpperCase();
+    if (destLimpo.includes('→')) { destLimpo = destLimpo.split('→')[1] || destLimpo; }
+    destLimpo = destLimpo.trim(); 
+    let custo = 0;
+    let detalhes = [];
+    if (destLimpo.includes('CABO FRIO') || destLimpo.includes('BUZIOS') || destLimpo.includes('ARRAIAL') || destLimpo.includes('SAO PEDRO') || destLimpo.includes('IGUABA')) {
+        custo += CUSTO_PEDAGIOS.VIA_LAGOS;
+        detalhes.push(`Via Lagos (${formatarMoeda(CUSTO_PEDAGIOS.VIA_LAGOS)})`);
+    }
+    if (destLimpo.includes('MACAE') || destLimpo.includes('RIO DAS OSTRAS') || destLimpo.includes('CAMPOS') || destLimpo.includes('CASIMIRO')) {
+        custo += CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE;
+        detalhes.push(`Praça BR-101 (R$ ${formatarMoeda(CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE)})`);
+    }
+    if (destLimpo.includes('RIO DE JANEIRO') || destLimpo.includes('NITEROI') || destLimpo.includes('SAO GONCALO') || destLimpo.includes('ITABORAI') || destLimpo.includes('DUQUE')) {
+        custo += CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE; 
+        detalhes.push(`Pedágio Manilha (R$ ${formatarMoeda(CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE)})`);
+        if(destLimpo.includes('RIO DE JANEIRO') || destLimpo.includes('DUQUE')) {
+            custo += CUSTO_PEDAGIOS.PONTE_RIO_NITEROI;
+            detalhes.push(`Ponte Rio-Niterói (R$ ${formatarMoeda(CUSTO_PEDAGIOS.PONTE_RIO_NITEROI)})`);
+        }
+    }
+    if (custo === 0) { detalhes.push("Rota local ou sem pedágio mapeado"); }
+    return { total: custo, lista: detalhes };
+}
+
+window.abrirDetalhesRota = function(rotaCodificada, kmTotal) {
+    try {
+        const destinoBruto = decodeURIComponent(rotaCodificada);
+        const destinoNome = destinoBruto.replace(/.*→/, '').trim(); 
+        const infoPedagio = calcularCustoPedagio(destinoNome);
+        const elDestino = document.getElementById('rotaDestinoNome');
+        const elRotaKm = document.getElementById('rotaKm');
+        const elResumoKm = document.getElementById('resumoKm');
+        const elResumoPedagio = document.getElementById('resumoPedagio');
+        const containerPedagios = document.getElementById('rotaPedagios');
+        const modal = document.getElementById('modalRota');
+        if (!modal) return;
+        elDestino.textContent = destinoNome;
+        elRotaKm.textContent = formatarNumero(kmTotal) + ' km (Estimado)';
+        elResumoKm.textContent = formatarNumero(kmTotal) + ' km';
+        elResumoPedagio.textContent = formatarMoeda(infoPedagio.total);
+        elResumoPedagio.style.color = infoPedagio.total > 0 ? '#dc3545' : '#333';
+        if(containerPedagios) {
+            containerPedagios.innerHTML = ''; 
+            infoPedagio.lista.forEach(item => {
+                const badge = document.createElement('span');
+                badge.style.cssText = "background:#ffc107; color:#000; padding:4px 8px; border-radius:10px; font-size:12px; margin-right:5px; display:inline-block;";
+                badge.innerHTML = `<i class="fas fa-ticket-alt"></i> ${item}`;
+                containerPedagios.appendChild(badge);
+            });
+        }
+        modal.style.cssText = "display: flex !important; position: fixed !important; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); z-index: 99999; align-items: center; justify-content: center;";
+        const card = modal.querySelector('.modal-content');
+        if(card) {
+            card.style.cssText = "background-color: #ffffff !important; display: block !important; width: 90%; max-width: 500px; padding: 20px; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.5); position: relative; z-index: 100000; color: #333;";
+        }
+    } catch (erro) { console.error(erro); }
+}
+
+function fecharModalRota() {
+    document.getElementById('modalRotaContainer').style.display = 'none';
+    if(document.getElementById('modalRota')) document.getElementById('modalRota').style.display = 'none';
+}
 
 // ==========================================
 // 6. CARREGAMENTO (Inicialização)
@@ -520,8 +760,15 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => { carregarDados(); testarConexao(); }, 1000);
 });
 
-// Tornar funções globais
+// EXPORTA FUNÇÕES PARA O HTML
 window.fecharModalVeiculo = fecharModalVeiculo;
 window.abrirDetalhesVeiculo = abrirDetalhesVeiculo;
 window.abrirDetalhesMotorista = abrirDetalhesMotorista;
 window.fecharModal = fecharModal;
+window.fecharModalMotorista = fecharModalMotorista;
+window.abrirDetalhesDia = abrirDetalhesDia;
+window.aplicarFiltroData = aplicarFiltroData;
+window.carregarDados = carregarDados;
+window.testarConexao = testarConexao;
+window.toggleDarkMode = toggleDarkMode;
+window.fecharModalRota = fecharModalRota;
