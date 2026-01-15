@@ -10,8 +10,8 @@ const CUSTOS = {
 // A constante CONFIG vem do arquivo config.js
 
 const CUSTO_PEDAGIOS = {
-    'AUTOPISTA_FLUMINENSE': 6.90,
-    'VIA_LAGOS': 27.00,
+    'AUTOPISTA_FLUMINENSE': 6.90, // Pedágio BR-101
+    'VIA_LAGOS': 27.00,           // Pedágio Via Lagos
     'PONTE_RIO_NITEROI': 6.20,
     'OUTROS': 0.00
 };
@@ -19,9 +19,9 @@ const CUSTO_PEDAGIOS = {
 // Variáveis de Estado
 let dadosAnalisados = null;
 let dadosOriginais = null;
-let dadosCombustivelOriginais = null;
+let dadosCombustivelOriginais = null; // DADOS DA ABA COMBUSTÍVEL
 let indiceColunaData = null;
-let chartInstance = null;
+let chartInstance = null; // Para o gráfico
 
 // Elementos do DOM
 const elementos = {
@@ -269,6 +269,21 @@ function mostrarVisaoGeral(resumo) {
     `;
     const topMotoristas = resumo.motoristasOrdenados.slice(0, 5);
     const topVeiculos = resumo.veiculosOrdenados.slice(0, 5);
+    
+    // --- TOP MESES (RESTAURADO) ---
+    const mesesMap = {};
+    Object.entries(resumo.dias || {}).forEach(([data, info]) => {
+        const partes = data.split('/'); 
+        if(partes.length === 3) {
+            const mesAno = `${partes[1]}/${partes[2]}`;
+            if(!mesesMap[mesAno]) mesesMap[mesAno] = { valor: 0, viagens: 0 };
+            mesesMap[mesAno].valor += info.valor;
+            mesesMap[mesAno].viagens += info.viagens;
+        }
+    });
+    const topMeses = Object.entries(mesesMap).sort((a,b) => b[1].valor - a[1].valor).slice(0, 5);
+    // --------------------------------
+
     const summaryHTML = `
     <div class="summary-cards">
         <div class="summary-card">
@@ -281,6 +296,12 @@ function mostrarVisaoGeral(resumo) {
             <div class="summary-header"><div class="summary-title">Top 5 Veículos</div><div class="summary-icon"><i class="fas fa-truck"></i></div></div>
             <table class="summary-table"><thead><tr><th>Placa</th><th>Viagens</th><th>Total</th></tr></thead><tbody>
                 ${topVeiculos.map(([placa, dados]) => `<tr><td>${placa}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
+            </tbody></table>
+        </div>
+        <div class="summary-card">
+            <div class="summary-header"><div class="summary-title">Top 5 Meses</div><div class="summary-icon"><i class="fas fa-calendar-alt"></i></div></div>
+            <table class="summary-table"><thead><tr><th>Mês/Ano</th><th>Viagens</th><th>Total</th></tr></thead><tbody>
+                ${topMeses.map(([mes, dados]) => `<tr><td>${mes}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td></tr>`).join('')}
             </tbody></table>
         </div>
     </div>`;
@@ -824,7 +845,6 @@ async function carregarDados() {
     }
 }
 
-// Inicialização
 document.addEventListener('DOMContentLoaded', function() {
     const menuItems = document.querySelectorAll('.menu-item');
     menuItems.forEach(item => {
