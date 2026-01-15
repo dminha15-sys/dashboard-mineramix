@@ -658,7 +658,7 @@ function abrirDetalhesVeiculo(placa) {
     try {
         const d = dadosAnalisados.veiculos[placa];
         
-        // --- 1. DADOS ESTIMADOS (Mantido igual) ---
+        // 1. DADOS ESTIMADOS (API_DADOS)
         const faturamento = d.valor;
         const kmTotalEstimado = d.km;
         const litrosEstimados = kmTotalEstimado > 0 ? kmTotalEstimado / CUSTOS.CONSUMO_MEDIO : 0;
@@ -666,42 +666,34 @@ function abrirDetalhesVeiculo(placa) {
         const custoManutencao = faturamento * CUSTOS.MANUTENCAO_PCT;
         const lucroLiquidoEstimado = faturamento - custoDieselEstimado - custoManutencao;
 
-        // --- 2. DADOS REAIS (Separando Diesel e Arla) ---
+        // 2. DADOS REAIS (COMBUSTÍVEL) - LÓGICA DE FILTRO CORRIGIDA
         let litrosDieselReal = 0;
         let valorDieselReal = 0;
         let litrosArlaReal = 0;
         let valorArlaReal = 0;
         let encontrouDadosReais = false;
 
+        // Pega as datas do filtro
+        const inicioInput = document.getElementById('dataInicio').value;
+        const fimInput = document.getElementById('dataFim').value;
+        
+        // Se não tiver data selecionada, assume "Sempre" (1900 até 2100)
+        let dInicio = inicioInput ? new Date(inicioInput + 'T00:00:00') : new Date(1900, 0, 1);
+        let dFim = fimInput ? new Date(fimInput + 'T23:59:59') : new Date(2100, 0, 1);
+
         if (dadosCombustivelOriginais && dadosCombustivelOriginais.length > 1) {
-            
-            // Mapeamento baseado na sua planilha
-            // Se as colunas mudarem, ajuste aqui
-            const cab = dadosCombustivelOriginais[0].map(c => String(c).toUpperCase());
-            const idxC = {
-                placa: 0,  // Coluna A
-                data: 1,   // Coluna B
-                litros: 3, // Coluna D (TOTAL ABASTECIDO)
-                tipo: 6,   // Coluna G (TIPO COMBUSTIVEL)
-                valor: 7   // Coluna H (TOTAL R$)
-            };
+            // Mapeamento das colunas (Confirme se A=0, B=1, etc na sua planilha)
+            const idxC = { placa: 0, data: 1, litros: 3, tipo: 6, valor: 7 };
 
-            // Filtros de Data
-            const inicioInput = document.getElementById('dataInicio').value;
-            const fimInput = document.getElementById('dataFim').value;
-            let dInicio = inicioInput ? new Date(inicioInput) : new Date(0);
-            let dFim = fimInput ? new Date(fimInput) : new Date(2100, 0, 1);
-            if(fimInput) dFim.setHours(23,59,59);
-
-            // Loop para somar
             dadosCombustivelOriginais.slice(1).forEach(linha => {
-                // Limpa placa para comparar (tira traço e espaço)
+                // Limpeza da placa (remove espaços e traços)
                 const placaLinha = String(linha[idxC.placa] || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
                 const placaAlvo = placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
 
                 if (placaLinha === placaAlvo) {
                     const dataReal = parsearDataBR(linha[idxC.data]);
                     
+                    // Compara as datas corretamente
                     if (dataReal && dataReal >= dInicio && dataReal <= dFim) {
                         encontrouDadosReais = true;
                         
@@ -713,7 +705,6 @@ function abrirDetalhesVeiculo(placa) {
                             litrosArlaReal += qtd;
                             valorArlaReal += vlr;
                         } else {
-                            // Considera Diesel qualquer coisa que não seja Arla
                             litrosDieselReal += qtd;
                             valorDieselReal += vlr;
                         }
@@ -722,7 +713,7 @@ function abrirDetalhesVeiculo(placa) {
             });
         }
 
-        // --- 3. ATUALIZAR A TELA ---
+        // 3. ATUALIZA A TELA
         document.getElementById('textoPlaca').textContent = placa;
         document.getElementById('modalFaturamento').textContent = formatarMoeda(faturamento);
         document.getElementById('modalKM').textContent = formatarNumero(kmTotalEstimado) + ' km';
@@ -733,44 +724,33 @@ function abrirDetalhesVeiculo(placa) {
         elLucroLiq.textContent = formatarMoeda(lucroLiquidoEstimado);
         elLucroLiq.style.color = lucroLiquidoEstimado >= 0 ? 'var(--cor-pago)' : '#dc3545';
 
-        // --- EXIBIR DADOS REAIS SEPARADOS ---
+        // Atualiza blocos de dados reais
         const elRealContainer = document.getElementById('containerDadosReais');
-        
-        if (encontrouDadosReais) {
-            if(elRealContainer) elRealContainer.style.display = 'block';
-            
-            if(document.getElementById('realLitrosDiesel')) document.getElementById('realLitrosDiesel').textContent = formatarNumero(litrosDieselReal) + ' L';
-            if(document.getElementById('realGastoDiesel')) document.getElementById('realGastoDiesel').textContent = `- ${formatarMoeda(valorDieselReal)}`;
-            
-            if(document.getElementById('realLitrosArla')) document.getElementById('realLitrosArla').textContent = formatarNumero(litrosArlaReal) + ' L';
-            if(document.getElementById('realGastoArla')) document.getElementById('realGastoArla').textContent = `- ${formatarMoeda(valorArlaReal)}`;
-
-        } else {
-            if(elRealContainer) elRealContainer.style.display = 'none';
+        if(elRealContainer) {
+            if (encontrouDadosReais) {
+                elRealContainer.style.display = 'block';
+                document.getElementById('realLitrosDiesel').textContent = formatarNumero(litrosDieselReal) + ' L';
+                document.getElementById('realGastoDiesel').textContent = `- ${formatarMoeda(valorDieselReal)}`;
+                document.getElementById('realLitrosArla').textContent = formatarNumero(litrosArlaReal) + ' L';
+                document.getElementById('realGastoArla').textContent = `- ${formatarMoeda(valorArlaReal)}`;
+            } else {
+                elRealContainer.style.display = 'none';
+            }
         }
 
-        // Motorista e Rota
-        let motoristaPrincipal = "Analisando...";
-        let rotaPrincipal = "Analisando...";
-        
+        // Lógica de Motorista e Rota (Mantida)
+        let motoristaPrincipal = "---";
+        let rotaPrincipal = "---";
         if(dadosOriginais && indiceColunaData !== null) {
              const cols = detectColumnsGlobal(dadosOriginais[0]); 
-             const idxMot = cols.motorista;
-             const idxOrig = cols.origem;
-             const idxDest = cols.destino;
-             const inicioInput = document.getElementById('dataInicio').value;
-             const fimInput = document.getElementById('dataFim').value;
-             let dInicio = inicioInput ? new Date(inicioInput) : new Date(0);
-             let dFim = fimInput ? new Date(fimInput) : new Date(2100,0,1);
-             if(fimInput) dFim.setHours(23,59,59);
-
+             const idxMot = cols.motorista; const idxOrig = cols.origem; const idxDest = cols.destino;
+             
              let viagensFiltradas = dadosOriginais.slice(1).filter(linha => {
                  const dt = parsearDataBR(linha[indiceColunaData]);
                  return dt >= dInicio && dt <= dFim && linha.toString().includes(placa);
              });
 
-             const contMot = {};
-             const contRota = {};
+             const contMot = {}; const contRota = {};
              viagensFiltradas.forEach(v => {
                  if(idxMot !== undefined) { const m = v[idxMot] || 'Desconhecido'; contMot[m] = (contMot[m] || 0) + 1; }
                  if(idxOrig !== undefined && idxDest !== undefined) { const r = `${v[idxOrig]} -> ${v[idxDest]}`; contRota[r] = (contRota[r] || 0) + 1; }
@@ -784,25 +764,12 @@ function abrirDetalhesVeiculo(placa) {
         document.getElementById('textoRotaVeiculo').textContent = rotaPrincipal;
         document.getElementById('modalMedia').textContent = formatarMoeda(d.viagens > 0 ? faturamento/d.viagens : 0);
 
-        document.getElementById('modalVeiculo').style.display = 'flex';
+        document.getElementById('modalVeiculo').style.display = 'flex'; // Exibe o modal
     } catch (e) {
         console.error("Erro detalhes veiculo", e);
-        alert("Erro ao processar dados: " + e.message);
+        alert("Erro: " + e.message);
     }
 }
-
-function fecharModal() {
-    document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
-}
-
-function fecharModalMotorista() {
-    document.getElementById('modalMotorista').style.display = 'none';
-}
-
-function fecharModalVeiculo() {
-    document.getElementById('modalVeiculo').style.display = 'none';
-}
-
 // ---------------------------
 // LÓGICA DE ROTAS E PEDÁGIOS
 // ---------------------------
