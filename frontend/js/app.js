@@ -783,6 +783,129 @@ function calcularCustoPedagio(destino) {
 }
 
 
+
+window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
+    try {
+        // 1. LIMPEZA E SEGURANÇA DO NOME
+        const destinoBruto = decodeURIComponent(rotaCodificada || '');
+        let destinoNome = destinoBruto.replace(/.*→/, '').trim(); 
+        
+        // Se o nome for vazio, define um padrão para não quebrar
+        if (!destinoNome || destinoNome.length === 0) {
+            destinoNome = "Destino Não Identificado";
+        }
+        
+        // 2. BUSCA INTELIGENTE COM PROTEÇÃO "|| {}" (A CORREÇÃO DO ERRO ESTÁ AQUI)
+        // O "|| {...}" garante que se a busca falhar, usamos um objeto padrão em vez de null
+        const dadosRota = buscarRotaInteligente(destinoNome) || { 
+            km: 0, pedagios: [], nome: destinoNome, mapaUrl: null 
+        };
+        
+        // Agora é seguro ler .km pois dadosRota nunca será nulo
+        const kmReal = (dadosRota.km && dadosRota.km > 0) ? dadosRota.km : (kmPlanilha || 0);
+        
+        // 3. CÁLCULOS
+        let total5Eixos = 0;
+        let total6Eixos = 0;
+        let listaPedagiosHtml = '';
+        
+        // Garante que pedagios é um array antes de usar .map
+        const pedagios = dadosRota.pedagios || [];
+
+        if (pedagios.length > 0) {
+            listaPedagiosHtml = pedagios.map(p => {
+                total5Eixos += p.custo_eixo * 5;
+                total6Eixos += p.custo_eixo * 6;
+                return `
+                <div class="toll-row">
+                    <span style="color:#ccc;">${p.nome}</span>
+                    <span style="color:#fff;">${formatarMoeda(p.custo_eixo)}/eixo</span>
+                </div>`;
+            }).join('');
+        } else {
+            listaPedagiosHtml = '<div style="color:#666; font-size:0.8rem; font-style:italic;">Nenhum pedágio cadastrado.</div>';
+        }
+
+        const modalContainer = document.getElementById('modalRotaContainer');
+        const cardBody = modalContainer.querySelector('.card-body');
+        
+        // 4. MAPA (Se não tiver URL, mostra aviso em vez de erro)
+        const htmlMapa = dadosRota.mapaUrl 
+            ? `<iframe src="${dadosRota.mapaUrl}" allowfullscreen="" loading="lazy"></iframe>`
+            : `<div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555; background:#111;"><i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:10px;"></i><span>Mapa não configurado</span></div>`;
+
+        // === 5. CONSTRUÇÃO DO HTML (LAYOUT EM COLUNAS PARA O SEU CSS NOVO) ===
+        cardBody.innerHTML = ''; 
+
+        // Coluna 1: MAPA (Esquerda)
+        const divMapa = document.createElement('div');
+        divMapa.className = 'route-map-col';
+        divMapa.innerHTML = htmlMapa;
+        cardBody.appendChild(divMapa);
+
+        // Coluna 2: INFO (Direita)
+        const divInfo = document.createElement('div');
+        divInfo.className = 'route-info-col';
+        
+        divInfo.innerHTML = `
+            <div class="info-scroll-area">
+                <div class="route-box">
+                    <div class="route-stop">
+                        <div class="stop-icon">
+                            <i class="fas fa-circle" style="color:#fff; font-size:0.7rem; margin-top:4px;"></i>
+                            <div class="stop-line"></div>
+                        </div>
+                        <div>
+                            <strong style="color:#fff; display:block;">Areal Tosana</strong>
+                            <small style="color:#888;">Origem</small>
+                        </div>
+                    </div>
+                    
+                    <div class="route-stop">
+                        <div class="stop-icon">
+                            <i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria); font-size:1.1rem;"></i>
+                        </div>
+                        <div>
+                            <strong style="color:#fff; display:block;">${destinoNome}</strong>
+                            <small style="color:#888;">Destino (${formatarNumero(kmReal)} km)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="route-box">
+                    <strong style="display:block; margin-bottom:10px; color:#FF6B35; text-transform:uppercase; font-size:0.75rem;">
+                        <i class="fas fa-ticket-alt"></i> Pedágios na Rota
+                    </strong>
+                    <div class="toll-list">
+                        ${listaPedagiosHtml}
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-footer">
+                <div class="axle-grid">
+                    <div class="axle-box">
+                        <span class="axle-title">Total 5 Eixos</span>
+                        <div class="axle-price">${formatarMoeda(total5Eixos)}</div>
+                    </div>
+                    <div class="axle-box">
+                        <span class="axle-title">Total 6 Eixos</span>
+                        <div class="axle-price">${formatarMoeda(total6Eixos)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        cardBody.appendChild(divInfo);
+
+        // Abre o modal com segurança
+        modalContainer.style.display = 'flex';
+        
+    } catch (erro) { 
+        console.error("Erro rota:", erro); 
+        alert("Erro ao abrir rota: " + erro.message);
+    }
+}
+
 function fecharModalRota() {
     document.getElementById('modalRotaContainer').style.display = 'none';
     if(document.getElementById('modalRota')) document.getElementById('modalRota').style.display = 'none';
@@ -955,127 +1078,7 @@ function buscarRotaInteligente(destino) {
     return { km: 0, pedagios: [], nome: destino, mapaUrl: null };
 }
 
-window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
-    try {
-        // 1. LIMPEZA E SEGURANÇA DO NOME
-        const destinoBruto = decodeURIComponent(rotaCodificada || '');
-        let destinoNome = destinoBruto.replace(/.*→/, '').trim(); 
-        
-        // Se o nome for vazio, define um padrão para não quebrar
-        if (!destinoNome || destinoNome.length === 0) {
-            destinoNome = "Destino Não Identificado";
-        }
-        
-        // 2. BUSCA INTELIGENTE COM PROTEÇÃO "|| {}" (A CORREÇÃO DO ERRO ESTÁ AQUI)
-        // O "|| {...}" garante que se a busca falhar, usamos um objeto padrão em vez de null
-        const dadosRota = buscarRotaInteligente(destinoNome) || { 
-            km: 0, pedagios: [], nome: destinoNome, mapaUrl: null 
-        };
-        
-        // Agora é seguro ler .km pois dadosRota nunca será nulo
-        const kmReal = (dadosRota.km && dadosRota.km > 0) ? dadosRota.km : (kmPlanilha || 0);
-        
-        // 3. CÁLCULOS
-        let total5Eixos = 0;
-        let total6Eixos = 0;
-        let listaPedagiosHtml = '';
-        
-        // Garante que pedagios é um array antes de usar .map
-        const pedagios = dadosRota.pedagios || [];
 
-        if (pedagios.length > 0) {
-            listaPedagiosHtml = pedagios.map(p => {
-                total5Eixos += p.custo_eixo * 5;
-                total6Eixos += p.custo_eixo * 6;
-                return `
-                <div class="toll-row">
-                    <span style="color:#ccc;">${p.nome}</span>
-                    <span style="color:#fff;">${formatarMoeda(p.custo_eixo)}/eixo</span>
-                </div>`;
-            }).join('');
-        } else {
-            listaPedagiosHtml = '<div style="color:#666; font-size:0.8rem; font-style:italic;">Nenhum pedágio cadastrado.</div>';
-        }
-
-        const modalContainer = document.getElementById('modalRotaContainer');
-        const cardBody = modalContainer.querySelector('.card-body');
-        
-        // 4. MAPA (Se não tiver URL, mostra aviso em vez de erro)
-        const htmlMapa = dadosRota.mapaUrl 
-            ? `<iframe src="${dadosRota.mapaUrl}" allowfullscreen="" loading="lazy"></iframe>`
-            : `<div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555; background:#111;"><i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:10px;"></i><span>Mapa não configurado</span></div>`;
-
-        // === 5. CONSTRUÇÃO DO HTML (LAYOUT EM COLUNAS PARA O SEU CSS NOVO) ===
-        cardBody.innerHTML = ''; 
-
-        // Coluna 1: MAPA (Esquerda)
-        const divMapa = document.createElement('div');
-        divMapa.className = 'route-map-col';
-        divMapa.innerHTML = htmlMapa;
-        cardBody.appendChild(divMapa);
-
-        // Coluna 2: INFO (Direita)
-        const divInfo = document.createElement('div');
-        divInfo.className = 'route-info-col';
-        
-        divInfo.innerHTML = `
-            <div class="info-scroll-area">
-                <div class="route-box">
-                    <div class="route-stop">
-                        <div class="stop-icon">
-                            <i class="fas fa-circle" style="color:#fff; font-size:0.7rem; margin-top:4px;"></i>
-                            <div class="stop-line"></div>
-                        </div>
-                        <div>
-                            <strong style="color:#fff; display:block;">Areal Tosana</strong>
-                            <small style="color:#888;">Origem</small>
-                        </div>
-                    </div>
-                    
-                    <div class="route-stop">
-                        <div class="stop-icon">
-                            <i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria); font-size:1.1rem;"></i>
-                        </div>
-                        <div>
-                            <strong style="color:#fff; display:block;">${destinoNome}</strong>
-                            <small style="color:#888;">Destino (${formatarNumero(kmReal)} km)</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="route-box">
-                    <strong style="display:block; margin-bottom:10px; color:#FF6B35; text-transform:uppercase; font-size:0.75rem;">
-                        <i class="fas fa-ticket-alt"></i> Pedágios na Rota
-                    </strong>
-                    <div class="toll-list">
-                        ${listaPedagiosHtml}
-                    </div>
-                </div>
-            </div>
-
-            <div class="info-footer">
-                <div class="axle-grid">
-                    <div class="axle-box">
-                        <span class="axle-title">Total 5 Eixos</span>
-                        <div class="axle-price">${formatarMoeda(total5Eixos)}</div>
-                    </div>
-                    <div class="axle-box">
-                        <span class="axle-title">Total 6 Eixos</span>
-                        <div class="axle-price">${formatarMoeda(total6Eixos)}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-        cardBody.appendChild(divInfo);
-
-        // Abre o modal com segurança
-        modalContainer.style.display = 'flex';
-        
-    } catch (erro) { 
-        console.error("Erro rota:", erro); 
-        alert("Erro ao abrir rota: " + erro.message);
-    }
-}
 // === EXPORTAÇÃO GLOBAL CRUCIAL ===
 // Isso garante que os botões HTML encontrem as funções
 window.fecharModalVeiculo = fecharModalVeiculo;
