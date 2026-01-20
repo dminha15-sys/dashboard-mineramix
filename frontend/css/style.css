@@ -467,11 +467,3 @@ body {
     .driver-metrics-grid { grid-template-columns: 1fr; }
     .modal-stats { grid-template-columns: 1fr 1fr !important; }
 }
-/* --- CABEÇALHO (TOP BAR) --- */
-    .top-bar {
-        position: fixed; top: 0; left: 0; height: 60px; width: 100%;
-        background: var(--cor-sidebar); z-index: 2000; padding: 0 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2); 
-        display: flex; justify-content: space-between; align-items: center;
-    }
-
