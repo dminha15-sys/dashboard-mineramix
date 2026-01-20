@@ -787,11 +787,9 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
         const destinoBruto = decodeURIComponent(rotaCodificada);
         const destinoNome = destinoBruto.replace(/.*→/, '').trim(); 
         
-        // 1. Busca a Inteligência da Rota
         const dadosRota = buscarRotaInteligente(destinoNome);
         const kmReal = dadosRota.km > 0 ? dadosRota.km : (kmPlanilha || 0);
         
-        // 2. Cálculo de Eixos
         let total5Eixos = 0;
         let total6Eixos = 0;
         let listaPedagiosHtml = '';
@@ -801,25 +799,23 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
                 total5Eixos += p.custo_eixo * 5;
                 total6Eixos += p.custo_eixo * 6;
                 return `
-                <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #333; padding:6px 0;">
-                    <span style="color:#aaa;">${p.nome}</span>
-                    <span style="color:#fff;">${formatarMoeda(p.custo_eixo)}/eixo</span>
+                <div class="toll-item">
+                    <span style="color:#ccc; font-size:0.9rem;">${p.nome}</span>
+                    <span style="color:#fff; font-weight:500;">${formatarMoeda(p.custo_eixo)}/eixo</span>
                 </div>`;
             }).join('');
         } else {
-            listaPedagiosHtml = '<div style="color:#666; font-size:0.8rem;">Sem pedágios cadastrados.</div>';
+            listaPedagiosHtml = '<div style="color:#666; font-size:0.8rem; padding:10px;">Sem pedágios cadastrados.</div>';
         }
 
-        // 3. Montagem do HTML (DIVIDIDO EM DUAS COLUNAS: MAPA | INFO)
         const modalContainer = document.getElementById('modalRotaContainer');
         const cardBody = modalContainer.querySelector('.card-body');
         
-        // Mapa: Se não tiver URL, mostra uma mensagem
         const htmlMapa = dadosRota.mapaUrl 
             ? `<iframe src="${dadosRota.mapaUrl}" allowfullscreen="" loading="lazy"></iframe>`
-            : `<div style="height:100%; display:flex; align-items:center; justify-content:center; color:#555; background:#111;"><i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:10px;"></i><br>Mapa indisponível</div>`;
+            : `<div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555; background:#111;"><i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:10px;"></i><span>Mapa indisponível</span></div>`;
 
-        // Aqui montamos a estrutura do Grid (definida no CSS novo)
+        // ESTRUTURA CORRIGIDA PARA O CSS NOVO
         const htmlConteudo = `
             <div class="route-body-grid">
                 
@@ -830,22 +826,20 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
                 <div class="route-info-col">
                     
                     <div class="timeline-box">
-                        <div class="route-timeline" style="margin:0; padding:0;">
-                            <div class="route-point" style="margin-bottom: 20px;">
-                                <div class="dot-origin" style="background:var(--cor-primaria)"></div>
-                                <div><strong>Areal Tosana</strong><br><small style="color:#777">Origem</small></div>
-                            </div>
-                            <div class="timeline-line" style="top:15px; bottom:25px; left:9px;"></div>
-                            <div class="stop-point">
-                                <i class="fas fa-map-marker-alt pin-dest"></i>
-                                <div><strong>${destinoNome}</strong><br><small style="color:#777">Destino (${formatarNumero(kmReal)} km)</small></div>
-                            </div>
+                        <div style="display:flex; align-items:flex-start; margin-bottom:15px;">
+                            <i class="fas fa-circle" style="color:var(--cor-primaria); margin-top:5px; margin-right:10px; font-size:0.8rem;"></i>
+                            <div><strong style="color:#fff;">Areal Tosana</strong><br><small style="color:#888;">Origem</small></div>
+                        </div>
+                        <div style="border-left: 2px dashed #444; margin-left: 5px; height: 20px; margin-bottom:5px;"></div>
+                        <div style="display:flex; align-items:flex-start;">
+                            <i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria); margin-top:2px; margin-right:10px; font-size:1.1rem;"></i>
+                            <div><strong style="color:#fff;">${destinoNome}</strong><br><small style="color:#888;">Destino (${formatarNumero(kmReal)} km)</small></div>
                         </div>
                     </div>
 
                     <div class="summary-box">
-                        <strong style="display:block; margin-bottom:10px; color:#FF6B35; text-transform:uppercase; font-size:0.8rem;">
-                            <i class="fas fa-ticket-alt"></i> Pedágios
+                        <strong style="display:block; margin-bottom:12px; color:#FF6B35; text-transform:uppercase; font-size:0.75rem; letter-spacing:1px;">
+                            <i class="fas fa-ticket-alt"></i> Pedágios na Rota
                         </strong>
                         ${listaPedagiosHtml}
                     </div>
@@ -867,7 +861,6 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
         cardBody.innerHTML = htmlConteudo;
         modalContainer.style.display = 'flex';
         
-        // Histórico para botão voltar do celular funcionar
         if (window.history && window.history.pushState) {
             window.history.pushState({modalOpen: true}, "", "#rota");
         }
