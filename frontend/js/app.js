@@ -993,7 +993,7 @@ const TABELA_ROTAS_INTELIGENTE = {
 
     'RIO DE JANEIRO': {
         km: 170,
-        mapaUrl: 'https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d3573.4213880758703!2d-42.00437693123026!3d-22.588759099999983!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1spt-BR!2sbr!4v1768917436284!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade',
+        mapaUrl: 'https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d470808.63285776315!2d-42.88247739812155!3d-22.795331993638456!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e6!4m5!1s0x97aff792cfb41b%3A0xb1987dcf5bba924c!2sMineramix%20Servi%C3%A7os%20Ltda%20-%20Alameda%20Bosque%20do%20Gargo%C3%A1%20-%20Centro%20H%C3%ADpico%2C%20Cabo%20Frio%20-%20RJ!3m2!1d-22.5886593!2d-42.0023765!4m5!1s0x997edabed798e3%3A0x32d403c4ef1d4cb!2sCaju%2C%20Rio%20de%20Janeiro%20-%20RJ!3m2!1d-22.880799099999997!2d-43.2278482!5e0!3m2!1spt-BR!2sbr!4v1768917707792!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"',
         pedagios: [
             { nome: "Pedágio Casimiro de Abreu", custo_eixo: 7.5 },
             { nome: "Pedágio Rio Bonito", custo_eixo: 7.5 },
