@@ -306,104 +306,150 @@ body {
 
 
 /* =======================================================
-   7. RESPONSIVIDADE MOBILE (CELULAR) - AQUI ESTÁ A CORREÇÃO
+   MOBILE (CELULAR) - VERSÃO CORRIGIDA E RESTAURADA
    ======================================================= */
 @media (max-width: 768px) {
     
-    /* Corpo geral no Mobile */
-    body { padding-top: 130px; padding-bottom: 80px; }
-    .main-content { 
-        padding: 1rem; 
-        margin: 0; /* REMOVE A MARGEM DE 250PX DO PC */
-        width: 100%; 
-    }
+    /* Ajuste do corpo para não cortar conteúdo */
+    body { padding-top: 140px; padding-bottom: 80px; }
+    .main-content { padding: 1rem; margin: 0; width: 100%; }
 
-    /* Top Bar Fixa */
+    /* --- TOP BAR (CABEÇALHO PRETO) --- */
     .top-bar {
         position: fixed; top: 0; left: 0; height: 60px; width: 100%;
         background: var(--cor-sidebar); z-index: 2000; padding: 0 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2); display: flex; justify-content: space-between; align-items: center;
     }
     .top-bar::before { content: "MINERAMIX"; color: white; font-weight: 700; font-size: 1.2rem; }
+    .top-bar::after { content: none; } 
     
-    /* Botões */
-    .top-actions { gap: 10px; display: flex !important; }
+    /* Botões do Topo */
+    .top-actions { display: flex !important; gap: 10px; }
     .top-actions .icon-btn {
         background: rgba(255,255,255,0.15); border: none; color: white;
-        width: 38px; height: 38px; border-radius: 50%;
+        width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
     }
+    /* Esconde botões desnecessários */
     .top-actions button[onclick="carregarDados()"],
     .top-actions button[onclick="testarConexao()"] { display: none !important; }
+    #btnDark { display: flex !important; }
 
-    /* Filtro de Data */
+    /* --- FILTROS DE DATA (RESTAURADOS E MAIORES) --- */
     .date-filter-top {
         position: fixed; top: 60px; left: 0; width: 100%;
-        background: var(--cor-card); padding: 0.5rem 1rem; z-index: 1900;
-        border-bottom: 1px solid var(--cor-borda); justify-content: space-between;
+        background: var(--cor-card);
+        padding: 10px 15px;
+        z-index: 1900;
+        border-bottom: 1px solid var(--cor-borda);
+        display: grid; /* Usa grid para organizar */
+        grid-template-columns: 1fr 1fr auto; /* Data - Data - Botão */
+        gap: 10px;
+        align-items: end; /* Alinha o botão com a parte de baixo do input */
     }
-    .date-input-group label { display: none; }
-    .date-input { width: 100%; height: 40px; }
 
-    /* Menu Inferior (Sidebar vira Bottom Bar) */
+    .date-input-group {
+        display: flex;
+        flex-direction: column; /* Título em cima do input */
+        gap: 4px;
+    }
+
+    /* O TÍTULO PEQUENO QUE VOCÊ PEDIU */
+    .date-input-group label {
+        display: block !important;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: var(--cor-texto-sec);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Input Grande */
+    .date-input {
+        width: 100%;
+        height: 40px;
+        font-size: 0.85rem;
+        background: var(--cor-fundo);
+        color: var(--cor-texto);
+        border: 1px solid var(--cor-borda);
+        border-radius: 6px;
+    }
+    
+    .date-filter-top .icon-btn.primary {
+        width: 40px; height: 40px; border-radius: 6px; margin-bottom: 1px;
+    }
+
+    /* --- BARRA DE NAVEGAÇÃO (SIDEBAR VIRANDO BOTTOM BAR) --- */
     .sidebar {
         position: fixed; bottom: 0; left: 0; top: auto; /* Remove top do PC */
-        height: 65px; width: 100%; padding: 0;
-        flex-direction: row; justify-content: space-between;
-        z-index: 2000; overflow-x: auto;
+        height: 70px; width: 100%; padding: 0;
+        background: var(--cor-sidebar);
+        display: flex;
+        flex-direction: row !important; /* FORÇA HORIZONTAL */
+        justify-content: space-between;
+        align-items: center;
+        z-index: 2000;
+        overflow-x: auto; /* Permite rolar para o lado se não couber */
+        overflow-y: hidden; /* Trava rolagem vertical */
+        white-space: nowrap;
+        box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
     }
+
     .sidebar .logo, .sidebar .menu-title { display: none; }
-    .menu-section, .menu-lista { display: contents; }
+    .menu-section, .menu-lista { display: contents; } /* Remove blocos que quebram o flex */
+
     .menu-item {
-        flex-direction: column; justify-content: center; height: 100%;
-        flex: 1; min-width: 60px; color: rgba(255,255,255,0.6); border: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        padding: 0 10px;
+        flex: 1; /* Distribui espaço igual */
+        min-width: 70px; /* Tamanho mínimo do botão */
+        color: rgba(255,255,255,0.6);
+        background: transparent;
+        border: none;
+        border-top: 3px solid transparent; /* Indicador ativo no topo */
+        border-left: none;
     }
+
     .menu-item.active {
-        color: var(--cor-secundaria); border-top: 3px solid var(--cor-secundaria); border-left: none;
+        color: var(--cor-secundaria);
+        border-top: 3px solid var(--cor-secundaria);
         background: rgba(255,255,255,0.05);
     }
-    .menu-item .menu-text { font-size: 0.6rem; display: block !important; }
 
-    /* Cards Mobile */
+    .menu-item i { font-size: 1.2rem; margin-bottom: 4px; margin-right: 0; width: auto; }
+    .menu-item .menu-text { font-size: 0.65rem; display: block !important; text-align: center; }
+
+    /* --- OUTROS AJUSTES MOBILE --- */
     .mobile-card-list { display: flex; flex-direction: column; gap: 1rem; }
     .mobile-card {
         background: var(--cor-card); border-radius: 12px; padding: 1.2rem;
         box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid var(--cor-borda);
-        display: flex; flex-direction: column; gap: 0.5rem; position: relative; overflow: hidden;
+        display: flex; flex-direction: column; gap: 0.5rem; position: relative;
     }
     .mobile-card::before {
         content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--cor-secundaria);
     }
     .mobile-card strong { font-size: 1.1rem; color: var(--cor-primaria); font-weight: 700; }
-    .mobile-card .money { font-size: 1.2rem; font-weight: 700; color: var(--cor-pago); align-self: flex-end; letter-spacing: -0.5px; }
+    .mobile-card .money { font-size: 1.2rem; font-weight: 700; color: var(--cor-pago); align-self: flex-end; }
 
-    /* --- MODAL DE ROTA MOBILE --- */
+    /* Modal Rota Mobile */
     .modal-overlay-rota { padding: 0; }
     .route-card { height: 100%; border-radius: 0; border: none; width: 100%; }
-    
-    /* VIRA UMA COLUNA */
-    .card-body {
-        grid-template-columns: 1fr; /* Uma coluna só */
-        grid-template-rows: 40% 60%; /* Mapa 40%, Info 60% */
-        display: block; /* Remove grid para controlar melhor no mobile */
-        overflow-y: auto; /* Scroll geral */
-    }
+    .card-body { grid-template-columns: 1fr; grid-template-rows: 40% 60%; display: block; overflow-y: auto; }
     .route-map-col { height: 300px; width: 100%; display: block; }
-    .route-info-col { height: auto; overflow: visible; border-left: none; border-top: 1px solid #333; padding-bottom: 80px; }
-    .info-scroll-area { padding: 15px; overflow: visible; }
+    .route-info-col { height: auto; border-left: none; border-top: 1px solid #333; padding-bottom: 80px; }
     .info-footer { position: static; margin-top: 20px; }
 
-    /* --- MODAIS PADRÃO MOBILE --- */
+    /* Modais Padrão Mobile */
     .modal-overlay { align-items: flex-end; padding: 0; }
     .modal-content, .modal-card {
-        max-height: 100vh; height: 100%; border-radius: 0;
-        display: flex; flex-direction: column; width: 100% !important; max-width: 100% !important;
+        height: 100%; max-height: 100vh; border-radius: 0; width: 100% !important; max-width: 100% !important;
     }
-    .modal-header {
-        position: sticky; top: 0; z-index: 5000;
-        background: var(--cor-card); border-bottom: 1px solid var(--cor-borda); flex-shrink: 0;
-    }
-    .modal-body { overflow-y: auto; flex: 1; padding-bottom: 80px; }
+    .modal-header { position: sticky; top: 0; z-index: 5000; background: var(--cor-card); }
+    .modal-body { overflow-y: auto; padding-bottom: 80px; }
     .driver-metrics-grid { grid-template-columns: 1fr; }
-    .modal-stats { grid-template-columns: 1fr 1fr !important; gap: 10px; }
-    .stat-box:last-child { grid-column: span 2; }
+    .modal-stats { grid-template-columns: 1fr 1fr !important; }
 }
