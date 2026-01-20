@@ -799,92 +799,95 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
                 total5Eixos += p.custo_eixo * 5;
                 total6Eixos += p.custo_eixo * 6;
                 return `
-                <div class="toll-item">
-                    <span style="color:#ccc; font-size:0.9rem;">${p.nome}</span>
-                    <span style="color:#fff; font-weight:500;">${formatarMoeda(p.custo_eixo)}/eixo</span>
+                <div class="toll-row">
+                    <span style="color:#ccc;">${p.nome}</span>
+                    <span style="color:#fff;">${formatarMoeda(p.custo_eixo)}/eixo</span>
                 </div>`;
             }).join('');
         } else {
-            listaPedagiosHtml = '<div style="color:#666; font-size:0.8rem; padding:5px;">Sem pedágios cadastrados.</div>';
+            listaPedagiosHtml = '<div style="color:#666; font-size:0.8rem; font-style:italic;">Nenhum pedágio cadastrado.</div>';
         }
 
         const modalContainer = document.getElementById('modalRotaContainer');
         const cardBody = modalContainer.querySelector('.card-body');
         
-        // Mapa: Verifica URL
         const htmlMapa = dadosRota.mapaUrl 
             ? `<iframe src="${dadosRota.mapaUrl}" allowfullscreen="" loading="lazy"></iframe>`
-            : `<div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555; background:#111;"><i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:10px;"></i><span>Mapa indisponível</span></div>`;
+            : `<div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555; background:#111;"><i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:10px;"></i><span>Mapa não configurado</span></div>`;
 
-        // === CONSTRUÇÃO SEGURA DO HTML ===
+        // === CONSTRUÇÃO DO LAYOUT (SEM POSIÇÃO ABSOLUTA) ===
         
-        // 1. Limpa tudo que tinha antes
-        cardBody.innerHTML = '';
+        cardBody.innerHTML = ''; // Limpa
 
-        // 2. Cria a DIV do MAPA e injeta
+        // 1. Coluna Esquerda: MAPA
         const divMapa = document.createElement('div');
         divMapa.className = 'route-map-col';
         divMapa.innerHTML = htmlMapa;
         cardBody.appendChild(divMapa);
 
-        // 3. Cria a DIV de INFORMAÇÕES e injeta
+        // 2. Coluna Direita: INFO (Com Scroll e Rodapé Fixos)
         const divInfo = document.createElement('div');
         divInfo.className = 'route-info-col';
         divInfo.innerHTML = `
-            <div class="timeline-box">
-                <div class="route-timeline">
-                    <div class="timeline-line"></div>
-
-                    <div class="route-point">
-                        <i class="fas fa-circle" style="color:#fff; font-size:0.7rem; margin-top:5px;"></i>
+            <div class="info-scroll-area">
+                
+                <div class="route-box">
+                    <div class="route-stop">
+                        <div class="stop-icon">
+                            <i class="fas fa-circle" style="color:#fff; font-size:0.7rem; margin-top:4px;"></i>
+                            <div class="stop-line"></div>
+                        </div>
                         <div>
                             <strong style="color:#fff; display:block;">Areal Tosana</strong>
                             <small style="color:#888;">Origem</small>
                         </div>
                     </div>
-
-                    <div class="route-point">
-                        <i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria); font-size:1.2rem;"></i>
+                    
+                    <div class="route-stop">
+                        <div class="stop-icon">
+                            <i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria); font-size:1.1rem;"></i>
+                        </div>
                         <div>
                             <strong style="color:#fff; display:block;">${destinoNome}</strong>
                             <small style="color:#888;">Destino (${formatarNumero(kmReal)} km)</small>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="summary-box">
-                <strong style="display:block; margin-bottom:12px; color:#FF6B35; text-transform:uppercase; font-size:0.75rem; letter-spacing:1px;">
-                    <i class="fas fa-ticket-alt"></i> Pedágios
-                </strong>
-                ${listaPedagiosHtml}
-            </div>
-
-            <div class="axle-section">
-                <div class="axle-card">
-                    <span class="axle-label">Total 5 Eixos</span>
-                    <div class="axle-value">${formatarMoeda(total5Eixos)}</div>
+                <div class="route-box">
+                    <strong style="display:block; margin-bottom:10px; color:#FF6B35; text-transform:uppercase; font-size:0.75rem;">
+                        <i class="fas fa-ticket-alt"></i> Pedágios na Rota
+                    </strong>
+                    <div class="toll-list">
+                        ${listaPedagiosHtml}
+                    </div>
                 </div>
-                <div class="axle-card">
-                    <span class="axle-label">Total 6 Eixos</span>
-                    <div class="axle-value">${formatarMoeda(total6Eixos)}</div>
+            </div>
+
+            <div class="info-footer">
+                <div class="axle-grid">
+                    <div class="axle-box">
+                        <span class="axle-title">Total 5 Eixos</span>
+                        <div class="axle-price">${formatarMoeda(total5Eixos)}</div>
+                    </div>
+                    <div class="axle-box">
+                        <span class="axle-title">Total 6 Eixos</span>
+                        <div class="axle-price">${formatarMoeda(total6Eixos)}</div>
+                    </div>
                 </div>
             </div>
         `;
         cardBody.appendChild(divInfo);
 
-        // 4. Abre o modal
+        // Exibir
         modalContainer.style.display = 'flex';
         
-        if (window.history && window.history.pushState) {
-            window.history.pushState({modalOpen: true}, "", "#rota");
-        }
-
     } catch (erro) { 
         console.error("Erro rota:", erro); 
         alert("Erro ao abrir rota.");
     }
 }
+
 function fecharModalRota() {
     document.getElementById('modalRotaContainer').style.display = 'none';
     if(document.getElementById('modalRota')) document.getElementById('modalRota').style.display = 'none';
