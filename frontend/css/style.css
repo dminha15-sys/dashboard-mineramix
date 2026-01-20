@@ -475,36 +475,3 @@ body {
         display: flex; justify-content: space-between; align-items: center;
     }
 
-    /* REMOVE O TÍTULO ANTIGO FEITO EM CSS */
-    .top-bar::before { content: none !important; }
-    .top-bar::after { content: none !important; }
-
-    /* ESTILO DO NOVO LOGO (Igual ao do PC) */
-    .mobile-logo {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .mobile-logo h1 {
-        font-size: 1.2rem;
-        font-weight: 700;
-        color: white;
-        margin: 0;
-        line-height: 1;
-        letter-spacing: 0.5px;
-    }
-
-    .mobile-logo span {
-        color: var(--cor-secundaria); /* A cor laranja */
-    }
-
-    .mobile-logo small {
-        font-size: 0.65rem;
-        color: rgba(255,255,255,0.6); /* Cinza claro */
-        display: block;
-        margin-top: 2px;
-        font-weight: 400;
-        text-transform: uppercase; /* Letras maiúsculas bonitas */
-        letter-spacing: 0.5px;
-    }
