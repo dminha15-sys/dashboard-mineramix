@@ -306,15 +306,15 @@ body {
 
 
 /* =======================================================
-   MOBILE (CELULAR) - VERSÃO CORRIGIDA E RESTAURADA
+   MOBILE (CELULAR) - VISUAL CORRIGIDO E OTIMIZADO
    ======================================================= */
 @media (max-width: 768px) {
     
-    /* Ajuste do corpo para não cortar conteúdo */
-    body { padding-top: 140px; padding-bottom: 80px; }
+    /* Espaços do corpo */
+    body { padding-top: 140px; padding-bottom: 90px; }
     .main-content { padding: 1rem; margin: 0; width: 100%; }
 
-    /* --- TOP BAR (CABEÇALHO PRETO) --- */
+    /* --- TOP BAR (CABEÇALHO) --- */
     .top-bar {
         position: fixed; top: 0; left: 0; height: 60px; width: 100%;
         background: var(--cor-sidebar); z-index: 2000; padding: 0 1rem;
@@ -329,31 +329,30 @@ body {
         background: rgba(255,255,255,0.15); border: none; color: white;
         width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
     }
-    /* Esconde botões desnecessários */
     .top-actions button[onclick="carregarDados()"],
     .top-actions button[onclick="testarConexao()"] { display: none !important; }
     #btnDark { display: flex !important; }
 
-    /* --- FILTROS DE DATA (RESTAURADOS E MAIORES) --- */
+    /* --- FILTROS DE DATA (ESTILO ANTIGO - GRANDE) --- */
     .date-filter-top {
         position: fixed; top: 60px; left: 0; width: 100%;
         background: var(--cor-card);
-        padding: 10px 15px;
+        padding: 12px 15px; /* Mais espaço */
         z-index: 1900;
         border-bottom: 1px solid var(--cor-borda);
-        display: grid; /* Usa grid para organizar */
-        grid-template-columns: 1fr 1fr auto; /* Data - Data - Botão */
-        gap: 10px;
-        align-items: end; /* Alinha o botão com a parte de baixo do input */
+        display: grid; 
+        grid-template-columns: 1fr 1fr auto; /* Data | Data | Botão */
+        gap: 12px;
+        align-items: end; 
     }
 
     .date-input-group {
         display: flex;
-        flex-direction: column; /* Título em cima do input */
-        gap: 4px;
+        flex-direction: column;
+        gap: 5px; /* Espaço entre titulo e input */
     }
 
-    /* O TÍTULO PEQUENO QUE VOCÊ PEDIU */
+    /* TÍTULO PEQUENO EM CIMA DO CAMPO */
     .date-input-group label {
         display: block !important;
         font-size: 0.65rem;
@@ -363,39 +362,40 @@ body {
         letter-spacing: 0.5px;
     }
     
-    /* Input Grande */
+    /* INPUT GRANDE E VISÍVEL */
     .date-input {
         width: 100%;
-        height: 40px;
-        font-size: 0.85rem;
+        height: 42px; /* Mais alto para o dedo */
+        font-size: 0.9rem;
         background: var(--cor-fundo);
         color: var(--cor-texto);
         border: 1px solid var(--cor-borda);
-        border-radius: 6px;
+        border-radius: 8px;
+        padding-left: 10px;
     }
     
     .date-filter-top .icon-btn.primary {
-        width: 40px; height: 40px; border-radius: 6px; margin-bottom: 1px;
+        width: 42px; height: 42px; border-radius: 8px; margin-bottom: 0;
     }
 
-    /* --- BARRA DE NAVEGAÇÃO (SIDEBAR VIRANDO BOTTOM BAR) --- */
+    /* --- BARRA DE NAVEGAÇÃO (AJUSTE DOS ESPAÇOS) --- */
     .sidebar {
-        position: fixed; bottom: 0; left: 0; top: auto; /* Remove top do PC */
-        height: 70px; width: 100%; padding: 0;
+        position: fixed; bottom: 0; left: 0; top: auto;
+        height: 75px; /* Um pouco mais alta para caber 2 linhas de texto */
+        width: 100%; padding: 0;
         background: var(--cor-sidebar);
         display: flex;
-        flex-direction: row !important; /* FORÇA HORIZONTAL */
+        flex-direction: row !important;
         justify-content: space-between;
         align-items: center;
         z-index: 2000;
-        overflow-x: auto; /* Permite rolar para o lado se não couber */
-        overflow-y: hidden; /* Trava rolagem vertical */
-        white-space: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
         box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
     }
 
     .sidebar .logo, .sidebar .menu-title { display: none; }
-    .menu-section, .menu-lista { display: contents; } /* Remove blocos que quebram o flex */
+    .menu-section, .menu-lista { display: contents; }
 
     .menu-item {
         display: flex;
@@ -403,13 +403,13 @@ body {
         justify-content: center;
         align-items: center;
         height: 100%;
-        padding: 0 10px;
-        flex: 1; /* Distribui espaço igual */
-        min-width: 70px; /* Tamanho mínimo do botão */
+        padding: 0 5px;
+        flex: 1; 
+        min-width: 75px; /* Garante largura mínima para não espremer */
         color: rgba(255,255,255,0.6);
         background: transparent;
         border: none;
-        border-top: 3px solid transparent; /* Indicador ativo no topo */
+        border-top: 3px solid transparent;
         border-left: none;
     }
 
@@ -419,10 +419,24 @@ body {
         background: rgba(255,255,255,0.05);
     }
 
-    .menu-item i { font-size: 1.2rem; margin-bottom: 4px; margin-right: 0; width: auto; }
-    .menu-item .menu-text { font-size: 0.65rem; display: block !important; text-align: center; }
+    .menu-item i { 
+        font-size: 1.3rem; 
+        margin-bottom: 6px; 
+        margin-right: 0; 
+        width: auto; 
+    }
+    
+    /* TEXTO DO MENU (QUEBRA DE LINHA) */
+    .menu-item .menu-text { 
+        font-size: 0.65rem; 
+        display: block !important; 
+        text-align: center;
+        white-space: normal; /* PERMITE QUEBRAR LINHA */
+        line-height: 1.1;    /* Linhas mais próximas */
+        max-width: 80px;     /* Limita largura para forçar a quebra se precisar */
+    }
 
-    /* --- OUTROS AJUSTES MOBILE --- */
+    /* --- MODAIS E CARDS --- */
     .mobile-card-list { display: flex; flex-direction: column; gap: 1rem; }
     .mobile-card {
         background: var(--cor-card); border-radius: 12px; padding: 1.2rem;
@@ -435,7 +449,7 @@ body {
     .mobile-card strong { font-size: 1.1rem; color: var(--cor-primaria); font-weight: 700; }
     .mobile-card .money { font-size: 1.2rem; font-weight: 700; color: var(--cor-pago); align-self: flex-end; }
 
-    /* Modal Rota Mobile */
+    /* Modal Rota */
     .modal-overlay-rota { padding: 0; }
     .route-card { height: 100%; border-radius: 0; border: none; width: 100%; }
     .card-body { grid-template-columns: 1fr; grid-template-rows: 40% 60%; display: block; overflow-y: auto; }
@@ -443,7 +457,7 @@ body {
     .route-info-col { height: auto; border-left: none; border-top: 1px solid #333; padding-bottom: 80px; }
     .info-footer { position: static; margin-top: 20px; }
 
-    /* Modais Padrão Mobile */
+    /* Modais Padrão */
     .modal-overlay { align-items: flex-end; padding: 0; }
     .modal-content, .modal-card {
         height: 100%; max-height: 100vh; border-radius: 0; width: 100% !important; max-width: 100% !important;
