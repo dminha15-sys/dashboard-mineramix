@@ -815,19 +815,22 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
             ? `<iframe src="${dadosRota.mapaUrl}" allowfullscreen="" loading="lazy"></iframe>`
             : `<div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555; background:#111;"><i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:10px;"></i><span>Mapa não configurado</span></div>`;
 
-        // === CONSTRUÇÃO DO LAYOUT (SEM POSIÇÃO ABSOLUTA) ===
+        // === AQUI ESTÁ A CORREÇÃO CRUCIAL ===
+        // Criamos as DUAS colunas que o CSS espera receber
         
-        cardBody.innerHTML = ''; // Limpa
+        cardBody.innerHTML = ''; // Limpa tudo antes
 
-        // 1. Coluna Esquerda: MAPA
+        // 1. CRIA A COLUNA DO MAPA (Esquerda/Topo)
         const divMapa = document.createElement('div');
         divMapa.className = 'route-map-col';
         divMapa.innerHTML = htmlMapa;
         cardBody.appendChild(divMapa);
 
-        // 2. Coluna Direita: INFO (Com Scroll e Rodapé Fixos)
+        // 2. CRIA A COLUNA DE INFO (Direita/Baixo)
         const divInfo = document.createElement('div');
         divInfo.className = 'route-info-col';
+        
+        // Conteúdo interno da coluna de info (Scroll + Rodapé Fixo)
         divInfo.innerHTML = `
             <div class="info-scroll-area">
                 
@@ -879,7 +882,7 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
         `;
         cardBody.appendChild(divInfo);
 
-        // Exibir
+        // Exibir o modal
         modalContainer.style.display = 'flex';
         
     } catch (erro) { 
