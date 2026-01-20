@@ -805,60 +805,70 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
                 </div>`;
             }).join('');
         } else {
-            listaPedagiosHtml = '<div style="color:#666; font-size:0.8rem; padding:10px;">Sem pedágios cadastrados.</div>';
+            listaPedagiosHtml = '<div style="color:#666; font-size:0.8rem; padding:5px;">Sem pedágios cadastrados.</div>';
         }
 
         const modalContainer = document.getElementById('modalRotaContainer');
         const cardBody = modalContainer.querySelector('.card-body');
         
+        // Se tiver URL de mapa, usa. Senão, mostra aviso.
         const htmlMapa = dadosRota.mapaUrl 
             ? `<iframe src="${dadosRota.mapaUrl}" allowfullscreen="" loading="lazy"></iframe>`
             : `<div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555; background:#111;"><i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:10px;"></i><span>Mapa indisponível</span></div>`;
 
-        // ESTRUTURA CORRIGIDA PARA O CSS NOVO
-        const htmlConteudo = `
-            <div class="route-body-grid">
-                
-                <div class="route-map-col">
-                    ${htmlMapa}
+        // === AQUI ESTÁ A ESTRUTURA BLINDADA ===
+        // Note que não criamos mais div wrapper extra, injetamos direto nas colunas do CSS
+        
+        // 1. Limpa o corpo atual
+        cardBody.innerHTML = '';
+
+        // 2. Cria a Coluna do Mapa
+        const divMapa = document.createElement('div');
+        divMapa.className = 'route-map-col';
+        divMapa.innerHTML = htmlMapa;
+
+        // 3. Cria a Coluna de Informações
+        const divInfo = document.createElement('div');
+        divInfo.className = 'route-info-col';
+        divInfo.innerHTML = `
+            <div class="timeline-box">
+                <div class="route-timeline">
+                    <div class="route-point">
+                        <i class="fas fa-circle" style="color:#fff; font-size:0.6rem; margin-right:10px;"></i>
+                        <div><strong style="color:#fff;">Areal Tosana</strong><br><small style="color:#888;">Origem</small></div>
+                    </div>
+                    <div class="timeline-line"></div>
+                    <div class="route-point" style="margin-top:20px;">
+                        <i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria); font-size:1.2rem; margin-right:10px; margin-left:-3px;"></i>
+                        <div><strong style="color:#fff;">${destinoNome}</strong><br><small style="color:#888;">Destino (${formatarNumero(kmReal)} km)</small></div>
+                    </div>
                 </div>
+            </div>
 
-                <div class="route-info-col">
-                    
-                    <div class="timeline-box">
-                        <div style="display:flex; align-items:flex-start; margin-bottom:15px;">
-                            <i class="fas fa-circle" style="color:var(--cor-primaria); margin-top:5px; margin-right:10px; font-size:0.8rem;"></i>
-                            <div><strong style="color:#fff;">Areal Tosana</strong><br><small style="color:#888;">Origem</small></div>
-                        </div>
-                        <div style="border-left: 2px dashed #444; margin-left: 5px; height: 20px; margin-bottom:5px;"></div>
-                        <div style="display:flex; align-items:flex-start;">
-                            <i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria); margin-top:2px; margin-right:10px; font-size:1.1rem;"></i>
-                            <div><strong style="color:#fff;">${destinoNome}</strong><br><small style="color:#888;">Destino (${formatarNumero(kmReal)} km)</small></div>
-                        </div>
-                    </div>
+            <div class="summary-box">
+                <strong style="display:block; margin-bottom:12px; color:#FF6B35; text-transform:uppercase; font-size:0.75rem; letter-spacing:1px;">
+                    <i class="fas fa-ticket-alt"></i> Pedágios
+                </strong>
+                ${listaPedagiosHtml}
+            </div>
 
-                    <div class="summary-box">
-                        <strong style="display:block; margin-bottom:12px; color:#FF6B35; text-transform:uppercase; font-size:0.75rem; letter-spacing:1px;">
-                            <i class="fas fa-ticket-alt"></i> Pedágios na Rota
-                        </strong>
-                        ${listaPedagiosHtml}
-                    </div>
-
-                    <div class="axle-section">
-                        <div class="axle-card">
-                            <span class="axle-label">Total 5 Eixos</span>
-                            <div class="axle-value">${formatarMoeda(total5Eixos)}</div>
-                        </div>
-                        <div class="axle-card">
-                            <span class="axle-label">Total 6 Eixos</span>
-                            <div class="axle-value">${formatarMoeda(total6Eixos)}</div>
-                        </div>
-                    </div>
+            <div class="axle-section">
+                <div class="axle-card">
+                    <span class="axle-label">Total 5 Eixos</span>
+                    <div class="axle-value">${formatarMoeda(total5Eixos)}</div>
+                </div>
+                <div class="axle-card">
+                    <span class="axle-label">Total 6 Eixos</span>
+                    <div class="axle-value">${formatarMoeda(total6Eixos)}</div>
                 </div>
             </div>
         `;
 
-        cardBody.innerHTML = htmlConteudo;
+        // 4. Adiciona as duas colunas ao corpo
+        cardBody.appendChild(divMapa);
+        cardBody.appendChild(divInfo);
+
+        // Exibe o modal
         modalContainer.style.display = 'flex';
         
         if (window.history && window.history.pushState) {
@@ -866,7 +876,7 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
         }
 
     } catch (erro) { 
-        console.error(erro); 
+        console.error("Erro rota:", erro); 
         alert("Erro ao abrir rota.");
     }
 }
