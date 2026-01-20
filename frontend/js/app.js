@@ -967,7 +967,165 @@ window.onclick = function(event) {
         fecharModalGlobal();
     }
 }
+// ==========================================
+// CONFIGURAÇÃO REAL DOS PEDÁGIOS E ROTAS
+// ==========================================
 
+// EDITE AQUI OS VALORES REAIS DA SUA OPERAÇÃO
+const TABELA_ROTAS_INTELIGENTE = {
+    // Palavra-chave do Destino : { km: Distância, pedagios: Lista de praças e custos unitários por eixo }
+    
+    'CABO FRIO': {
+        km: 145,
+        mapaUrl: 'https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d235864.088277271!2d-42.36881776510657!3d-22.76618588078044!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e0!4m5!1s0x9714eb65110e63%3A0x5380c551697520!2sAreal%20Tosana%20-%20Estr.%20Geral%20de%20B%C3%A1lsamo%2C%20S%2Fn%20-%20B%C3%A1lsamo%2C%20Rio%20Bonito%20-%20RJ%2C%2028800-000!3m2!1d-22.6876615!2d-42.593850799999996!4m5!1s0x97047d7883d67f%3A0x6d977d4c51921356!2sCabo%20Frio%2C%20Rio%20de%20Janeiro!3m2!1d-22.8868661!2d-42.0266395!5e0!3m2!1spt-BR!2sbr!4v1700000000000',
+        pedagios: [
+            { nome: "Via Lagos", custo_eixo: 5.40 }, 
+            // Se tiver outro pedágio, adicione aqui: { nome: "Praça BR-101", custo_eixo: 4.30 }
+        ]
+    },
+
+    'MACAÉ': { // O código entende "MACAE" ou "MACAÉ"
+        km: 110,
+        pedagios: [
+            { nome: "Praça BR-101 (Pedágio)", custo_eixo: 6.90 }
+        ]
+    },
+
+    'RIO DE JANEIRO': {
+        km: 90,
+        pedagios: [
+            { nome: "Pedágio Manilha", custo_eixo: 6.90 },
+            { nome: "Ponte Rio-Niterói", custo_eixo: 6.20 } // Ponte geralmente é cobrada por eixo comercial
+        ]
+    },
+    
+    // Adicione outros destinos conforme sua necessidade
+    'NITEROI': {
+        km: 65,
+        pedagios: [ { nome: "Pedágio Manilha", custo_eixo: 6.90 } ]
+    },
+    
+    'CAMPOS': {
+        km: 210,
+        pedagios: [ 
+            { nome: "Praça Casimiro", custo_eixo: 6.90 },
+            { nome: "Praça Campos", custo_eixo: 6.90 }
+        ]
+    }
+};
+
+// ==========================================
+// FUNÇÕES DE CÁLCULO INTELIGENTE
+// ==========================================
+
+function buscarRotaInteligente(destino) {
+    if (!destino) return null;
+    const destinoLimpo = destino.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove acentos
+    
+    // Tenta encontrar a palavra chave dentro do destino (Ex: "OBRA CABO FRIO" encontra "CABO FRIO")
+    const chaves = Object.keys(TABELA_ROTAS_INTELIGENTE);
+    for (let chave of chaves) {
+        const chaveLimpa = chave.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (destinoLimpo.includes(chaveLimpa)) {
+            return { nome: chave, ...TABELA_ROTAS_INTELIGENTE[chave] };
+        }
+    }
+    // Retorno padrão se não achar
+    return { km: 0, pedagios: [], nome: destino, mapaUrl: null };
+}
+
+window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
+    try {
+        const destinoBruto = decodeURIComponent(rotaCodificada);
+        const destinoNome = destinoBruto.replace(/.*→/, '').trim(); 
+        
+        // 1. Busca a Inteligência da Rota
+        const dadosRota = buscarRotaInteligente(destinoNome);
+        
+        // Usa o KM da sua configuração manual (mais confiável) ou o da planilha se não tiver config
+        const kmReal = dadosRota.km > 0 ? dadosRota.km : (kmPlanilha || 0);
+        
+        // 2. Cálculo de Eixos (5 e 6)
+        let total5Eixos = 0;
+        let total6Eixos = 0;
+        let listaPedagiosHtml = '';
+
+        if (dadosRota.pedagios.length > 0) {
+            listaPedagiosHtml = dadosRota.pedagios.map(p => {
+                const valor5 = p.custo_eixo * 5;
+                const valor6 = p.custo_eixo * 6;
+                total5Eixos += valor5;
+                total6Eixos += valor6;
+                
+                return `
+                <div class="toll-item" style="display:flex; justify-content:space-between; border-bottom:1px dashed #333; padding:4px 0; margin-bottom:4px;">
+                    <span style="font-size:0.8rem; color:#aaa;">${p.nome}</span>
+                    <span style="font-size:0.8rem; color:#fff;">(Base: ${formatarMoeda(p.custo_eixo)}/eixo)</span>
+                </div>`;
+            }).join('');
+        } else {
+            listaPedagiosHtml = '<div style="color:#666; font-size:0.8rem; padding:5px;">Nenhum pedágio cadastrado nesta rota.</div>';
+        }
+
+        // 3. Montagem do Modal
+        const modalContainer = document.getElementById('modalRotaContainer');
+        const cardBody = modalContainer.querySelector('.card-body');
+        
+        // Se houver mapa cadastrado, usa ele. Se não, usa um genérico.
+        const iframeMapa = dadosRota.mapaUrl 
+            ? `<iframe src="${dadosRota.mapaUrl}" width="100%" height="150" style="border:0; border-radius:6px; margin-bottom:10px;" allowfullscreen="" loading="lazy"></iframe>`
+            : `<div style="width:100%; height:80px; background:#252525; display:flex; align-items:center; justify-content:center; color:#555; border-radius:6px; margin-bottom:10px;"><small>Mapa não configurado para este destino</small></div>`;
+
+        const htmlConteudo = `
+            ${iframeMapa}
+
+            <div class="route-timeline" style="margin-bottom: 10px; padding: 0;">
+                <div class="route-point" style="margin-bottom: 10px;">
+                    <div class="dot-origin"></div>
+                    <div class="info-text">
+                        <strong>Areal Tosana</strong>
+                        <span>Origem</span>
+                    </div>
+                </div>
+                
+                <div class="timeline-line"></div>
+
+                <div class="stop-point">
+                    <i class="fas fa-map-marker-alt pin-dest"></i>
+                    <div class="info-text">
+                        <strong>${destinoNome}</strong>
+                        <span>Destino (${formatarNumero(kmReal)} km)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-box">
+                <div style="margin-bottom:8px; border-bottom:1px solid #444; padding-bottom:5px; font-size:0.8rem; color:#aaa; text-transform:uppercase;">
+                    Praças de Pedágio
+                </div>
+                ${listaPedagiosHtml}
+            </div>
+
+            <div class="axle-section">
+                <div class="axle-card">
+                    <span class="axle-label">Carreta 5 Eixos</span>
+                    <div class="axle-value cost-highlight">${formatarMoeda(total5Eixos)}</div>
+                </div>
+                <div class="axle-card">
+                    <span class="axle-label">Carreta 6 Eixos</span>
+                    <div class="axle-value cost-highlight">${formatarMoeda(total6Eixos)}</div>
+                </div>
+            </div>
+        `;
+
+        cardBody.innerHTML = htmlConteudo;
+        modalContainer.style.display = 'flex';
+        
+    } catch (erro) { 
+        console.error(erro); 
+        alert("Erro ao calcular rota inteligente.");
+    }
+}
 // === EXPORTAÇÃO GLOBAL CRUCIAL ===
 // Isso garante que os botões HTML encontrem as funções
 window.fecharModalVeiculo = fecharModalVeiculo;
