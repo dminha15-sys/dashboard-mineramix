@@ -811,36 +811,44 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
         const modalContainer = document.getElementById('modalRotaContainer');
         const cardBody = modalContainer.querySelector('.card-body');
         
-        // Se tiver URL de mapa, usa. Senão, mostra aviso.
+        // Mapa: Verifica URL
         const htmlMapa = dadosRota.mapaUrl 
             ? `<iframe src="${dadosRota.mapaUrl}" allowfullscreen="" loading="lazy"></iframe>`
             : `<div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555; background:#111;"><i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:10px;"></i><span>Mapa indisponível</span></div>`;
 
-        // === AQUI ESTÁ A ESTRUTURA BLINDADA ===
-        // Note que não criamos mais div wrapper extra, injetamos direto nas colunas do CSS
+        // === CONSTRUÇÃO SEGURA DO HTML ===
         
-        // 1. Limpa o corpo atual
+        // 1. Limpa tudo que tinha antes
         cardBody.innerHTML = '';
 
-        // 2. Cria a Coluna do Mapa
+        // 2. Cria a DIV do MAPA e injeta
         const divMapa = document.createElement('div');
         divMapa.className = 'route-map-col';
         divMapa.innerHTML = htmlMapa;
+        cardBody.appendChild(divMapa);
 
-        // 3. Cria a Coluna de Informações
+        // 3. Cria a DIV de INFORMAÇÕES e injeta
         const divInfo = document.createElement('div');
         divInfo.className = 'route-info-col';
         divInfo.innerHTML = `
             <div class="timeline-box">
                 <div class="route-timeline">
-                    <div class="route-point">
-                        <i class="fas fa-circle" style="color:#fff; font-size:0.6rem; margin-right:10px;"></i>
-                        <div><strong style="color:#fff;">Areal Tosana</strong><br><small style="color:#888;">Origem</small></div>
-                    </div>
                     <div class="timeline-line"></div>
-                    <div class="route-point" style="margin-top:20px;">
-                        <i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria); font-size:1.2rem; margin-right:10px; margin-left:-3px;"></i>
-                        <div><strong style="color:#fff;">${destinoNome}</strong><br><small style="color:#888;">Destino (${formatarNumero(kmReal)} km)</small></div>
+
+                    <div class="route-point">
+                        <i class="fas fa-circle" style="color:#fff; font-size:0.7rem; margin-top:5px;"></i>
+                        <div>
+                            <strong style="color:#fff; display:block;">Areal Tosana</strong>
+                            <small style="color:#888;">Origem</small>
+                        </div>
+                    </div>
+
+                    <div class="route-point">
+                        <i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria); font-size:1.2rem;"></i>
+                        <div>
+                            <strong style="color:#fff; display:block;">${destinoNome}</strong>
+                            <small style="color:#888;">Destino (${formatarNumero(kmReal)} km)</small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -863,12 +871,9 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
                 </div>
             </div>
         `;
-
-        // 4. Adiciona as duas colunas ao corpo
-        cardBody.appendChild(divMapa);
         cardBody.appendChild(divInfo);
 
-        // Exibe o modal
+        // 4. Abre o modal
         modalContainer.style.display = 'flex';
         
         if (window.history && window.history.pushState) {
@@ -880,7 +885,6 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
         alert("Erro ao abrir rota.");
     }
 }
-
 function fecharModalRota() {
     document.getElementById('modalRotaContainer').style.display = 'none';
     if(document.getElementById('modalRota')) document.getElementById('modalRota').style.display = 'none';
