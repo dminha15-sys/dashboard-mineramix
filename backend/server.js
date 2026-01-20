@@ -60,7 +60,7 @@ app.get('/api/dados', async (req, res) => {
         // 2. BUSCA AS DUAS ABAS (LENTO 🐢)
         const response = await sheets.spreadsheets.values.batchGet({
             spreadsheetId: SPREADSHEET_ID,
-            ranges: ['API_DADOS!A:K', 'COMBUSTIVEL!A:H']
+            ranges: ['MINERAMIX!A:K', 'COMBUSTIVEL!A:H']
         });
         
         const dadosGerais = response.data.valueRanges[0].values || [];
