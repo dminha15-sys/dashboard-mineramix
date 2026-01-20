@@ -955,86 +955,80 @@
 
 
 /* =======================================================
-   ESTILO DO MODAL DE ROTA (PC E MOBILE OTIMIZADO)
+   MODAL DE ROTA - LAYOUT BLINDADO (FLEXBOX)
    ======================================================= */
 
+/* Fundo escuro atrás do modal */
 .modal-overlay-rota {
     display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85); /* Fundo mais escuro para foco */
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.9); /* Fundo bem escuro */
     z-index: 9999;
     justify-content: center;
     align-items: center;
-    backdrop-filter: blur(4px);
     padding: 20px;
 }
 
+/* O Cartão Principal (A Janela) */
 .route-card {
-    background-color: #1e1e1e; /* Fundo escuro */
+    background-color: #1e1e1e;
     width: 100%;
-    max-width: 900px; /* Mais largo para caber mapa e info lado a lado */
+    max-width: 1200px; /* Bem largo no PC */
+    height: 85vh;      /* Altura fixa (85% da tela) */
     border-radius: 12px;
-    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    box-shadow: 0 0 40px rgba(0,0,0,0.8);
     border: 1px solid #333;
-    color: #fff;
     display: flex;
-    flex-direction: column;
-    max-height: 90vh; /* Não ultrapassa altura da tela */
-    overflow: hidden; /* Garante que scroll fique dentro do corpo */
+    flex-direction: column; /* Cabeçalho em cima, Corpo embaixo */
+    overflow: hidden; /* Nada sai pra fora */
 }
 
-/* CABEÇALHO (Sempre fixo no topo do card) */
+/* 1. CABEÇALHO FIXO */
 .card-header {
+    height: 60px; /* Altura fixa */
+    min-height: 60px;
     background-color: #252525;
-    padding: 15px 20px;
     border-bottom: 1px solid #333;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-shrink: 0; /* Impede que o cabeçalho encolha */
+    padding: 0 20px;
+    flex-shrink: 0; /* Nunca encolhe */
 }
 
 .header-title h2 { margin: 0; font-size: 1.1rem; color: #fff; }
-.header-title span { font-size: 0.8rem; color: #aaa; margin-top: 4px; display: block; }
+.header-title span { font-size: 0.8rem; color: #aaa; display: block; }
 
 .close-btn {
-    background: rgba(255,255,255,0.1);
+    background: transparent;
     border: none;
     color: #fff;
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     cursor: pointer;
+    width: 40px; height: 40px;
     display: flex; align-items: center; justify-content: center;
-    transition: 0.2s;
+    border-radius: 50%;
 }
-.close-btn:hover { background: #dc3545; }
+.close-btn:hover { background: rgba(255,255,255,0.1); }
 
-/* CORPO DO MODAL (Com Grid para PC) */
+
+/* 2. CORPO DO MODAL (ONDE DIVIDE MAPA E INFO) */
 .card-body {
-    padding: 0;
-    overflow-y: auto; /* Scroll apenas aqui dentro */
-    flex: 1;
+    flex: 1; /* Ocupa todo o resto da altura */
+    display: flex; /* Lado a Lado no PC */
+    flex-direction: row;
+    overflow: hidden; /* Importante para o scroll funcionar só na info */
 }
 
-/* O Layout Mágico: Grid de 2 colunas */
-.route-body-grid {
-    display: grid;
-    grid-template-columns: 1.2fr 1fr; /* Mapa maior (1.2) que a info (1) */
-    height: 100%;
-}
-
-/* Coluna da Esquerda (Mapa) */
+/* LADO ESQUERDO: MAPA (60%) */
 .route-map-col {
-    background: #000;
-    min-height: 400px; /* Altura mínima no PC */
+    flex: 6; /* Peso 6 */
     height: 100%;
+    background: #000;
+    position: relative;
 }
-
 .route-map-col iframe {
     width: 100%;
     height: 100%;
@@ -1042,195 +1036,69 @@
     display: block;
 }
 
-/* Coluna da Direita (Infos) */
+/* LADO DIREITO: INFO (40%) */
 .route-info-col {
+    flex: 4; /* Peso 4 */
+    height: 100%;
+    background: #181818;
     padding: 20px;
+    overflow-y: auto; /* Scroll apenas aqui dentro */
     display: flex;
     flex-direction: column;
     gap: 15px;
+    border-left: 1px solid #333;
 }
 
-/* Estilos internos da Info */
-.timeline-box { padding: 0 10px; }
-.summary-box { background: #121212; padding: 15px; border-radius: 8px; border: 1px solid #333; }
-.axle-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; } /* Fica no final */
-.axle-card { background: #252525; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #333; }
-.axle-value { font-size: 1.2rem; color: #FF6B35; font-weight: bold; }
+/* --- ESTILOS INTERNOS DA INFO --- */
+.timeline-box { background: #222; padding: 15px; border-radius: 8px; border: 1px solid #333; }
+.summary-box { background: #222; padding: 15px; border-radius: 8px; border: 1px solid #333; }
+.toll-item { display: flex; justify-content: space-between; border-bottom: 1px dashed #444; padding: 8px 0; }
+.axle-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; }
+.axle-card { background: #2a2a2a; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #333; }
+.axle-label { font-size: 0.7rem; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 2px; }
+.axle-value { font-size: 1.1rem; color: #FF6B35; font-weight: bold; }
+.route-timeline { position: relative; padding: 0; margin: 0; }
+.route-point { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; position: relative; z-index: 2;}
+.timeline-line { position: absolute; left: 5px; top: 15px; bottom: 15px; width: 2px; border-left: 2px dashed #555; z-index: 1; margin-left: 4px; }
+
 
 /* =======================================================
-   RESPONSIVIDADE MOBILE (CELULAR) - A MÁGICA
+   MOBILE (CELULAR) - TELA CHEIA
    ======================================================= */
 @media (max-width: 768px) {
     .modal-overlay-rota {
-        padding: 0; /* Remove margens externas */
-        align-items: flex-end; /* Abre de baixo para cima ou ocupa tudo */
+        padding: 0; /* Sem margem */
+        align-items: flex-end; /* Garante que abra ocupando tudo */
     }
 
     .route-card {
-        max-width: 100%;
-        height: 100vh; /* Ocupa 100% da altura da tela */
-        max-height: 100vh;
-        border-radius: 0; /* Remove bordas arredondadas */
+        width: 100%;
+        height: 100%;      /* Altura total */
+        max-height: 100%;  /* Garante altura total */
+        border-radius: 0;  /* Quadrado */
+        border: none;
     }
 
-    /* O grid vira uma coluna só */
-    .route-body-grid {
-        display: flex;
+    /* MUDANÇA DE DIREÇÃO: Um em cima do outro */
+    .card-body {
         flex-direction: column;
-        overflow-y: auto; /* Permite rolar o conteúdo todo */
     }
 
-    /* Mapa no topo */
+    /* MAPA NO TOPO (Tamanho Fixo) */
     .route-map-col {
-        height: 250px; /* Altura fixa para o mapa no celular */
-        flex-shrink: 0;
-        min-height: 250px;
+        flex: none; /* Não estica */
+        height: 35vh; /* Ocupa 35% da altura da tela */
+        width: 100%;
     }
 
+    /* INFO EM BAIXO (Resto da tela) */
     .route-info-col {
-        padding: 15px;
-        padding-bottom: 80px; /* Espaço extra para não cortar o final */
-    }
-
-    /* O cabeçalho fica GRUDADO no topo */
-    .card-header {
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        background: #252525; /* Garante que não fique transparente */
-        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        flex: 1; /* Ocupa o resto */
+        border-left: none;
+        border-top: 1px solid #333;
+        padding-bottom: 80px; /* Espaço pro dedo rolar até o fim */
     }
 }
-  /* Linha tracejada */
-  .timeline-line {
-    position: absolute;
-    left: 28px;
-    top: 40px;
-    bottom: 60px;
-    border-left: 2px dashed #444;
-    z-index: 0;
-  }
-
-  .stop-point {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 25px;
-    z-index: 1;
-  }
-
-  /* Bolinha da origem */
-  .dot-origin {
-    width: 10px;
-    height: 10px;
-    background: #fff;
-    border-radius: 50%;
-    margin-top: 5px;
-    margin-right: 15px;
-    box-shadow: 0 0 0 4px var(--theme-card-bg);
-  }
-
-  /* Pin do destino (Laranja igual imagem) */
-  .pin-dest {
-    color: var(--theme-accent);
-    font-size: 18px;
-    margin-right: 12px;
-    margin-left: -4px;
-    background: var(--theme-card-bg);
-  }
-
-  .info-text strong {
-    display: block;
-    font-size: 14px;
-    margin-bottom: 3px;
-  }
-
-  .info-text span {
-    font-size: 12px;
-    color: var(--theme-text-muted);
-  }
-
-  /* TAGS DE PEDÁGIO (Estilo Dark) */
-  .toll-container {
-    margin-left: 26px; /* Alinhado ao texto */
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .toll-badge {
-    background-color: rgba(255, 193, 7, 0.1); /* Fundo amarelo bem suave */
-    border: 1px solid rgba(255, 193, 7, 0.4);
-    color: var(--theme-yellow);
-    padding: 6px 10px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 600;
-    width: fit-content;
-    display: flex;
-    align-items: center;
-  }
-  
-  .toll-badge i { margin-right: 6px; }
-
-  /* BOX ESCURO DE TOTAIS */
-  .summary-box {
-    background-color: #121212; /* Mais escuro que o card, destaque */
-    margin: 0 15px 15px 15px;
-    padding: 15px;
-    border-radius: 6px;
-    border: 1px solid var(--theme-border);
-  }
-
-  .summary-line {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    font-size: 13px;
-    color: var(--theme-text-muted);
-  }
-
-  .summary-line strong {
-    color: #fff;
-  }
-  
-  .cost-highlight {
-    color: var(--theme-accent); /* Laranja */
-    font-weight: bold;
-    font-size: 14px;
-  }
-
-  /* GRID DE EIXOS (O PEDIDO EXTRA) */
-  .axle-section {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid #333;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
-  .axle-card {
-    background: #252525;
-    text-align: center;
-    padding: 8px;
-    border-radius: 4px;
-  }
-
-  .axle-label {
-    font-size: 10px;
-    color: var(--theme-text-muted);
-    text-transform: uppercase;
-    display: block;
-    margin-bottom: 2px;
-  }
-
-  .axle-value {
-    font-size: 14px;
-    color: #fff;
-    font-weight: 700;
-  }
 
 /* --- CORREÇÃO DO MODAL NO MOBILE (FIXAR CABEÇALHO) --- */
 @media (max-width: 768px) {
