@@ -786,15 +786,21 @@ function aplicarFiltroData() {
     
     if (!inicio || !fim) { mostrarNotificacao('⚠️ Selecione as duas datas', 'error'); return; }
     
-    const dataInicio = new Date(inicio);
-    const dataFim = new Date(fim);
-    dataFim.setHours(23, 59, 59, 999);
+    // === INICIO DA CORREÇÃO ===
+    // Força a interpretação como horário LOCAL, ignorando o fuso UTC
+    const [anoI, mesI, diaI] = inicio.split('-').map(Number);
+    const dataInicio = new Date(anoI, mesI - 1, diaI, 0, 0, 0, 0);
+
+    const [anoF, mesF, diaF] = fim.split('-').map(Number);
+    const dataFim = new Date(anoF, mesF - 1, diaF, 23, 59, 59, 999);
+    // === FIM DA CORREÇÃO ===
     
     const cabecalho = dadosOriginais[0];
     const linhas = dadosOriginais.slice(1);
     
     const linhasFiltradas = linhas.filter(linha => {
         const data = parsearDataBR(linha[indiceColunaData]);
+        // A comparação agora funcionará pois ambos estão no mesmo fuso horário
         return data && data >= dataInicio && data <= dataFim;
     });
     
