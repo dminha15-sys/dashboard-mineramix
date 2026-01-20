@@ -784,18 +784,34 @@ function calcularCustoPedagio(destino) {
 
 window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
     try {
-        const destinoBruto = decodeURIComponent(rotaCodificada);
-        const destinoNome = destinoBruto.replace(/.*→/, '').trim(); 
+        // 1. TRATAMENTO DE SEGURANÇA PARA ROTAS VAZIAS
+        const destinoBruto = decodeURIComponent(rotaCodificada || '');
+        let destinoNome = destinoBruto.replace(/.*→/, '').trim(); 
         
-        const dadosRota = buscarRotaInteligente(destinoNome);
-        const kmReal = dadosRota.km > 0 ? dadosRota.km : (kmPlanilha || 0);
+        // Se o nome for vazio (ex: apenas "->"), define um padrão para não quebrar
+        if (!destinoNome || destinoNome.length === 0) {
+            destinoNome = "Destino Não Identificado";
+        }
         
+        // 2. BUSCA INTELIGENTE COM PROTEÇÃO "|| {}"
+        // Se buscarRotaInteligente retornar null, usamos um objeto vazio para não travar o código
+        const dadosRota = buscarRotaInteligente(destinoNome) || { 
+            km: 0, pedagios: [], nome: destinoNome, mapaUrl: null 
+        };
+        
+        // Agora é seguro ler .km pois dadosRota nunca será nulo
+        const kmReal = (dadosRota.km && dadosRota.km > 0) ? dadosRota.km : (kmPlanilha || 0);
+        
+        // Cálculos
         let total5Eixos = 0;
         let total6Eixos = 0;
         let listaPedagiosHtml = '';
+        
+        // Garante que pedagios é um array antes de usar .map
+        const pedagios = dadosRota.pedagios || [];
 
-        if (dadosRota.pedagios.length > 0) {
-            listaPedagiosHtml = dadosRota.pedagios.map(p => {
+        if (pedagios.length > 0) {
+            listaPedagiosHtml = pedagios.map(p => {
                 total5Eixos += p.custo_eixo * 5;
                 total6Eixos += p.custo_eixo * 6;
                 return `
@@ -811,29 +827,26 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
         const modalContainer = document.getElementById('modalRotaContainer');
         const cardBody = modalContainer.querySelector('.card-body');
         
+        // Mapa
         const htmlMapa = dadosRota.mapaUrl 
             ? `<iframe src="${dadosRota.mapaUrl}" allowfullscreen="" loading="lazy"></iframe>`
             : `<div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555; background:#111;"><i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:10px;"></i><span>Mapa não configurado</span></div>`;
 
-        // === AQUI ESTÁ A CORREÇÃO CRUCIAL ===
-        // Criamos as DUAS colunas que o CSS espera receber
-        
-        cardBody.innerHTML = ''; // Limpa tudo antes
+        // === CONSTRUÇÃO DO LAYOUT (Grid Sólido) ===
+        cardBody.innerHTML = ''; 
 
-        // 1. CRIA A COLUNA DO MAPA (Esquerda/Topo)
+        // Coluna 1: MAPA
         const divMapa = document.createElement('div');
         divMapa.className = 'route-map-col';
         divMapa.innerHTML = htmlMapa;
         cardBody.appendChild(divMapa);
 
-        // 2. CRIA A COLUNA DE INFO (Direita/Baixo)
+        // Coluna 2: INFO
         const divInfo = document.createElement('div');
         divInfo.className = 'route-info-col';
         
-        // Conteúdo interno da coluna de info (Scroll + Rodapé Fixo)
         divInfo.innerHTML = `
             <div class="info-scroll-area">
-                
                 <div class="route-box">
                     <div class="route-stop">
                         <div class="stop-icon">
@@ -882,12 +895,11 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
         `;
         cardBody.appendChild(divInfo);
 
-        // Exibir o modal
         modalContainer.style.display = 'flex';
         
     } catch (erro) { 
         console.error("Erro rota:", erro); 
-        alert("Erro ao abrir rota.");
+        alert("Erro ao abrir rota: " + erro.message);
     }
 }
 
