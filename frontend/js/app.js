@@ -915,7 +915,6 @@ function fecharModalRota() {
 // 6. FUNÇÕES PRINCIPAIS (AGORA DEFINIDAS)
 // ==========================================
 
-// Esta função estava faltando e causava o erro ao clicar no botão de filtro
 function aplicarFiltroData() {
     if (!dadosOriginais) { mostrarNotificacao('❌ Dados ainda não carregados', 'error'); return; }
     if (indiceColunaData === null) { mostrarNotificacao('❌ Coluna de data não encontrada', 'error'); return; }
@@ -923,23 +922,35 @@ function aplicarFiltroData() {
     const inicio = document.getElementById('dataInicio').value;
     const fim = document.getElementById('dataFim').value;
     
-    if (!inicio || !fim) { mostrarNotificacao('⚠️ Selecione as duas datas', 'error'); return; }
+    // === NOVA LÓGICA: LIMPAR FILTRO ===
+    // Se os dois campos estiverem vazios, volta ao normal (Período Total)
+    if (!inicio && !fim) {
+        dadosAnalisados = analisarDadosMineramix(dadosOriginais);
+        
+        // Atualiza a tela atual
+        const itemAtivo = document.querySelector('.menu-item.active');
+        const relatorioAtual = itemAtivo ? itemAtivo.getAttribute('data-report') : 'overview';
+        mostrarRelatorio(relatorioAtual);
+        
+        mostrarNotificacao('📅 Filtro removido: Exibindo todo o período', 'success');
+        return;
+    }
+    // ==================================
+
+    if (!inicio || !fim) { mostrarNotificacao('⚠️ Selecione as duas datas (ou limpe ambas para ver tudo)', 'error'); return; }
     
-    // === INICIO DA CORREÇÃO ===
-    // Força a interpretação como horário LOCAL, ignorando o fuso UTC
+    // Lógica de Filtro (Data Local)
     const [anoI, mesI, diaI] = inicio.split('-').map(Number);
     const dataInicio = new Date(anoI, mesI - 1, diaI, 0, 0, 0, 0);
 
     const [anoF, mesF, diaF] = fim.split('-').map(Number);
     const dataFim = new Date(anoF, mesF - 1, diaF, 23, 59, 59, 999);
-    // === FIM DA CORREÇÃO ===
     
     const cabecalho = dadosOriginais[0];
     const linhas = dadosOriginais.slice(1);
     
     const linhasFiltradas = linhas.filter(linha => {
         const data = parsearDataBR(linha[indiceColunaData]);
-        // A comparação agora funcionará pois ambos estão no mesmo fuso horário
         return data && data >= dataInicio && data <= dataFim;
     });
     
