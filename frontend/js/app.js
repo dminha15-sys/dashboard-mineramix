@@ -739,32 +739,84 @@ function calcularCustoPedagio(destino) {
 
 window.abrirDetalhesRota = function(rotaCodificada, kmTotal) {
     try {
+        // 1. Decodificar e Calcular
         const destinoBruto = decodeURIComponent(rotaCodificada);
         const destinoNome = destinoBruto.replace(/.*→/, '').trim(); 
         const infoPedagio = calcularCustoPedagio(destinoNome);
-        const elDestino = document.getElementById('rotaDestinoNome');
-        const elRotaKm = document.getElementById('rotaKm');
-        const elResumoKm = document.getElementById('resumoKm');
-        const elResumoPedagio = document.getElementById('resumoPedagio');
-        const containerPedagios = document.getElementById('rotaPedagios');
-        const modal = document.getElementById('modalRota');
-        if (!modal) return;
-        elDestino.textContent = destinoNome;
-        elRotaKm.textContent = formatarNumero(kmTotal) + ' km (Estimado)';
-        elResumoKm.textContent = formatarNumero(kmTotal) + ' km';
-        elResumoPedagio.textContent = formatarMoeda(infoPedagio.total);
-        elResumoPedagio.style.color = infoPedagio.total > 0 ? '#dc3545' : '#333';
-        if(containerPedagios) {
-            containerPedagios.innerHTML = ''; 
-            infoPedagio.lista.forEach(item => {
-                const badge = document.createElement('span');
-                badge.style.cssText = "background:#ffc107; color:#000; padding:4px 8px; border-radius:10px; font-size:12px; margin-right:5px; display:inline-block;";
-                badge.innerHTML = `<i class="fas fa-ticket-alt"></i> ${item}`;
-                containerPedagios.appendChild(badge);
-            });
+        
+        // 2. Selecionar o NOVO modal e o corpo dele
+        const modalContainer = document.getElementById('modalRotaContainer');
+        const cardBody = modalContainer.querySelector('.card-body');
+        
+        if (!modalContainer || !cardBody) {
+            console.error("Modal de rota não encontrado no HTML");
+            return;
         }
-        abrirModalComHistorico('modalRotaContainer');
-    } catch (erro) { console.error(erro); }
+
+        // 3. Gerar as Badges de Pedágio
+        const badgesHtml = infoPedagio.lista.map(item => 
+            `<span class="toll-badge"><i class="fas fa-ticket-alt"></i> ${item}</span>`
+        ).join('');
+
+        // 4. Criar o HTML Novo Dinamicamente (Usando seu CSS novo)
+        const htmlConteudo = `
+            <div class="route-timeline">
+                <div class="route-point">
+                    <div class="point-icon origin"><i class="fas fa-industry"></i></div>
+                    <div class="point-content">
+                        <strong>Areal Tosana</strong>
+                        <small>Origem Fixa</small>
+                    </div>
+                </div>
+
+                <div class="route-path">
+                    <div class="path-line"></div>
+                    <div class="toll-info">
+                        ${badgesHtml || '<span class="toll-badge" style="background:#eee; color:#666">Sem pedágio</span>'}
+                    </div>
+                </div>
+
+                <div class="route-point">
+                    <div class="point-icon dest"><i class="fas fa-map-marker-alt"></i></div>
+                    <div class="point-content">
+                        <strong>${destinoNome}</strong>
+                        <small>Destino Final</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="route-summary-box" style="margin-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span><i class="fas fa-road"></i> Distância Aprox.</span>
+                    <strong>${formatarNumero(kmTotal)} km</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fas fa-ticket-alt"></i> Custo Pedágio (Est.)</span>
+                    <strong style="color: ${infoPedagio.total > 0 ? '#dc3545' : '#28a745'}">
+                        ${formatarMoeda(infoPedagio.total)}
+                    </strong>
+                </div>
+            </div>
+        `;
+
+        // 5. Injetar o HTML e Abrir
+        cardBody.innerHTML = htmlConteudo;
+        
+        // Usa sua função global de abrir modal ou exibe direto
+        modalContainer.style.display = 'flex'; 
+        
+        // Opcional: Se quiser usar o histórico do navegador (botão voltar do celular)
+        if(typeof abrirModalComHistorico === 'function') {
+           // Se sua função abrirModalComHistorico apenas muda o display, ok.
+           // Se ela faz mais coisas, chame ela aqui.
+           // Mas como já demos o display flex acima, garantimos que abre.
+           window.history.pushState({modalOpen: true}, "", "#rota");
+        }
+
+    } catch (erro) { 
+        console.error("Erro ao abrir rota:", erro); 
+        alert("Erro ao carregar detalhes da rota.");
+    }
 }
 
 function fecharModalRota() {
