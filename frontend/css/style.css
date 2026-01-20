@@ -467,3 +467,54 @@ body {
     .driver-metrics-grid { grid-template-columns: 1fr; }
     .modal-stats { grid-template-columns: 1fr 1fr !important; }
 }
+/* =======================================================
+   CORREÇÃO FINAL: LOGO MOBILE x DESKTOP
+   ======================================================= */
+
+/* 1. REGRA GERAL (PC): Esconde o logo novo para não quebrar o layout */
+.mobile-only {
+    display: none !important;
+}
+
+/* 2. REGRAS APENAS PARA CELULAR */
+@media (max-width: 768px) {
+    
+    /* Mostra o logo novo APENAS no celular */
+    .mobile-only {
+        display: flex !important;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    /* Estilo do Texto do Logo (Branco e Laranja) */
+    .mobile-logo h1 {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: white;
+        margin: 0;
+        line-height: 1;
+        letter-spacing: 0.5px;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .mobile-logo span {
+        color: #FF6B35; /* Laranja da sua marca */
+    }
+
+    .mobile-logo small {
+        font-size: 0.65rem;
+        color: rgba(255,255,255,0.6);
+        display: block;
+        margin-top: 2px;
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-family: 'Inter', sans-serif;
+    }
+
+    /* Remove o título antigo de texto puro que estava duplicado */
+    .top-bar::before {
+        content: none !important;
+        display: none !important;
+    }
+}
