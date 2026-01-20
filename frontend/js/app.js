@@ -782,85 +782,99 @@ function calcularCustoPedagio(destino) {
     return { total: custo, lista: detalhes };
 }
 
-window.abrirDetalhesRota = function(rotaCodificada, kmTotal) {
+window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
     try {
-        // 1. Decodificar e Calcular
         const destinoBruto = decodeURIComponent(rotaCodificada);
         const destinoNome = destinoBruto.replace(/.*→/, '').trim(); 
-        const infoPedagio = calcularCustoPedagio(destinoNome);
         
-        // 2. Selecionar o NOVO modal e o corpo dele
+        // 1. Busca a Inteligência da Rota
+        const dadosRota = buscarRotaInteligente(destinoNome);
+        const kmReal = dadosRota.km > 0 ? dadosRota.km : (kmPlanilha || 0);
+        
+        // 2. Cálculo de Eixos
+        let total5Eixos = 0;
+        let total6Eixos = 0;
+        let listaPedagiosHtml = '';
+
+        if (dadosRota.pedagios.length > 0) {
+            listaPedagiosHtml = dadosRota.pedagios.map(p => {
+                total5Eixos += p.custo_eixo * 5;
+                total6Eixos += p.custo_eixo * 6;
+                return `
+                <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #333; padding:6px 0;">
+                    <span style="color:#aaa;">${p.nome}</span>
+                    <span style="color:#fff;">${formatarMoeda(p.custo_eixo)}/eixo</span>
+                </div>`;
+            }).join('');
+        } else {
+            listaPedagiosHtml = '<div style="color:#666; font-size:0.8rem;">Sem pedágios cadastrados.</div>';
+        }
+
+        // 3. Montagem do HTML (DIVIDIDO EM DUAS COLUNAS: MAPA | INFO)
         const modalContainer = document.getElementById('modalRotaContainer');
         const cardBody = modalContainer.querySelector('.card-body');
         
-        if (!modalContainer || !cardBody) {
-            console.error("Modal de rota não encontrado no HTML");
-            return;
-        }
+        // Mapa: Se não tiver URL, mostra uma mensagem
+        const htmlMapa = dadosRota.mapaUrl 
+            ? `<iframe src="${dadosRota.mapaUrl}" allowfullscreen="" loading="lazy"></iframe>`
+            : `<div style="height:100%; display:flex; align-items:center; justify-content:center; color:#555; background:#111;"><i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:10px;"></i><br>Mapa indisponível</div>`;
 
-        // 3. Gerar as Badges de Pedágio
-        const badgesHtml = infoPedagio.lista.map(item => 
-            `<span class="toll-badge"><i class="fas fa-ticket-alt"></i> ${item}</span>`
-        ).join('');
-
-        // 4. Criar o HTML Novo Dinamicamente (Usando seu CSS novo)
+        // Aqui montamos a estrutura do Grid (definida no CSS novo)
         const htmlConteudo = `
-            <div class="route-timeline">
-                <div class="route-point">
-                    <div class="point-icon origin"><i class="fas fa-industry"></i></div>
-                    <div class="point-content">
-                        <strong>Areal Tosana</strong>
-                        <small>Origem Fixa</small>
-                    </div>
+            <div class="route-body-grid">
+                
+                <div class="route-map-col">
+                    ${htmlMapa}
                 </div>
 
-                <div class="route-path">
-                    <div class="path-line"></div>
-                    <div class="toll-info">
-                        ${badgesHtml || '<span class="toll-badge" style="background:#eee; color:#666">Sem pedágio</span>'}
+                <div class="route-info-col">
+                    
+                    <div class="timeline-box">
+                        <div class="route-timeline" style="margin:0; padding:0;">
+                            <div class="route-point" style="margin-bottom: 20px;">
+                                <div class="dot-origin" style="background:var(--cor-primaria)"></div>
+                                <div><strong>Areal Tosana</strong><br><small style="color:#777">Origem</small></div>
+                            </div>
+                            <div class="timeline-line" style="top:15px; bottom:25px; left:9px;"></div>
+                            <div class="stop-point">
+                                <i class="fas fa-map-marker-alt pin-dest"></i>
+                                <div><strong>${destinoNome}</strong><br><small style="color:#777">Destino (${formatarNumero(kmReal)} km)</small></div>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="route-point">
-                    <div class="point-icon dest"><i class="fas fa-map-marker-alt"></i></div>
-                    <div class="point-content">
-                        <strong>${destinoNome}</strong>
-                        <small>Destino Final</small>
+                    <div class="summary-box">
+                        <strong style="display:block; margin-bottom:10px; color:#FF6B35; text-transform:uppercase; font-size:0.8rem;">
+                            <i class="fas fa-ticket-alt"></i> Pedágios
+                        </strong>
+                        ${listaPedagiosHtml}
                     </div>
-                </div>
-            </div>
 
-            <div class="route-summary-box" style="margin-top: 1rem;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span><i class="fas fa-road"></i> Distância Aprox.</span>
-                    <strong>${formatarNumero(kmTotal)} km</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="fas fa-ticket-alt"></i> Custo Pedágio (Est.)</span>
-                    <strong style="color: ${infoPedagio.total > 0 ? '#dc3545' : '#28a745'}">
-                        ${formatarMoeda(infoPedagio.total)}
-                    </strong>
+                    <div class="axle-section">
+                        <div class="axle-card">
+                            <span class="axle-label">Total 5 Eixos</span>
+                            <div class="axle-value">${formatarMoeda(total5Eixos)}</div>
+                        </div>
+                        <div class="axle-card">
+                            <span class="axle-label">Total 6 Eixos</span>
+                            <div class="axle-value">${formatarMoeda(total6Eixos)}</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
 
-        // 5. Injetar o HTML e Abrir
         cardBody.innerHTML = htmlConteudo;
+        modalContainer.style.display = 'flex';
         
-        // Usa sua função global de abrir modal ou exibe direto
-        modalContainer.style.display = 'flex'; 
-        
-        // Opcional: Se quiser usar o histórico do navegador (botão voltar do celular)
-        if(typeof abrirModalComHistorico === 'function') {
-           // Se sua função abrirModalComHistorico apenas muda o display, ok.
-           // Se ela faz mais coisas, chame ela aqui.
-           // Mas como já demos o display flex acima, garantimos que abre.
-           window.history.pushState({modalOpen: true}, "", "#rota");
+        // Histórico para botão voltar do celular funcionar
+        if (window.history && window.history.pushState) {
+            window.history.pushState({modalOpen: true}, "", "#rota");
         }
 
     } catch (erro) { 
-        console.error("Erro ao abrir rota:", erro); 
-        alert("Erro ao carregar detalhes da rota.");
+        console.error(erro); 
+        alert("Erro ao abrir rota.");
     }
 }
 
