@@ -993,7 +993,7 @@ const TABELA_ROTAS_INTELIGENTE = {
 
     'RIO DE JANEIRO': {
         km: 170,
-        mapaUrl: 'https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d3573.4213880758703!2d-42.00437693123026!3d-22.588759099999983!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1spt-BR!2sbr!4v1768917436284!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>',
+        mapaUrl: 'https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d3573.4213880758703!2d-42.00437693123026!3d-22.588759099999983!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e1!3m2!1spt-BR!2sbr!4v1768917436284!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade',
         pedagios: [
             { nome: "Pedágio Casimiro de Abreu", custo_eixo: 7.5 },
             { nome: "Pedágio Rio Bonito", custo_eixo: 7.5 },
