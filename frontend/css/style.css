@@ -4,11 +4,11 @@
 :root {
     --cor-primaria: #1f2933;
     --cor-secundaria: #FF6B35;
-    --cor-fundo: #F1F3F5;      /* cinza claro elegante */
+    --cor-fundo: #F1F3F5;
     --cor-card: #FFFFFF;
     --cor-texto: #1f2933;
     --cor-texto-sec: #6B7280;
-    --cor-borda: #DDE1E6;      /* borda mais visível */
+    --cor-borda: #DDE1E6;
     --cor-sidebar: #1A1D21;
     --cor-pago: #28a745;
     --cor-pendente: #ffc107;
@@ -26,11 +26,7 @@ body.dark {
     --cor-sidebar: #0d0f12;
 }
 
-* { 
-    margin: 0; 
-    padding: 0; 
-    box-sizing: border-box; 
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
     font-family: 'Inter', sans-serif;
@@ -42,7 +38,7 @@ body {
 }
 
 /* =======================================================
-   2. SIDEBAR (MENU LATERAL)
+   2. SIDEBAR (MENU LATERAL - PADRÃO DESKTOP)
    ======================================================= */
 .sidebar {
     width: 250px;
@@ -53,6 +49,7 @@ body {
     height: 100vh;
     overflow-y: auto;
     z-index: 100;
+    top: 0; left: 0; /* Garante posição no PC */
 }
 
 .logo {
@@ -60,7 +57,6 @@ body {
     border-bottom: 1px solid rgba(255,255,255,0.1);
     margin-bottom: 1.5rem;
 }
-
 .logo h1 { font-size: 1.4rem; font-weight: 700; color: white; }
 .logo span { color: var(--cor-secundaria); }
 .logo small { display: block; font-size: 0.7rem; color: rgba(255,255,255,0.6); margin-top: 4px; }
@@ -88,7 +84,10 @@ body {
    3. ÁREA PRINCIPAL E TOP BAR
    ======================================================= */
 .main-content {
-    flex: 1; margin-left: 250px; padding: 1.5rem; width: calc(100% - 250px);
+    flex: 1;
+    margin-left: 250px; /* ISSO QUE EMPURRA O CONTEÚDO NO PC */
+    padding: 1.5rem;
+    width: calc(100% - 250px);
 }
 
 .top-bar {
@@ -99,7 +98,7 @@ body {
 .date-filter-top { display: flex; align-items: flex-end; gap: 0.5rem; }
 .top-actions { display: flex; align-items: center; gap: 0.5rem; }
 
-/* Inputs e Botões Gerais */
+/* Botões */
 .icon-btn {
     width: 38px; height: 38px; border-radius: 8px;
     border: 1px solid var(--cor-borda); background: var(--cor-card); color: var(--cor-texto);
@@ -128,7 +127,7 @@ body {
 .last-update { color: var(--cor-texto-sec); font-size: 0.75rem; }
 
 /* =======================================================
-   4. DASHBOARD E METRICAS
+   4. DASHBOARD E MÉTRICAS
    ======================================================= */
 .metrics-grid {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;
@@ -147,7 +146,7 @@ body {
 .metric-value { font-size: 1.4rem; font-weight: 700; color: var(--cor-primaria); margin: 0.25rem 0; }
 .metric-label { font-size: 0.75rem; color: var(--cor-texto-sec); line-height: 1.3; }
 
-/* Tabelas e Cards de Resumo */
+/* Cards de Resumo e Tabelas */
 .summary-cards {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;
 }
@@ -216,177 +215,171 @@ body {
 .modal-close, .close-btn { background: none; border: none; font-size: 1.5rem; color: var(--cor-texto-sec); cursor: pointer; }
 .modal-body { padding: 1.5rem; }
 
-/* -- Itens que FALTAVAM -- */
 .modal-chart-container {
-    margin-bottom: 1.5rem;
-    height: 300px; /* Importante para o gráfico aparecer */
-    width: 100%;
+    margin-bottom: 1.5rem; height: 300px; width: 100%;
 }
 
-.modal-stats {
-    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 1.5rem;
-}
-.stat-box {
-    background: var(--cor-fundo); padding: 0.8rem; border-radius: 8px; text-align: center;
-}
+.modal-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.5rem; margin-bottom: 1.5rem; }
+.stat-box { background: var(--cor-fundo); padding: 0.8rem; border-radius: 8px; text-align: center; }
 .stat-box.destaque { border: 1px solid var(--cor-secundaria); background: rgba(255, 107, 53, 0.05); }
 .stat-label { font-size: 0.65rem; color: var(--cor-texto-sec); display: block; margin-bottom: 4px; text-transform: uppercase; }
 .stat-value { font-size: 0.9rem; color: var(--cor-primaria); display: block; }
 
 .driver-list-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid var(--cor-borda); }
-
-/* Detalhes do Motorista */
 .driver-metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem; }
 .metric-item { display: flex; justify-content: space-between; align-items: center; }
 .metric-column { display: flex; flex-direction: column; gap: 1rem; }
 
 /* =======================================================
-   6. MODAL DE ROTA - LAYOUT PROFISSIONAL
+   6. MODAL DE ROTA - LAYOUT BLINDADO (PC)
    ======================================================= */
-/* =======================================================
-   MODAL DE ROTA - LAYOUT SÓLIDO (CORREÇÃO FINAL)
-   ======================================================= */
-
 .modal-overlay-rota {
-    display: none;
-    position: fixed;
-    top: 0; left: 0;
+    display: none; position: fixed; top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.95); /* Fundo quase preto */
-    z-index: 9999;
-    justify-content: center;
-    align-items: center;
-    padding: 2vh; /* Margem pequena na borda */
+    background: rgba(0, 0, 0, 0.95); z-index: 9999;
+    justify-content: center; align-items: center; padding: 2vh;
 }
 
 .route-card {
-    background-color: #1e1e1e;
-    width: 100%;
-    max-width: 1200px;
-    height: 90vh; /* Ocupa 90% da altura da tela */
-    border-radius: 8px;
-    border: 1px solid #333;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    background-color: #1e1e1e; width: 100%; max-width: 1200px;
+    height: 90vh; border-radius: 8px; border: 1px solid #333;
+    display: flex; flex-direction: column; overflow: hidden;
     box-shadow: 0 0 50px rgba(0,0,0,0.5);
 }
 
-/* --- CABEÇALHO --- */
 .card-header {
-    height: 60px;
-    min-height: 60px;
-    background-color: #252525;
-    border-bottom: 1px solid #333;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 20px;
+    height: 60px; min-height: 60px; background-color: #252525;
+    border-bottom: 1px solid #333; display: flex;
+    justify-content: space-between; align-items: center; padding: 0 20px;
 }
 .header-title h2 { margin: 0; font-size: 1.1rem; color: #fff; }
 .header-title span { font-size: 0.8rem; color: #aaa; }
 .close-btn {
-    background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer;
-    width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+    background: none; border: none; color: #fff; font-size: 1.5rem;
+    cursor: pointer; width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
 }
 
-/* --- CORPO (GRID) --- */
+/* Corpo GRID (PC) */
 .card-body {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 65% 35%; /* Mapa 65%, Info 35% */
-    overflow: hidden; /* Nada sai pra fora */
-    height: 100%;
+    flex: 1; display: grid; grid-template-columns: 65% 35%; /* Mapa 65%, Info 35% */
+    overflow: hidden; height: 100%;
 }
 
-/* MAPA */
 .route-map-col {
-    background: #000;
-    height: 100%;
-    width: 100%;
-    position: relative;
+    background: #000; height: 100%; width: 100%; position: relative;
 }
 .route-map-col iframe { width: 100%; height: 100%; border: none; }
 
-/* INFO (DIREITA) */
 .route-info-col {
-    background: #181818;
-    border-left: 1px solid #333;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden; /* O scroll será interno */
+    background: #181818; border-left: 1px solid #333;
+    display: flex; flex-direction: column; height: 100%; overflow: hidden;
 }
 
-/* CONTEÚDO ROLÁVEL DA DIREITA */
-.info-scroll-area {
-    padding: 20px;
-    overflow-y: auto;
-    flex: 1; /* Ocupa o espaço que sobrar */
-}
-
-/* RODAPÉ DOS PREÇOS (FIXO NO FUNDO DA DIREITA) */
+.info-scroll-area { padding: 20px; overflow-y: auto; flex: 1; }
 .info-footer {
-    background: #202020;
-    border-top: 1px solid #333;
-    padding: 15px;
-    flex-shrink: 0; /* Não encolhe */
+    background: #202020; border-top: 1px solid #333;
+    padding: 15px; flex-shrink: 0;
 }
 
-/* --- ELEMENTOS DE TEXTO --- */
+/* Elementos da Rota */
 .route-box {
-    background: #252525;
-    border: 1px solid #333;
-    border-radius: 6px;
-    padding: 15px;
-    margin-bottom: 15px;
+    background: #252525; border: 1px solid #333; border-radius: 6px;
+    padding: 15px; margin-bottom: 15px;
 }
-
-.route-stop {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 15px;
-}
+.route-stop { display: flex; gap: 15px; margin-bottom: 15px; }
 .route-stop:last-child { margin-bottom: 0; }
-
-.stop-icon {
-    width: 30px; display: flex; flex-direction: column; align-items: center;
-}
-.stop-line {
-    width: 2px; flex: 1; background: #444; margin-top: 5px; min-height: 20px;
-}
-
-.toll-list {
-    display: flex; flex-direction: column; gap: 8px;
-}
+.stop-icon { width: 30px; display: flex; flex-direction: column; align-items: center; }
+.stop-line { width: 2px; flex: 1; background: #444; margin-top: 5px; min-height: 20px; }
+.toll-list { display: flex; flex-direction: column; gap: 8px; }
 .toll-row {
     display: flex; justify-content: space-between;
-    border-bottom: 1px dashed #333; padding-bottom: 5px;
-    font-size: 0.85rem;
+    border-bottom: 1px dashed #333; padding-bottom: 5px; font-size: 0.85rem;
 }
-
-/* CARDS DE PREÇO NO RODAPÉ */
-.axle-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-}
+.axle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .axle-box {
-    background: #2a2a2a; border: 1px solid #444;
-    border-radius: 6px; padding: 10px; text-align: center;
+    background: #2a2a2a; border: 1px solid #444; border-radius: 6px;
+    padding: 10px; text-align: center;
 }
 .axle-title { font-size: 0.7rem; color: #aaa; text-transform: uppercase; display: block; }
 .axle-price { font-size: 1.2rem; color: #FF6B35; font-weight: bold; }
 
 
 /* =======================================================
-   MOBILE (CELULAR) - MUDANÇA TOTAL
+   7. RESPONSIVIDADE MOBILE (CELULAR) - AQUI ESTÁ A CORREÇÃO
    ======================================================= */
 @media (max-width: 768px) {
-    .modal-overlay-rota { padding: 0; }
     
-    .route-card {
-        height: 100%; border-radius: 0; border: none; width: 100%;
+    /* Corpo geral no Mobile */
+    body { padding-top: 130px; padding-bottom: 80px; }
+    .main-content { 
+        padding: 1rem; 
+        margin: 0; /* REMOVE A MARGEM DE 250PX DO PC */
+        width: 100%; 
     }
 
+    /* Top Bar Fixa */
+    .top-bar {
+        position: fixed; top: 0; left: 0; height: 60px; width: 100%;
+        background: var(--cor-sidebar); z-index: 2000; padding: 0 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .top-bar::before { content: "MINERAMIX"; color: white; font-weight: 700; font-size: 1.2rem; }
+    
+    /* Botões */
+    .top-actions { gap: 10px; display: flex !important; }
+    .top-actions .icon-btn {
+        background: rgba(255,255,255,0.15); border: none; color: white;
+        width: 38px; height: 38px; border-radius: 50%;
+    }
+    .top-actions button[onclick="carregarDados()"],
+    .top-actions button[onclick="testarConexao()"] { display: none !important; }
+
+    /* Filtro de Data */
+    .date-filter-top {
+        position: fixed; top: 60px; left: 0; width: 100%;
+        background: var(--cor-card); padding: 0.5rem 1rem; z-index: 1900;
+        border-bottom: 1px solid var(--cor-borda); justify-content: space-between;
+    }
+    .date-input-group label { display: none; }
+    .date-input { width: 100%; height: 40px; }
+
+    /* Menu Inferior (Sidebar vira Bottom Bar) */
+    .sidebar {
+        position: fixed; bottom: 0; left: 0; top: auto; /* Remove top do PC */
+        height: 65px; width: 100%; padding: 0;
+        flex-direction: row; justify-content: space-between;
+        z-index: 2000; overflow-x: auto;
+    }
+    .sidebar .logo, .sidebar .menu-title { display: none; }
+    .menu-section, .menu-lista { display: contents; }
+    .menu-item {
+        flex-direction: column; justify-content: center; height: 100%;
+        flex: 1; min-width: 60px; color: rgba(255,255,255,0.6); border: none;
+    }
+    .menu-item.active {
+        color: var(--cor-secundaria); border-top: 3px solid var(--cor-secundaria); border-left: none;
+        background: rgba(255,255,255,0.05);
+    }
+    .menu-item .menu-text { font-size: 0.6rem; display: block !important; }
+
+    /* Cards Mobile */
+    .mobile-card-list { display: flex; flex-direction: column; gap: 1rem; }
+    .mobile-card {
+        background: var(--cor-card); border-radius: 12px; padding: 1.2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid var(--cor-borda);
+        display: flex; flex-direction: column; gap: 0.5rem; position: relative; overflow: hidden;
+    }
+    .mobile-card::before {
+        content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--cor-secundaria);
+    }
+    .mobile-card strong { font-size: 1.1rem; color: var(--cor-primaria); font-weight: 700; }
+    .mobile-card .money { font-size: 1.2rem; font-weight: 700; color: var(--cor-pago); align-self: flex-end; letter-spacing: -0.5px; }
+
+    /* --- MODAL DE ROTA MOBILE --- */
+    .modal-overlay-rota { padding: 0; }
+    .route-card { height: 100%; border-radius: 0; border: none; width: 100%; }
+    
     /* VIRA UMA COLUNA */
     .card-body {
         grid-template-columns: 1fr; /* Uma coluna só */
@@ -394,21 +387,23 @@ body {
         display: block; /* Remove grid para controlar melhor no mobile */
         overflow-y: auto; /* Scroll geral */
     }
-
-    .route-map-col {
-        height: 300px; /* Altura fixa mapa */
-        width: 100%;
-        display: block;
-    }
-
-    .route-info-col {
-        height: auto; /* Altura automática */
-        overflow: visible;
-        border-left: none;
-        border-top: 1px solid #333;
-        padding-bottom: 80px; /* Espaço extra final */
-    }
-    
+    .route-map-col { height: 300px; width: 100%; display: block; }
+    .route-info-col { height: auto; overflow: visible; border-left: none; border-top: 1px solid #333; padding-bottom: 80px; }
     .info-scroll-area { padding: 15px; overflow: visible; }
     .info-footer { position: static; margin-top: 20px; }
+
+    /* --- MODAIS PADRÃO MOBILE --- */
+    .modal-overlay { align-items: flex-end; padding: 0; }
+    .modal-content, .modal-card {
+        max-height: 100vh; height: 100%; border-radius: 0;
+        display: flex; flex-direction: column; width: 100% !important; max-width: 100% !important;
+    }
+    .modal-header {
+        position: sticky; top: 0; z-index: 5000;
+        background: var(--cor-card); border-bottom: 1px solid var(--cor-borda); flex-shrink: 0;
+    }
+    .modal-body { overflow-y: auto; flex: 1; padding-bottom: 80px; }
+    .driver-metrics-grid { grid-template-columns: 1fr; }
+    .modal-stats { grid-template-columns: 1fr 1fr !important; gap: 10px; }
+    .stat-box:last-child { grid-column: span 2; }
 }
