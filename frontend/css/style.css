@@ -955,7 +955,7 @@
 
 
 /* =======================================================
-   MODAL DE ROTA - LAYOUT BLINDADO (FLEXBOX)
+   MODAL DE ROTA - LAYOUT PROFISSIONAL (CORRIGIDO)
    ======================================================= */
 
 /* Fundo escuro atrás do modal */
@@ -964,30 +964,30 @@
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.9); /* Fundo bem escuro */
+    background: rgba(0, 0, 0, 0.9);
     z-index: 9999;
     justify-content: center;
     align-items: center;
     padding: 20px;
 }
 
-/* O Cartão Principal (A Janela) */
+/* O CARTÃO PRINCIPAL */
 .route-card {
     background-color: #1e1e1e;
     width: 100%;
     max-width: 1200px; /* Bem largo no PC */
     height: 85vh;      /* Altura fixa (85% da tela) */
     border-radius: 12px;
-    box-shadow: 0 0 40px rgba(0,0,0,0.8);
+    box-shadow: 0 0 50px rgba(0,0,0,0.8);
     border: 1px solid #333;
     display: flex;
     flex-direction: column; /* Cabeçalho em cima, Corpo embaixo */
-    overflow: hidden; /* Nada sai pra fora */
+    overflow: hidden; 
 }
 
-/* 1. CABEÇALHO FIXO */
+/* 1. CABEÇALHO FIXO (Nunca se move) */
 .card-header {
-    height: 60px; /* Altura fixa */
+    height: 60px; /* Altura travada */
     min-height: 60px;
     background-color: #252525;
     border-bottom: 1px solid #333;
@@ -995,108 +995,102 @@
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
-    flex-shrink: 0; /* Nunca encolhe */
+    flex-shrink: 0; 
 }
 
 .header-title h2 { margin: 0; font-size: 1.1rem; color: #fff; }
 .header-title span { font-size: 0.8rem; color: #aaa; display: block; }
 
 .close-btn {
-    background: transparent;
-    border: none;
-    color: #fff;
-    font-size: 1.5rem;
-    cursor: pointer;
-    width: 40px; height: 40px;
+    background: transparent; border: none; color: #fff;
+    font-size: 1.5rem; cursor: pointer; width: 40px; height: 40px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 50%;
 }
 .close-btn:hover { background: rgba(255,255,255,0.1); }
 
 
-/* 2. CORPO DO MODAL (ONDE DIVIDE MAPA E INFO) */
+/* 2. CORPO DO MODAL (DIVIDIDO EM 2) */
 .card-body {
     flex: 1; /* Ocupa todo o resto da altura */
     display: flex; /* Lado a Lado no PC */
     flex-direction: row;
-    overflow: hidden; /* Importante para o scroll funcionar só na info */
+    overflow: hidden; /* Importante! */
+    position: relative;
+    width: 100%;
 }
 
 /* LADO ESQUERDO: MAPA (60%) */
 .route-map-col {
-    flex: 6; /* Peso 6 */
+    flex: 6; /* Peso maior para o mapa */
     height: 100%;
     background: #000;
     position: relative;
+    min-width: 0; /* Previne que o iframe estoure o layout */
 }
 .route-map-col iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: block;
+    width: 100%; height: 100%; border: none; display: block;
 }
 
 /* LADO DIREITO: INFO (40%) */
 .route-info-col {
-    flex: 4; /* Peso 4 */
+    flex: 4; /* Peso menor para info */
     height: 100%;
     background: #181818;
     padding: 20px;
-    overflow-y: auto; /* Scroll apenas aqui dentro */
+    overflow-y: auto; /* Scroll APENAS aqui dentro */
     display: flex;
     flex-direction: column;
     gap: 15px;
     border-left: 1px solid #333;
+    min-width: 320px; /* Garante largura mínima para leitura */
 }
 
-/* --- ESTILOS INTERNOS DA INFO --- */
+/* --- DESIGN INTERNO DAS INFOS --- */
 .timeline-box { background: #222; padding: 15px; border-radius: 8px; border: 1px solid #333; }
 .summary-box { background: #222; padding: 15px; border-radius: 8px; border: 1px solid #333; }
 .toll-item { display: flex; justify-content: space-between; border-bottom: 1px dashed #444; padding: 8px 0; }
+
 .axle-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; }
 .axle-card { background: #2a2a2a; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #333; }
-.axle-label { font-size: 0.7rem; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 2px; }
+.axle-label { font-size: 0.7rem; color: #aaa; text-transform: uppercase; display: block; margin-bottom: 4px; }
 .axle-value { font-size: 1.1rem; color: #FF6B35; font-weight: bold; }
-.route-timeline { position: relative; padding: 0; margin: 0; }
-.route-point { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; position: relative; z-index: 2;}
-.timeline-line { position: absolute; left: 5px; top: 15px; bottom: 15px; width: 2px; border-left: 2px dashed #555; z-index: 1; margin-left: 4px; }
+
+/* Timeline Visual (Ajustado para não encavalar) */
+.route-timeline { position: relative; padding-left: 10px; }
+.route-point { display: flex; align-items: flex-start; gap: 15px; margin-bottom: 20px; position: relative; z-index: 2; }
+.timeline-line { 
+    position: absolute; left: 14px; top: 10px; bottom: 30px; width: 2px; 
+    border-left: 2px dashed #555; z-index: 1; 
+}
 
 
 /* =======================================================
-   MOBILE (CELULAR) - TELA CHEIA
+   MOBILE (CELULAR) - MUDANÇA DE LAYOUT
    ======================================================= */
 @media (max-width: 768px) {
-    .modal-overlay-rota {
-        padding: 0; /* Sem margem */
-        align-items: flex-end; /* Garante que abra ocupando tudo */
-    }
-
+    .modal-overlay-rota { padding: 0; align-items: flex-end; }
+    
     .route-card {
-        width: 100%;
-        height: 100%;      /* Altura total */
-        max-height: 100%;  /* Garante altura total */
-        border-radius: 0;  /* Quadrado */
-        border: none;
+        width: 100%; height: 100%; border-radius: 0; border: none;
     }
 
-    /* MUDANÇA DE DIREÇÃO: Um em cima do outro */
-    .card-body {
-        flex-direction: column;
-    }
+    /* VIRA COLUNA: UM EM CIMA DO OUTRO */
+    .card-body { flex-direction: column; }
 
-    /* MAPA NO TOPO (Tamanho Fixo) */
+    /* MAPA NO TOPO (Tamanho fixo) */
     .route-map-col {
         flex: none; /* Não estica */
-        height: 35vh; /* Ocupa 35% da altura da tela */
+        height: 35vh; /* 35% da altura da tela */
         width: 100%;
     }
 
-    /* INFO EM BAIXO (Resto da tela) */
+    /* INFO EM BAIXO (O resto da tela) */
     .route-info-col {
-        flex: 1; /* Ocupa o resto */
-        border-left: none;
-        border-top: 1px solid #333;
-        padding-bottom: 80px; /* Espaço pro dedo rolar até o fim */
+        flex: 1; 
+        width: 100%;
+        border-left: none; border-top: 1px solid #333;
+        padding-bottom: 80px; /* Espaço extra pro dedo */
     }
 }
 
