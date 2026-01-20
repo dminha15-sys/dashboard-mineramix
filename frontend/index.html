@@ -72,21 +72,19 @@
 
     <main class="main-content">
         <div class="top-bar">
-    <div class="date-filter-top">
-        <div class="date-input-group">
-            <label>Início</label>
-            <input type="date" id="dataInicio" class="date-input">
-        </div>
-
-        <div class="date-input-group">
-            <label>Fim</label>
-            <input type="date" id="dataFim" class="date-input">
-        </div>
-
-        <button class="icon-btn primary" onclick="aplicarFiltroData()" title="Aplicar filtro">
-            <i class="fas fa-search"></i>
-        </button>
+<div class="date-filter-top">
+    <div class="date-input-group">
+        <label>PERÍODO INICIAL</label> <input type="date" id="dataInicio" class="date-input">
     </div>
+
+    <div class="date-input-group">
+        <label>PERÍODO FINAL</label> <input type="date" id="dataFim" class="date-input">
+    </div>
+
+    <button class="icon-btn primary" onclick="aplicarFiltroData()" title="Aplicar filtro">
+        <i class="fas fa-search"></i>
+    </button>
+</div>
 
     <div class="top-actions">
         <button class="icon-btn" onclick="carregarDados()" title="Atualizar">
