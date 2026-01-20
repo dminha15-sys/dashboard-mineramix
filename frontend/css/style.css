@@ -954,68 +954,153 @@
 
 
 
+/* =======================================================
+   ESTILO DO MODAL DE ROTA (PC E MOBILE OTIMIZADO)
+   ======================================================= */
+
 .modal-overlay-rota {
-    display: none; /* Começa invisível */
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7); /* Fundo escurecido atrás */
+    background: rgba(0, 0, 0, 0.85); /* Fundo mais escuro para foco */
     z-index: 9999;
     justify-content: center;
     align-items: center;
+    backdrop-filter: blur(4px);
+    padding: 20px;
 }
 
-/* MODAL */
-  .route-card {
-    background-color: var(--theme-card-bg);
-    width: 380px;
-    border-radius: 8px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-    border: 1px solid var(--theme-border);
-    color: var(--theme-text-main);
-    overflow: hidden;
-  }
+.route-card {
+    background-color: #1e1e1e; /* Fundo escuro */
+    width: 100%;
+    max-width: 900px; /* Mais largo para caber mapa e info lado a lado */
+    border-radius: 12px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    border: 1px solid #333;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh; /* Não ultrapassa altura da tela */
+    overflow: hidden; /* Garante que scroll fique dentro do corpo */
+}
 
-  /* CABEÇALHO */
-  .card-header {
+/* CABEÇALHO (Sempre fixo no topo do card) */
+.card-header {
     background-color: #252525;
     padding: 15px 20px;
-    border-bottom: 1px solid var(--theme-border);
+    border-bottom: 1px solid #333;
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-  }
+    align-items: center;
+    flex-shrink: 0; /* Impede que o cabeçalho encolha */
+}
 
-  .header-title h2 {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 700;
-    color: #fff;
-  }
+.header-title h2 { margin: 0; font-size: 1.1rem; color: #fff; }
+.header-title span { font-size: 0.8rem; color: #aaa; margin-top: 4px; display: block; }
 
-  .header-title span {
-    font-size: 12px;
-    color: var(--theme-text-muted);
-    margin-top: 4px;
-    display: block;
-  }
-
-  .close-btn {
-    background: none;
+.close-btn {
+    background: rgba(255,255,255,0.1);
     border: none;
-    color: var(--theme-text-muted);
-    font-size: 18px;
+    color: #fff;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    font-size: 1.2rem;
     cursor: pointer;
-  }
+    display: flex; align-items: center; justify-content: center;
+    transition: 0.2s;
+}
+.close-btn:hover { background: #dc3545; }
 
-  /* CORPO / TIMELINE */
-  .card-body {
-    padding: 25px 20px;
-    position: relative;
-  }
+/* CORPO DO MODAL (Com Grid para PC) */
+.card-body {
+    padding: 0;
+    overflow-y: auto; /* Scroll apenas aqui dentro */
+    flex: 1;
+}
 
+/* O Layout Mágico: Grid de 2 colunas */
+.route-body-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr; /* Mapa maior (1.2) que a info (1) */
+    height: 100%;
+}
+
+/* Coluna da Esquerda (Mapa) */
+.route-map-col {
+    background: #000;
+    min-height: 400px; /* Altura mínima no PC */
+    height: 100%;
+}
+
+.route-map-col iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+
+/* Coluna da Direita (Infos) */
+.route-info-col {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Estilos internos da Info */
+.timeline-box { padding: 0 10px; }
+.summary-box { background: #121212; padding: 15px; border-radius: 8px; border: 1px solid #333; }
+.axle-section { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; } /* Fica no final */
+.axle-card { background: #252525; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #333; }
+.axle-value { font-size: 1.2rem; color: #FF6B35; font-weight: bold; }
+
+/* =======================================================
+   RESPONSIVIDADE MOBILE (CELULAR) - A MÁGICA
+   ======================================================= */
+@media (max-width: 768px) {
+    .modal-overlay-rota {
+        padding: 0; /* Remove margens externas */
+        align-items: flex-end; /* Abre de baixo para cima ou ocupa tudo */
+    }
+
+    .route-card {
+        max-width: 100%;
+        height: 100vh; /* Ocupa 100% da altura da tela */
+        max-height: 100vh;
+        border-radius: 0; /* Remove bordas arredondadas */
+    }
+
+    /* O grid vira uma coluna só */
+    .route-body-grid {
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto; /* Permite rolar o conteúdo todo */
+    }
+
+    /* Mapa no topo */
+    .route-map-col {
+        height: 250px; /* Altura fixa para o mapa no celular */
+        flex-shrink: 0;
+        min-height: 250px;
+    }
+
+    .route-info-col {
+        padding: 15px;
+        padding-bottom: 80px; /* Espaço extra para não cortar o final */
+    }
+
+    /* O cabeçalho fica GRUDADO no topo */
+    .card-header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: #252525; /* Garante que não fique transparente */
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+}
   /* Linha tracejada */
   .timeline-line {
     position: absolute;
