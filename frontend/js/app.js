@@ -357,17 +357,62 @@ function mostrarRelatorioClientes(resumo) {
 }
 
 function mostrarRelatorioRotas(resumo) {
+    // Função auxiliar para gerar o clique seguro (codificando caracteres especiais)
+    const gerarClick = (rota, km) => {
+        const rotaSafe = encodeURIComponent(rota);
+        // Passa a rota codificada e o KM total (ou 0 se não tiver)
+        return `onclick="abrirDetalhesRota('${rotaSafe}', ${km || 0})" style="cursor:pointer"`;
+    };
+
+    // --- VERSÃO MOBILE ---
     if (window.innerWidth < 768) {
-        const list = resumo.rotasOrdenadas.map(([r, d]) => `<div class="mobile-card"><strong>${r}</strong><span>${d.viagens} viagens</span><span class="money">${formatarMoeda(d.valor)}</span></div>`).join('');
+        const list = resumo.rotasOrdenadas.map(([r, d]) => 
+            `<div class="mobile-card" ${gerarClick(r, d.km)}>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <strong style="flex:1; margin-right:10px;">${r}</strong>
+                    <i class="fas fa-chevron-right" style="color:var(--cor-secundaria); font-size:0.9rem;"></i>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:8px; color:var(--cor-texto-sec); font-size:0.85rem;">
+                    <span>${d.viagens} viagens</span>
+                    <span>${formatarNumero(d.km)} km</span>
+                </div>
+                <div style="text-align:right; margin-top:5px;">
+                    <span class="money">${formatarMoeda(d.valor)}</span>
+                </div>
+            </div>`
+        ).join('');
         elementos.contentArea.innerHTML = `<h3 class="mobile-title">Rotas</h3><div class="mobile-card-list">${list}</div>`;
         return;
     }
+
+    // --- VERSÃO DESKTOP ---
     elementos.contentArea.innerHTML = `
     <div class="summary-card">
-        <div class="summary-header"><div class="summary-title">Rotas Frequentes</div></div>
-        <table class="summary-table"><thead><tr><th>Rota</th><th class="center">Viagens</th><th class="money">Total</th></tr></thead><tbody>
-        ${resumo.rotasOrdenadas.map(([r, d]) => `<tr><td>${r}</td><td class="center">${d.viagens}</td><td class="money">${formatarMoeda(d.valor)}</td></tr>`).join('')}
-        </tbody></table>
+        <div class="summary-header">
+            <div class="summary-title">Rotas Frequentes</div>
+        </div>
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>Rota</th>
+                    <th class="center">Viagens</th>
+                    <th class="center">KM Acumulado</th>
+                    <th class="money">Faturamento</th>
+                    <th class="center">Detalhes</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${resumo.rotasOrdenadas.map(([r, d]) => `
+                    <tr ${gerarClick(r, d.km)} class="hover-row">
+                        <td>${r}</td>
+                        <td class="center">${d.viagens}</td>
+                        <td class="center">${formatarNumero(d.km)}</td>
+                        <td class="money">${formatarMoeda(d.valor)}</td>
+                        <td class="center"><i class="fas fa-search-plus" style="color:var(--cor-secundaria)"></i></td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
     </div>`;
 }
 
