@@ -342,17 +342,49 @@ function mostrarRelatorioVeiculos(resumo) {
 }
 
 function mostrarRelatorioClientes(resumo) {
+    // Versão Mobile (Cards)
     if (window.innerWidth < 768) {
-        const list = resumo.clientesOrdenados.slice(0, 10).map(([c, d]) => `<div class="mobile-card"><strong>${c}</strong><span>${d.viagens} viagens</span><span class="money">${formatarMoeda(d.valor)}</span></div>`).join('');
-        elementos.contentArea.innerHTML = `<h3 class="mobile-title">Clientes</h3><div class="mobile-card-list">${list}</div>`;
+        const list = resumo.clientesOrdenados.slice(0, 50).map(([c, d]) => 
+            `<div class="mobile-card" onclick="abrirDetalhesCliente('${c}')" style="cursor: pointer;">
+                <strong>${c}</strong>
+                <div style="display:flex; justify-content:space-between; margin-top:5px;">
+                    <span class="status-badge status-analise">${d.viagens} viagens</span>
+                    <span class="money">${formatarMoeda(d.valor)}</span>
+                </div>
+             </div>`
+        ).join('');
+        elementos.contentArea.innerHTML = `<h3 class="mobile-title">Clientes (Toque para detalhar)</h3><div class="mobile-card-list">${list}</div>`;
         return;
     }
+
+    // Versão Desktop (Tabela)
     elementos.contentArea.innerHTML = `
     <div class="summary-card">
-        <div class="summary-header"><div class="summary-title">Resumo por Cliente</div></div>
-        <table class="summary-table"><thead><tr><th>Cliente</th><th class="center">Viagens</th><th class="money">Total</th><th class="money">Média</th></tr></thead><tbody>
-        ${resumo.clientesOrdenados.map(([c, d]) => `<tr><td>${c}</td><td class="center">${d.viagens}</td><td class="money">${formatarMoeda(d.valor)}</td><td class="money">${formatarMoeda(d.valor/d.viagens)}</td></tr>`).join('')}
-        </tbody></table>
+        <div class="summary-header">
+            <div class="summary-title">Resumo por Cliente</div>
+            <small style="color:var(--cor-texto-sec)">Clique no cliente para ver o diário</small>
+        </div>
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th class="center">Viagens</th>
+                    <th class="money">Total</th>
+                    <th class="money">Média/Viagem</th>
+                    <th class="center">Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+            ${resumo.clientesOrdenados.map(([c, d]) => `
+                <tr onclick="abrirDetalhesCliente('${c}')" style="cursor:pointer" class="hover-row">
+                    <td><strong>${c}</strong></td>
+                    <td class="center">${d.viagens}</td>
+                    <td class="money">${formatarMoeda(d.valor)}</td>
+                    <td class="money">${formatarMoeda(d.valor/d.viagens)}</td>
+                    <td class="center"><i class="fas fa-search-plus" style="color:var(--cor-secundaria)"></i></td>
+                </tr>`).join('')}
+            </tbody>
+        </table>
     </div>`;
 }
 
@@ -1089,6 +1121,94 @@ function buscarRotaInteligente(destino) {
     return { km: 0, pedagios: [], nome: destino, mapaUrl: null };
 }
 
+// --- FUNÇÃO PARA DETALHAR O CLIENTE (DATA | VIAGENS | TOTAL) ---
+function abrirDetalhesCliente(nomeCliente) {
+    if (!dadosOriginais) return;
+
+    // 1. Identificar colunas nos dados originais
+    const colunas = detectarColunas(dadosOriginais[0]);
+    const idxCliente = colunas.find(c => c.tipo === 'cliente')?.indice;
+    const idxData = colunas.find(c => c.tipo === 'data')?.indice;
+    const idxValor = colunas.find(c => c.tipo === 'valor')?.indice;
+
+    if (idxCliente === undefined || idxData === undefined) {
+        alert("Colunas de Cliente ou Data não identificadas na planilha.");
+        return;
+    }
+
+    // 2. Filtro de Data (Respeita o filtro global selecionado no topo)
+    const inicioInput = document.getElementById('dataInicio').value;
+    const fimInput = document.getElementById('dataFim').value;
+    let dInicio = inicioInput ? new Date(inicioInput + 'T00:00:00') : new Date(1900, 0, 1);
+    let dFim = fimInput ? new Date(fimInput + 'T23:59:59') : new Date(2100, 0, 1);
+
+    // 3. Processar os dados: Filtrar pelo Nome e agrupar por Dia
+    const diasMap = {};
+    let totalGeral = 0;
+
+    dadosOriginais.slice(1).forEach(linha => {
+        const clienteLinha = linha[idxCliente];
+        const dataRaw = linha[idxData];
+        
+        // Verifica se é o cliente clicado
+        if (clienteLinha === nomeCliente) {
+            const dataObj = parsearDataBR(dataRaw);
+            
+            // Verifica se está dentro do período selecionado
+            if (dataObj && dataObj >= dInicio && dataObj <= dFim) {
+                const dataStr = dataObj.toLocaleDateString('pt-BR'); // Ex: 23/01/2026
+                const valor = idxValor !== undefined ? extrairNumero(linha[idxValor]) : 0;
+
+                if (!diasMap[dataStr]) {
+                    diasMap[dataStr] = { viagens: 0, valor: 0, dataSort: dataObj };
+                }
+                
+                diasMap[dataStr].viagens++;
+                diasMap[dataStr].valor += valor;
+                totalGeral += valor;
+            }
+        }
+    });
+
+    // 4. Ordenar os dias (do mais recente para o mais antigo)
+    const diasOrdenados = Object.entries(diasMap).sort((a, b) => b[1].dataSort - a[1].dataSort);
+
+    // 5. Preencher o Modal
+    document.getElementById('mClienteNome').innerText = nomeCliente;
+    document.getElementById('mClienteTotal').innerText = formatarMoeda(totalGeral);
+    
+    const tbody = document.getElementById('listaDiasCliente');
+    tbody.innerHTML = '';
+
+    if (diasOrdenados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="center" style="padding: 20px;">Nenhuma viagem encontrada neste período.</td></tr>';
+    } else {
+        diasOrdenados.forEach(([data, dados]) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${data}</td>
+                <td class="center"><strong>${dados.viagens}</strong></td>
+                <td class="money">${formatarMoeda(dados.valor)}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // 6. Abrir o Modal
+    const modal = document.getElementById('modalDetalheCliente');
+    modal.style.display = 'flex';
+    
+    // Adiciona ao histórico do navegador (botão voltar fecha o modal)
+    window.history.pushState({modalOpen: true}, "", "#detalheCliente");
+}
+
+function fecharModalCliente() {
+    document.getElementById('modalDetalheCliente').style.display = 'none';
+}
+
+// ADICIONE ISSO TAMBÉM: Exportar para que o HTML encontre a função
+window.abrirDetalhesCliente = abrirDetalhesCliente;
+window.fecharModalCliente = fecharModalCliente;
 
 // === EXPORTAÇÃO GLOBAL CRUCIAL ===
 // Isso garante que os botões HTML encontrem as funções
