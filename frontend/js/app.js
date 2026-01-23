@@ -1121,97 +1121,142 @@ function buscarRotaInteligente(destino) {
     return { km: 0, pedagios: [], nome: destino, mapaUrl: null };
 }
 
-// --- FUNÇÃO PARA DETALHAR O CLIENTE (DATA | VIAGENS | TOTAL) ---
+// --- FUNÇÃO PRINCIPAL: ABRE O MODAL E GERA A LISTA DE DIAS ---
 function abrirDetalhesCliente(nomeCliente) {
     if (!dadosOriginais) return;
 
-    // 1. Identificar colunas nos dados originais
-    const colunas = detectarColunas(dadosOriginais[0]);
+    // 1. Mapear Colunas
+    const cabecalho = dadosOriginais[0];
+    const colunas = detectarColunas(cabecalho);
+    
     const idxCliente = colunas.find(c => c.tipo === 'cliente')?.indice;
     const idxData = colunas.find(c => c.tipo === 'data')?.indice;
     const idxValor = colunas.find(c => c.tipo === 'valor')?.indice;
+    const idxMotorista = colunas.find(c => c.tipo === 'motorista')?.indice;
+    const idxCavalo = colunas.find(c => c.tipo === 'veiculo')?.indice;
+    
+    // Procura coluna de Carreta/Reboque
+    let idxCarreta = -1;
+    cabecalho.forEach((col, i) => {
+        const t = String(col).toUpperCase();
+        if (t.includes('CARRETA') || t.includes('REBOQUE')) idxCarreta = i;
+    });
 
     if (idxCliente === undefined || idxData === undefined) {
-        alert("Colunas de Cliente ou Data não identificadas na planilha.");
+        alert("Colunas não identificadas.");
         return;
     }
 
-    // 2. Filtro de Data (Respeita o filtro global selecionado no topo)
+    // 2. Filtros de Data
     const inicioInput = document.getElementById('dataInicio').value;
     const fimInput = document.getElementById('dataFim').value;
     let dInicio = inicioInput ? new Date(inicioInput + 'T00:00:00') : new Date(1900, 0, 1);
     let dFim = fimInput ? new Date(fimInput + 'T23:59:59') : new Date(2100, 0, 1);
 
-    // 3. Processar os dados: Filtrar pelo Nome e agrupar por Dia
+    // 3. Agrupar dados
     const diasMap = {};
-    let totalGeral = 0;
+    let totalPeriodo = 0;
 
-    dadosOriginais.slice(1).forEach(linha => {
-        const clienteLinha = linha[idxCliente];
-        const dataRaw = linha[idxData];
-        
-        // Verifica se é o cliente clicado
-        if (clienteLinha === nomeCliente) {
-            const dataObj = parsearDataBR(dataRaw);
+    dadosOriginais.slice(1).forEach((linha, index) => {
+        if (linha[idxCliente] === nomeCliente) {
+            const dataObj = parsearDataBR(linha[idxData]);
             
-            // Verifica se está dentro do período selecionado
             if (dataObj && dataObj >= dInicio && dataObj <= dFim) {
-                const dataStr = dataObj.toLocaleDateString('pt-BR'); // Ex: 23/01/2026
+                const dataStr = dataObj.toLocaleDateString('pt-BR');
                 const valor = idxValor !== undefined ? extrairNumero(linha[idxValor]) : 0;
-
-                if (!diasMap[dataStr]) {
-                    diasMap[dataStr] = { viagens: 0, valor: 0, dataSort: dataObj };
-                }
                 
-                diasMap[dataStr].viagens++;
-                diasMap[dataStr].valor += valor;
-                totalGeral += valor;
+                if (!diasMap[dataStr]) {
+                    diasMap[dataStr] = { 
+                        objData: dataObj, // Para ordenar
+                        total: 0, 
+                        viagens: [] 
+                    };
+                }
+
+                diasMap[dataStr].total += valor;
+                diasMap[dataStr].viagens.push({
+                    motorista: idxMotorista !== undefined ? (linha[idxMotorista] || '---') : '---',
+                    cavalo: idxCavalo !== undefined ? (linha[idxCavalo] || '---') : '---',
+                    carreta: idxCarreta !== -1 ? (linha[idxCarreta] || '---') : '---',
+                    valor: valor,
+                    id: index // ID único para controle se precisar
+                });
+                totalPeriodo += valor;
             }
         }
     });
 
-    // 4. Ordenar os dias (do mais recente para o mais antigo)
-    const diasOrdenados = Object.entries(diasMap).sort((a, b) => b[1].dataSort - a[1].dataSort);
-
-    // 5. Preencher o Modal
+    // 4. Preencher Header
     document.getElementById('mClienteNome').innerText = nomeCliente;
-    document.getElementById('mClienteTotal').innerText = formatarMoeda(totalGeral);
-    
-    const tbody = document.getElementById('listaDiasCliente');
-    tbody.innerHTML = '';
+    document.getElementById('mClienteTotal').innerText = formatarMoeda(totalPeriodo);
+
+    // 5. Gerar HTML (Accordion)
+    const container = document.getElementById('listaViagensAccordion');
+    container.innerHTML = '';
+
+    // Ordena do dia mais recente para o mais antigo
+    const diasOrdenados = Object.entries(diasMap).sort((a, b) => b[1].objData - a[1].objData);
 
     if (diasOrdenados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" class="center" style="padding: 20px;">Nenhuma viagem encontrada neste período.</td></tr>';
+        container.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">Nenhum registro no período.</div>';
     } else {
-        diasOrdenados.forEach(([data, dados]) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${data}</td>
-                <td class="center"><strong>${dados.viagens}</strong></td>
-                <td class="money">${formatarMoeda(dados.valor)}</td>
+        diasOrdenados.forEach(([data, info], index) => {
+            const idUnico = `dia-${index}`; // ID para vincular o clique
+            
+            // HTML DO DIA (RESUMO)
+            const htmlResumo = `
+                <div class="day-summary-row" onclick="toggleDia('${idUnico}', this)">
+                    <div class="day-info">
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                        <span class="day-date">${data}</span>
+                        <span class="day-count">${info.viagens.length} viagens</span>
+                    </div>
+                    <span class="day-total">${formatarMoeda(info.total)}</span>
+                </div>
             `;
-            tbody.appendChild(tr);
+
+            // HTML DOS DETALHES (TABELA INTERNA)
+            let htmlDetalhes = `<div id="${idUnico}" class="day-details-box">`;
+            
+            info.viagens.forEach(v => {
+                htmlDetalhes += `
+                    <div class="trip-card">
+                        <div class="t-driver"><i class="fas fa-user"></i> ${v.motorista}</div>
+                        <div class="t-plate cav"><i class="fas fa-truck"></i> ${v.cavalo}</div>
+                        <div class="t-plate car"><i class="fas fa-trailer"></i> ${v.carreta}</div>
+                        <div class="t-value">${formatarMoeda(v.valor)}</div>
+                    </div>
+                `;
+            });
+            htmlDetalhes += `</div>`;
+
+            container.innerHTML += (htmlResumo + htmlDetalhes);
         });
     }
 
-    // 6. Abrir o Modal
-    const modal = document.getElementById('modalDetalheCliente');
-    modal.style.display = 'flex';
+    document.getElementById('modalDetalheCliente').style.display = 'flex';
+}
+
+// --- FUNÇÃO DE CLIQUE PARA EXPANDIR/RECOLHER ---
+function toggleDia(idElemento, elementoClicado) {
+    const detalhes = document.getElementById(idElemento);
     
-    // Adiciona ao histórico do navegador (botão voltar fecha o modal)
-    window.history.pushState({modalOpen: true}, "", "#detalheCliente");
+    if (detalhes.style.display === 'block') {
+        detalhes.style.display = 'none';
+        elementoClicado.classList.remove('active');
+    } else {
+        // Opcional: Fechar outros abertos? Se quiser, descomente as linhas abaixo
+        // document.querySelectorAll('.day-details-box').forEach(el => el.style.display = 'none');
+        // document.querySelectorAll('.day-summary-row').forEach(el => el.classList.remove('active'));
+
+        detalhes.style.display = 'block';
+        elementoClicado.classList.add('active');
+    }
 }
 
-function fecharModalCliente() {
-    document.getElementById('modalDetalheCliente').style.display = 'none';
-}
-
-// ADICIONE ISSO TAMBÉM: Exportar para que o HTML encontre a função
+// Exporta globalmente
 window.abrirDetalhesCliente = abrirDetalhesCliente;
-window.fecharModalCliente = fecharModalCliente;
-
-// === EXPORTAÇÃO GLOBAL CRUCIAL ===
-// Isso garante que os botões HTML encontrem as funções
+window.toggleDia = toggleDia;
 window.fecharModalVeiculo = fecharModalVeiculo;
 window.abrirDetalhesVeiculo = abrirDetalhesVeiculo;
 window.abrirDetalhesMotorista = abrirDetalhesMotorista;
