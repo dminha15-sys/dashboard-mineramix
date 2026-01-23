@@ -365,7 +365,39 @@
     </div>
 
 </div>
-    
+    <div id="modalDetalheCliente" class="modal-overlay" style="display: none;">
+    <div class="modal-content modal-fixed-header">
+        
+        <div class="modal-header">
+            <div style="display: flex; flex-direction: column;">
+                <h3 id="mClienteNome" style="color:var(--cor-primaria); margin:0;">Nome do Cliente</h3>
+                <small style="color:var(--cor-texto-sec); font-size: 0.75rem;">Detalhamento Diário</small>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="text-align: right;">
+                    <small style="display:block; font-size: 0.7rem; color:var(--cor-texto-sec);">TOTAL NO PERÍODO</small>
+                    <strong id="mClienteTotal" style="color:var(--cor-pago); font-size: 1.1rem;">R$ 0,00</strong>
+                </div>
+                <button class="modal-close" onclick="fecharModalCliente()">&times;</button>
+            </div>
+        </div>
+
+        <div class="modal-body" style="padding: 0;">
+            <table class="summary-table" style="width: 100%;">
+                <thead style="position: sticky; top: 0; background: var(--cor-card); z-index: 10;">
+                    <tr>
+                        <th style="padding: 15px;">Data</th>
+                        <th class="center">Viagens</th>
+                        <th class="money" style="padding-right: 15px;">Faturamento</th>
+                    </tr>
+                </thead>
+                <tbody id="listaDiasCliente">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
         <script src="config.js"></script>
         <script src="js/app.js"></script>
 </body>
