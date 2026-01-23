@@ -1028,18 +1028,18 @@ window.onclick = function(event) {
 // EDITE AQUI OS VALORES REAIS DA SUA OPERAÇÃO
 const TABELA_ROTAS_INTELIGENTE = {
     'CABO FRIO': {
-        km: 145,
-        mapaUrl: 'https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d235864.088277271!2d-42.36881776510657!3d-22.76618588078044!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e0!4m5!1s0x9714eb65110e63%3A0x5380c551697520!2sAreal%20Tosana%20-%20Estr.%20Geral%20de%20B%C3%A1lsamo%2C%20S%2Fn%20-%20B%C3%A1lsamo%2C%20Rio%20Bonito%20-%20RJ%2C%2028800-000!3m2!1d-22.6876615!2d-42.593850799999996!4m5!1s0x97047d7883d67f%3A0x6d977d4c51921356!2sCabo%20Frio%2C%20Rio%20de%20Janeiro!3m2!1d-22.8868661!2d-42.0266395!5e0!3m2!1spt-BR!2sbr!4v1700000000000',
-        pedagios: [ { nome: "Via Lagos", custo_eixo: 5.40 } ]
+        km: 52.5,
+        mapaUrl: 'https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d3683.4106022275396!2d-42.0256325!3d-22.601137299999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e0!4m5!1s0x97ae1259163945%3A0x3e29485642a05fee!2sMinerare%20Minera%C3%A7%C3%A3o%2C%20Estr.%20Mico-Le%C3%A3o-Dourado%2C%20s%2Fn%20-%20Tamoios%2C%20Cabo%20Frio%20-%20RJ%2C%2028925-440!3m2!1d-22.6009967!2d-42.025559!4m5!1s0x97073d3c0566d5%3A0x5115f34a20c5ad67!2sCabo%20Frio%2C%20RJ!3m2!1d-22.8868925!2d-42.0266568!5e0!3m2!1spt-BR!2sbr!4v1769184172669!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade',
+        pedagios: [ { nome: "Não Há",  } ]
     },
     'MACAÉ': { 
-        km: 110,
-        pedagios: [ { nome: "Praça BR-101 (Pedágio)", custo_eixo: 6.90 } ]
+        km: 40.6,
+        mapaUrl: 'https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d257175.06074194243!2d-41.997661641280054!3d-22.547188464946306!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e0!4m5!1s0x97ae1259163945%3A0x3e29485642a05fee!2sMinerare%20Minera%C3%A7%C3%A3o%2C%20Estr.%20Mico-Le%C3%A3o-Dourado%2C%20s%2Fn%20-%20Tamoios%2C%20Cabo%20Frio%20-%20RJ%2C%2028925-440!3m2!1d-22.6009967!2d-42.025559!4m5!1s0x9630267844443b%3A0x9840d1e83fd0de59!2zTWFjYcOpLCBSSg!3m2!1d-22.3836956!2d-41.7827676!5e0!3m2!1spt-BR!2sbr!4v1769184397919!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade'
+        pedagios: [ { nome: "Não Há", } ]
     },
     'RIO DE JANEIRO': {
-        km: 170,
-        mapaUrl: 'https://www.google.com/maps/embed?pb=!1m34!1m12!1m3!1d559549.9264079186!2d-42.9566886959513!3d-22.877746383020902!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m19!3e0!4m5!1s0x97aff792cfb41b%3A0xb1987dcf5bba924c!2sMineramix%20Servi%C3%A7os%20Ltda%2C%20Alameda%20Bosque%20do%20Gargo%C3%A1%20-%20Centro%20H%C3%ADpico%2C%20Cabo%20Frio%20-%20RJ%2C%2028925-190!3m2!1d-22.5886593!2d-42.0023765!4m5!1s0x97b39190335f2b%3A0x5df8be77350a552e!2sTREVO%20RIO%20DAS%20OSTRAS%20-%20Jardim%20Campomar%2C%20Rio%20das%20Ostras%20-%20RJ!3m2!1d-22.5379215!2d-41.9671729!4m5!1s0x997ec7a0c7d135%3A0x3d9004e36c1bd4d2!2sConcrevit%2C%20R.%20Carlos%20Seidl%2C%20N%3A%2001226%20-%20Caju%2C%20Rio%20de%20Janeiro%20-%20RJ%2C%2020931-005!3m2!1d-22.8787122!2d-43.224516!5e0!3m2!1spt-BR!2sbr!4v1768928689062!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade',
-        pedagios: [
+        km: 180,
+        mapaUrl: 'https://www.google.com/maps/embed?pb=!1m34!1m12!1m3!1d3683.4106022275846!2d-42.02745899543678!3d-22.601137299999994!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m19!3e0!4m5!1s0x97ae1259163945%3A0x3e29485642a05fee!2sMinerare%20Minera%C3%A7%C3%A3o%2C%20Estr.%20Mico-Le%C3%A3o-Dourado%2C%20s%2Fn%20-%20Tamoios%2C%20Cabo%20Frio%20-%20RJ%2C%2028925-440!3m2!1d-22.6009967!2d-42.025559!4m5!1s0x97bac04db8ab0f%3A0xd0da30b53c3fb75f!2sCasimiro%20de%20Abreu%2C%20RJ%2C%2028860-000!3m2!1d-22.479796699999998!2d-42.202903!4m5!1s0x9bde559108a05b%3A0x50dc426c672fd24e!2sRio%20de%20Janeiro%2C%20RJ!3m2!1d-22.9068467!2d-43.1728965!5e0!3m2!1spt-BR!2sbr!4v1769184000835!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade',
             { nome: "Pedágio Casimiro de Abreu", custo_eixo: 7.5 },
             { nome: "Pedágio Rio Bonito", custo_eixo: 7.5 },
             { nome: "Ponte São Gonçalo", custo_eixo: 7.5 } 
