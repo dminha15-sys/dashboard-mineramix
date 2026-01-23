@@ -7,7 +7,7 @@ const CUSTOS = {
     MANUTENCAO_PCT: 0.12 // 12% sobre o faturamento
 };
 
-// A constante CONFIG vem do arquivo config.js
+// A constante CONFIG vem do arquivo config.js (certifique-se que ele é carregado antes)
 
 const CUSTO_PEDAGIOS = {
     'AUTOPISTA_FLUMINENSE': 6.90, // Pedágio BR-101
@@ -786,6 +786,9 @@ function fecharModalMotorista() { fecharModalGlobal(); }
 function fecharModal() { fecharModalGlobal(); }
 function fecharModalVeiculo() { fecharModalGlobal(); }
 function fecharModalRota() { fecharModalGlobal(); }
+function fecharModalCliente() { 
+    document.getElementById('modalDetalheCliente').style.display = 'none'; 
+}
 
 // Rota e Pedágio
 function calcularCustoPedagio(destino) {
@@ -814,34 +817,21 @@ function calcularCustoPedagio(destino) {
     return { total: custo, lista: detalhes };
 }
 
-
-
 window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
     try {
-        // 1. LIMPEZA E SEGURANÇA DO NOME
         const destinoBruto = decodeURIComponent(rotaCodificada || '');
         let destinoNome = destinoBruto.replace(/.*→/, '').trim(); 
+        if (!destinoNome || destinoNome.length === 0) { destinoNome = "Destino Não Identificado"; }
         
-        // Se o nome for vazio, define um padrão para não quebrar
-        if (!destinoNome || destinoNome.length === 0) {
-            destinoNome = "Destino Não Identificado";
-        }
-        
-        // 2. BUSCA INTELIGENTE COM PROTEÇÃO "|| {}" (A CORREÇÃO DO ERRO ESTÁ AQUI)
-        // O "|| {...}" garante que se a busca falhar, usamos um objeto padrão em vez de null
         const dadosRota = buscarRotaInteligente(destinoNome) || { 
             km: 0, pedagios: [], nome: destinoNome, mapaUrl: null 
         };
         
-        // Agora é seguro ler .km pois dadosRota nunca será nulo
         const kmReal = (dadosRota.km && dadosRota.km > 0) ? dadosRota.km : (kmPlanilha || 0);
         
-        // 3. CÁLCULOS
         let total5Eixos = 0;
         let total6Eixos = 0;
         let listaPedagiosHtml = '';
-        
-        // Garante que pedagios é um array antes de usar .map
         const pedagios = dadosRota.pedagios || [];
 
         if (pedagios.length > 0) {
@@ -861,21 +851,16 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
         const modalContainer = document.getElementById('modalRotaContainer');
         const cardBody = modalContainer.querySelector('.card-body');
         
-        // 4. MAPA (Se não tiver URL, mostra aviso em vez de erro)
         const htmlMapa = dadosRota.mapaUrl 
             ? `<iframe src="${dadosRota.mapaUrl}" allowfullscreen="" loading="lazy"></iframe>`
             : `<div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555; background:#111;"><i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:10px;"></i><span>Mapa não configurado</span></div>`;
 
-        // === 5. CONSTRUÇÃO DO HTML (LAYOUT EM COLUNAS PARA O SEU CSS NOVO) ===
         cardBody.innerHTML = ''; 
-
-        // Coluna 1: MAPA (Esquerda)
         const divMapa = document.createElement('div');
         divMapa.className = 'route-map-col';
         divMapa.innerHTML = htmlMapa;
         cardBody.appendChild(divMapa);
 
-        // Coluna 2: INFO (Direita)
         const divInfo = document.createElement('div');
         divInfo.className = 'route-info-col';
         
@@ -928,10 +913,7 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
             </div>
         `;
         cardBody.appendChild(divInfo);
-
-        // Abre o modal com segurança
         modalContainer.style.display = 'flex';
-        
     } catch (erro) { 
         console.error("Erro rota:", erro); 
         alert("Erro ao abrir rota: " + erro.message);
@@ -943,10 +925,6 @@ function fecharModalRota() {
     if(document.getElementById('modalRota')) document.getElementById('modalRota').style.display = 'none';
 }
 
-// ==========================================
-// 6. FUNÇÕES PRINCIPAIS (AGORA DEFINIDAS)
-// ==========================================
-
 function aplicarFiltroData() {
     if (!dadosOriginais) { mostrarNotificacao('❌ Dados ainda não carregados', 'error'); return; }
     if (indiceColunaData === null) { mostrarNotificacao('❌ Coluna de data não encontrada', 'error'); return; }
@@ -955,15 +933,11 @@ function aplicarFiltroData() {
     const fim = document.getElementById('dataFim').value;
     
     // === NOVA LÓGICA: LIMPAR FILTRO ===
-    // Se os dois campos estiverem vazios, volta ao normal (Período Total)
     if (!inicio && !fim) {
         dadosAnalisados = analisarDadosMineramix(dadosOriginais);
-        
-        // Atualiza a tela atual
         const itemAtivo = document.querySelector('.menu-item.active');
         const relatorioAtual = itemAtivo ? itemAtivo.getAttribute('data-report') : 'overview';
         mostrarRelatorio(relatorioAtual);
-        
         mostrarNotificacao('📅 Filtro removido: Exibindo todo o período', 'success');
         return;
     }
@@ -971,7 +945,6 @@ function aplicarFiltroData() {
 
     if (!inicio || !fim) { mostrarNotificacao('⚠️ Selecione as duas datas (ou limpe ambas para ver tudo)', 'error'); return; }
     
-    // Lógica de Filtro (Data Local)
     const [anoI, mesI, diaI] = inicio.split('-').map(Number);
     const dataInicio = new Date(anoI, mesI - 1, diaI, 0, 0, 0, 0);
 
@@ -995,7 +968,7 @@ function aplicarFiltroData() {
     mostrarNotificacao(`📅 Período aplicado: ${linhasFiltradas.length} registros`, 'success');
 }
 
-// Esta função estava faltando e causava o erro ao clicar no botão de plug
+// esta função estava faltando e causava o erro ao clicar no botão de plug
 async function testarConexao() {
     try {
         atualizarStatus(false, '🔄 Testando conexão...');
@@ -1046,36 +1019,23 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => { carregarDados(); testarConexao(); }, 1000);
 });
 
-// Fechar modais ao clicar fora (ATUALIZADO)
 window.onclick = function(event) {
     if (event.target.classList.contains('modal-overlay') || event.target.classList.contains('modal-overlay-rota')) {
         fecharModalGlobal();
     }
 }
-// ==========================================
-// CONFIGURAÇÃO REAL DOS PEDÁGIOS E ROTAS
-// ==========================================
 
 // EDITE AQUI OS VALORES REAIS DA SUA OPERAÇÃO
 const TABELA_ROTAS_INTELIGENTE = {
-    // Palavra-chave do Destino : { km: Distância, pedagios: Lista de praças e custos unitários por eixo }
-    
     'CABO FRIO': {
         km: 145,
         mapaUrl: 'https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d235864.088277271!2d-42.36881776510657!3d-22.76618588078044!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e0!4m5!1s0x9714eb65110e63%3A0x5380c551697520!2sAreal%20Tosana%20-%20Estr.%20Geral%20de%20B%C3%A1lsamo%2C%20S%2Fn%20-%20B%C3%A1lsamo%2C%20Rio%20Bonito%20-%20RJ%2C%2028800-000!3m2!1d-22.6876615!2d-42.593850799999996!4m5!1s0x97047d7883d67f%3A0x6d977d4c51921356!2sCabo%20Frio%2C%20Rio%20de%20Janeiro!3m2!1d-22.8868661!2d-42.0266395!5e0!3m2!1spt-BR!2sbr!4v1700000000000',
-        pedagios: [
-            { nome: "Via Lagos", custo_eixo: 5.40 }, 
-            // Se tiver outro pedágio, adicione aqui: { nome: "Praça BR-101", custo_eixo: 4.30 }
-        ]
+        pedagios: [ { nome: "Via Lagos", custo_eixo: 5.40 } ]
     },
-
-    'MACAÉ': { // O código entende "MACAE" ou "MACAÉ"
+    'MACAÉ': { 
         km: 110,
-        pedagios: [
-            { nome: "Praça BR-101 (Pedágio)", custo_eixo: 6.90 }
-        ]
+        pedagios: [ { nome: "Praça BR-101 (Pedágio)", custo_eixo: 6.90 } ]
     },
-
     'RIO DE JANEIRO': {
         km: 170,
         mapaUrl: 'https://www.google.com/maps/embed?pb=!1m34!1m12!1m3!1d559549.9264079186!2d-42.9566886959513!3d-22.877746383020902!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m19!3e0!4m5!1s0x97aff792cfb41b%3A0xb1987dcf5bba924c!2sMineramix%20Servi%C3%A7os%20Ltda%2C%20Alameda%20Bosque%20do%20Gargo%C3%A1%20-%20Centro%20H%C3%ADpico%2C%20Cabo%20Frio%20-%20RJ%2C%2028925-190!3m2!1d-22.5886593!2d-42.0023765!4m5!1s0x97b39190335f2b%3A0x5df8be77350a552e!2sTREVO%20RIO%20DAS%20OSTRAS%20-%20Jardim%20Campomar%2C%20Rio%20das%20Ostras%20-%20RJ!3m2!1d-22.5379215!2d-41.9671729!4m5!1s0x997ec7a0c7d135%3A0x3d9004e36c1bd4d2!2sConcrevit%2C%20R.%20Carlos%20Seidl%2C%20N%3A%2001226%20-%20Caju%2C%20Rio%20de%20Janeiro%20-%20RJ%2C%2020931-005!3m2!1d-22.8787122!2d-43.224516!5e0!3m2!1spt-BR!2sbr!4v1768928689062!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade',
@@ -1085,13 +1045,10 @@ const TABELA_ROTAS_INTELIGENTE = {
             { nome: "Ponte São Gonçalo", custo_eixo: 7.5 } 
         ]
     },
-    
-    // Adicione outros destinos conforme sua necessidade
     'NITEROI': {
         km: 65,
         pedagios: [ { nome: "Pedágio Manilha", custo_eixo: 6.90 } ]
     },
-    
     'CAMPOS': {
         km: 210,
         pedagios: [ 
@@ -1101,15 +1058,9 @@ const TABELA_ROTAS_INTELIGENTE = {
     }
 };
 
-// ==========================================
-// FUNÇÕES DE CÁLCULO INTELIGENTE
-// ==========================================
-
 function buscarRotaInteligente(destino) {
     if (!destino) return null;
-    const destinoLimpo = destino.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove acentos
-    
-    // Tenta encontrar a palavra chave dentro do destino (Ex: "OBRA CABO FRIO" encontra "CABO FRIO")
+    const destinoLimpo = destino.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
     const chaves = Object.keys(TABELA_ROTAS_INTELIGENTE);
     for (let chave of chaves) {
         const chaveLimpa = chave.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -1117,7 +1068,6 @@ function buscarRotaInteligente(destino) {
             return { nome: chave, ...TABELA_ROTAS_INTELIGENTE[chave] };
         }
     }
-    // Retorno padrão se não achar
     return { km: 0, pedagios: [], nome: destino, mapaUrl: null };
 }
 
@@ -1190,8 +1140,6 @@ function abrirDetalhesCliente(nomeCliente) {
     document.getElementById('mClienteNome').innerText = nomeCliente;
     document.getElementById('mClienteTotal').innerText = formatarMoeda(totalPeriodo);
 
-// ... (Parte inicial da função permanece igual) ...
-
     // 5. Gerar HTML (Accordion)
     const container = document.getElementById('listaViagensAccordion');
     container.innerHTML = '';
@@ -1245,7 +1193,8 @@ function abrirDetalhesCliente(nomeCliente) {
     }
 
     document.getElementById('modalDetalheCliente').style.display = 'flex';
-    // ... (Resto da função permanece igual)
+    window.history.pushState({modalOpen: true}, "", "#detalheCliente");
+}
 
 // --- FUNÇÃO DE CLIQUE PARA EXPANDIR/RECOLHER ---
 function toggleDia(idElemento, elementoClicado) {
@@ -1255,10 +1204,6 @@ function toggleDia(idElemento, elementoClicado) {
         detalhes.style.display = 'none';
         elementoClicado.classList.remove('active');
     } else {
-        // Opcional: Fechar outros abertos? Se quiser, descomente as linhas abaixo
-        // document.querySelectorAll('.day-details-box').forEach(el => el.style.display = 'none');
-        // document.querySelectorAll('.day-summary-row').forEach(el => el.classList.remove('active'));
-
         detalhes.style.display = 'block';
         elementoClicado.classList.add('active');
     }
@@ -1272,9 +1217,10 @@ window.abrirDetalhesVeiculo = abrirDetalhesVeiculo;
 window.abrirDetalhesMotorista = abrirDetalhesMotorista;
 window.fecharModal = fecharModal;
 window.fecharModalMotorista = fecharModalMotorista;
+window.fecharModalCliente = fecharModalCliente;
 window.abrirDetalhesDia = abrirDetalhesDia;
-window.aplicarFiltroData = aplicarFiltroData; // <--- AGORA VAI FUNCIONAR
+window.aplicarFiltroData = aplicarFiltroData; 
 window.carregarDados = carregarDados;
-window.testarConexao = testarConexao; // <--- AGORA VAI FUNCIONAR
+window.testarConexao = testarConexao; 
 window.toggleDarkMode = toggleDarkMode;
 window.fecharModalRota = fecharModalRota;
