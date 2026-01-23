@@ -561,3 +561,79 @@ body {
         border-radius: 0 !important;
     }
 }
+/* --- ESTILOS DO ACCORDION (DIA -> DETALHES) --- */
+
+/* Linha do Dia (Clicável) */
+.day-summary-row {
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.day-summary-row:hover {
+    background-color: #f8f9fa;
+}
+
+.day-info { display: flex; align-items: center; gap: 10px; }
+.day-date { font-weight: 700; color: var(--cor-primaria); font-size: 0.95rem; }
+.day-count { font-size: 0.75rem; background: #e9ecef; padding: 2px 8px; border-radius: 10px; color: #495057; }
+.day-total { font-weight: 700; color: var(--cor-secundaria); font-size: 0.95rem; }
+
+/* Ícone da seta que gira */
+.toggle-icon {
+    transition: transform 0.3s ease;
+    color: var(--cor-texto-sec);
+}
+.day-summary-row.active .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* Container de Detalhes (Escondido por padrão) */
+.day-details-box {
+    display: none; /* Segredo: começa oculto */
+    background-color: #f1f3f5;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 10px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Cartão da Viagem Individual (Dentro do dia) */
+.trip-card {
+    background: white;
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+    border: 1px solid #dee2e6;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr; /* Motorista | Cavalo | Carreta | Valor */
+    align-items: center;
+    gap: 10px;
+}
+.trip-card:last-child { margin-bottom: 0; }
+
+/* Texto dos detalhes */
+.t-driver { font-weight: 600; color: var(--cor-primaria); font-size: 0.85rem; }
+.t-plate { font-family: 'Courier New', monospace; font-size: 0.8rem; color: #666; text-transform: uppercase; }
+.t-value { text-align: right; font-weight: bold; color: var(--cor-pago); font-size: 0.9rem; }
+
+/* Responsividade Mobile */
+@media (max-width: 768px) {
+    .trip-card {
+        grid-template-columns: 1fr; /* Tudo em uma coluna */
+        gap: 5px;
+    }
+    .trip-card div {
+        display: flex;
+        justify-content: space-between; /* Rótulo na esq, Valor na dir */
+    }
+    /* Adiciona rótulos via CSS para economizar HTML */
+    .t-plate.cav::before { content: "Cavalo:"; color: #999; font-size: 0.75rem; }
+    .t-plate.car::before { content: "Carreta:"; color: #999; font-size: 0.75rem; }
+}
