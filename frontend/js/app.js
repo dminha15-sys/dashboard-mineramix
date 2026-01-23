@@ -1030,12 +1030,12 @@ const TABELA_ROTAS_INTELIGENTE = {
     'CABO FRIO': {
         km: 52.5,
         mapaUrl: 'https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d3683.4106022275396!2d-42.0256325!3d-22.601137299999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e0!4m5!1s0x97ae1259163945%3A0x3e29485642a05fee!2sMinerare%20Minera%C3%A7%C3%A3o%2C%20Estr.%20Mico-Le%C3%A3o-Dourado%2C%20s%2Fn%20-%20Tamoios%2C%20Cabo%20Frio%20-%20RJ%2C%2028925-440!3m2!1d-22.6009967!2d-42.025559!4m5!1s0x97073d3c0566d5%3A0x5115f34a20c5ad67!2sCabo%20Frio%2C%20RJ!3m2!1d-22.8868925!2d-42.0266568!5e0!3m2!1spt-BR!2sbr!4v1769184172669!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade',
-        pedagios: [ { nome: "Não Há",  } ]
+        pedagios: [ { nome: "Não Há", custo_eixo: 0.0 }, ]
     },
     'MACAÉ': { 
         km: 40.6,
         mapaUrl: 'https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d257175.06074194243!2d-41.997661641280054!3d-22.547188464946306!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e0!4m5!1s0x97ae1259163945%3A0x3e29485642a05fee!2sMinerare%20Minera%C3%A7%C3%A3o%2C%20Estr.%20Mico-Le%C3%A3o-Dourado%2C%20s%2Fn%20-%20Tamoios%2C%20Cabo%20Frio%20-%20RJ%2C%2028925-440!3m2!1d-22.6009967!2d-42.025559!4m5!1s0x9630267844443b%3A0x9840d1e83fd0de59!2zTWFjYcOpLCBSSg!3m2!1d-22.3836956!2d-41.7827676!5e0!3m2!1spt-BR!2sbr!4v1769184397919!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade',
-        pedagios: [ { nome: "Não Há", } ]
+        pedagios: [ { nome: "Não Há", custo_eixo: 0.0 }, ]
     },
     
     'RIO DE JANEIRO': {
