@@ -1190,6 +1190,8 @@ function abrirDetalhesCliente(nomeCliente) {
     document.getElementById('mClienteNome').innerText = nomeCliente;
     document.getElementById('mClienteTotal').innerText = formatarMoeda(totalPeriodo);
 
+// ... (Parte inicial da função permanece igual) ...
+
     // 5. Gerar HTML (Accordion)
     const container = document.getElementById('listaViagensAccordion');
     container.innerHTML = '';
@@ -1198,7 +1200,7 @@ function abrirDetalhesCliente(nomeCliente) {
     const diasOrdenados = Object.entries(diasMap).sort((a, b) => b[1].objData - a[1].objData);
 
     if (diasOrdenados.length === 0) {
-        container.innerHTML = '<div style="padding:20px; text-align:center; color:#999;">Nenhum registro no período.</div>';
+        container.innerHTML = '<div style="padding:40px; text-align:center; color:var(--cor-texto-sec);"><i class="fas fa-folder-open" style="font-size: 2rem; margin-bottom: 10px; display:block;"></i>Nenhuma viagem encontrada neste período.</div>';
     } else {
         diasOrdenados.forEach(([data, info], index) => {
             const idUnico = `dia-${index}`; // ID para vincular o clique
@@ -1215,16 +1217,24 @@ function abrirDetalhesCliente(nomeCliente) {
                 </div>
             `;
 
-            // HTML DOS DETALHES (TABELA INTERNA)
+            // HTML DOS DETALHES (LISTA DE VIAGENS)
             let htmlDetalhes = `<div id="${idUnico}" class="day-details-box">`;
             
             info.viagens.forEach(v => {
                 htmlDetalhes += `
                     <div class="trip-card">
-                        <div class="t-driver"><i class="fas fa-user"></i> ${v.motorista}</div>
-                        <div class="t-plate cav"><i class="fas fa-truck"></i> ${v.cavalo}</div>
-                        <div class="t-plate car"><i class="fas fa-trailer"></i> ${v.carreta}</div>
-                        <div class="t-value">${formatarMoeda(v.valor)}</div>
+                        <div class="t-driver" title="Motorista">
+                            <i class="fas fa-user-tie"></i> ${v.motorista}
+                        </div>
+                        <div class="t-plate cav" title="Placa do Cavalo">
+                            <i class="fas fa-truck-moving"></i> ${v.cavalo}
+                        </div>
+                        <div class="t-plate car" title="Placa da Carreta">
+                            <i class="fas fa-trailer"></i> ${v.carreta}
+                        </div>
+                        <div class="t-value" title="Valor Faturado">
+                            ${formatarMoeda(v.valor)}
+                        </div>
                     </div>
                 `;
             });
@@ -1235,7 +1245,7 @@ function abrirDetalhesCliente(nomeCliente) {
     }
 
     document.getElementById('modalDetalheCliente').style.display = 'flex';
-}
+    // ... (Resto da função permanece igual)
 
 // --- FUNÇÃO DE CLIQUE PARA EXPANDIR/RECOLHER ---
 function toggleDia(idElemento, elementoClicado) {
