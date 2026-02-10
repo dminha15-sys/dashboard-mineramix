@@ -267,10 +267,24 @@ function mostrarVisaoGeral(resumo) {
             <div class="metric-card"><div class="metric-icon"><i class="fas fa-truck"></i></div><div class="metric-value">${Object.keys(resumo.veiculos).length}</div><div class="metric-label">Veículos</div></div>
         </div>
     `;
+
+    // --- CÓDIGO NOVO: Gráfico de Tendência ---
+    const chartHTML = `
+    <div class="summary-card" style="margin-bottom: 1.5rem;">
+        <div class="summary-header">
+            <div class="summary-title">Tendência dos Últimos 10 Dias</div>
+            <div class="summary-icon"><i class="fas fa-chart-line"></i></div>
+        </div>
+        <div style="height: 300px; width: 100%;">
+            <canvas id="graficoGeral"></canvas>
+        </div>
+    </div>`;
+    // -----------------------------------------
+
     const topMotoristas = resumo.motoristasOrdenados.slice(0, 5);
     const topVeiculos = resumo.veiculosOrdenados.slice(0, 5);
     
-    // --- TOP MESES (RESTAURADO) ---
+    // Top Meses (Recuperado)
     const mesesMap = {};
     Object.entries(resumo.dias || {}).forEach(([data, info]) => {
         const partes = data.split('/'); 
@@ -282,7 +296,6 @@ function mostrarVisaoGeral(resumo) {
         }
     });
     const topMeses = Object.entries(mesesMap).sort((a,b) => b[1].valor - a[1].valor).slice(0, 5);
-    // --------------------------------
 
     const summaryHTML = `
     <div class="summary-cards">
@@ -305,7 +318,82 @@ function mostrarVisaoGeral(resumo) {
             </tbody></table>
         </div>
     </div>`;
-    elementos.contentArea.innerHTML = metricsHTML + summaryHTML;
+
+    // Injeta HTML com o Gráfico
+    elementos.contentArea.innerHTML = metricsHTML + chartHTML + summaryHTML;
+
+    // --- LÓGICA DO GRÁFICO (Chart.js) ---
+    const ultimos10 = resumo.diasOrdenados.slice(0, 10).reverse();
+    const labels = ultimos10.map(d => d[0].substring(0, 5)); // Pega só dia/mês
+    const dataViagens = ultimos10.map(d => d[1].viagens);
+    const dataValor = ultimos10.map(d => d[1].valor);
+
+    const ctx = document.getElementById('graficoGeral').getContext('2d');
+    
+    // Evita erro de canvas duplicado
+    if (window.overviewChart instanceof Chart) {
+        window.overviewChart.destroy();
+    }
+
+    // Cores automáticas (Dark/Light)
+    const isDark = document.body.classList.contains('dark');
+    const colorText = isDark ? '#b0b0b0' : '#4a5568';
+    const colorGrid = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+
+    window.overviewChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Qtd Viagens',
+                    data: dataViagens,
+                    borderColor: '#FF6B35',
+                    backgroundColor: 'rgba(255, 107, 53, 0.1)',
+                    yAxisID: 'y',
+                    tension: 0.3,
+                    fill: true,
+                    pointRadius: 4
+                },
+                {
+                    label: 'Valor Total (R$)',
+                    data: dataValor,
+                    borderColor: '#28a745',
+                    backgroundColor: 'transparent',
+                    yAxisID: 'y1',
+                    tension: 0.3,
+                    borderDash: [5, 5],
+                    pointRadius: 4
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { labels: { color: colorText } },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) label += ': ';
+                            if (context.parsed.y !== null) {
+                                if(context.dataset.yAxisID === 'y1') label += formatarMoeda(context.parsed.y);
+                                else label += context.parsed.y;
+                            }
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { color: colorGrid }, ticks: { color: colorText } },
+                y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Viagens', color: colorText }, grid: { color: colorGrid }, ticks: { color: colorText } },
+                y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Valor (R$)', color: colorText }, grid: { drawOnChartArea: false }, ticks: { color: colorText } }
+            }
+        }
+    });
 }
 
 function mostrarRelatorioMotoristas(resumo) {
