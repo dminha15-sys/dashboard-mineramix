@@ -130,7 +130,7 @@ body {
    4. DASHBOARD E MÉTRICAS
    ======================================================= */
 .metrics-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;
 }
 .metric-card {
     background: var(--cor-card); border-radius: 8px; padding: 1rem;
@@ -148,7 +148,7 @@ body {
 
 /* Cards de Resumo e Tabelas */
 .summary-cards {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;
 }
 .summary-card {
     background: var(--cor-card); border-radius: 8px; padding: 1.25rem;
