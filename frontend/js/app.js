@@ -268,7 +268,7 @@ function mostrarVisaoGeral(resumo) {
         </div>
     `;
 
-    // --- GRÁFICO (AJUSTADO PARA MOBILE E DESKTOP) ---
+    // Container do Gráfico
     const chartHTML = `
     <div class="summary-cards" style="grid-template-columns: 1fr; margin-bottom: 1.5rem;">
         <div class="summary-card">
@@ -310,115 +310,100 @@ function mostrarVisaoGeral(resumo) {
     
     elementos.contentArea.innerHTML = metricsHTML + chartHTML + summaryHTML;
 
-    // --- LÓGICA DO GRÁFICO (Chart.js) ---
-    const ultimos10 = resumo.diasOrdenados.slice(0, 10).reverse();
-    const labels = ultimos10.map(d => d[0].substring(0, 5)); // Pega só DD/MM
-    const dataViagens = ultimos10.map(d => d[1].viagens);
-    const dataValor = ultimos10.map(d => d[1].valor);
+    // --- FUNÇÃO PARA DESENHAR/ATUALIZAR O GRÁFICO ---
+    const desenharGrafico = () => {
+        const ctx = document.getElementById('graficoGeral').getContext('2d');
+        
+        if (window.overviewChart instanceof Chart) {
+            window.overviewChart.destroy();
+        }
 
-    const ctx = document.getElementById('graficoGeral').getContext('2d');
-    
-    if (window.overviewChart instanceof Chart) {
-        window.overviewChart.destroy();
-    }
+        const ultimos10 = resumo.diasOrdenados.slice(0, 10).reverse();
+        const labels = ultimos10.map(d => d[0].substring(0, 5));
+        const dataViagens = ultimos10.map(d => d[1].viagens);
+        const dataValor = ultimos10.map(d => d[1].valor);
 
-    // Cores e Configurações
-    const isDark = document.body.classList.contains('dark');
-    const colorText = isDark ? '#b0b0b0' : '#4a5568';
-    const colorGrid = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
-    
-    // DETECTA SE É MOBILE (Largura menor que 768px)
-    const isMobile = window.innerWidth < 768;
+        const isDark = document.body.classList.contains('dark');
+        const colorText = isDark ? '#b0b0b0' : '#4a5568';
+        const colorGrid = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+        const isMobile = window.innerWidth < 768;
 
-    // Configuração Diferente para Mobile (Barras) e Desktop (Linhas)
-    const chartType = isMobile ? 'bar' : 'line';
-    const fillOption = isMobile ? false : true;
-    const borderDashOption = isMobile ? [] : [5, 5];
-
-    window.overviewChart = new Chart(ctx, {
-        type: chartType, // Muda dinamicamente
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Qtd Viagens',
-                    data: dataViagens,
-                    borderColor: '#FF6B35', 
-                    backgroundColor: isMobile ? '#FF6B35' : 'rgba(255, 107, 53, 0.1)',
-                    yAxisID: 'y',
-                    tension: 0.3,
-                    fill: fillOption,
-                    pointRadius: 4,
-                    order: 2
-                },
-                {
-                    label: 'Valor Total (R$)',
-                    data: dataValor,
-                    borderColor: '#28a745', 
-                    backgroundColor: isMobile ? '#28a745' : 'transparent',
-                    yAxisID: 'y1',
-                    tension: 0.3,
-                    borderDash: borderDashOption,
-                    pointRadius: 4,
-                    type: isMobile ? 'line' : 'line', // Mantém linha para valor mesmo no mobile (opcional, fica misto) ou mude para 'bar' se preferir tudo barra
-                    order: 1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: {
-                mode: 'index',
-                intersect: false,
+        window.overviewChart = new Chart(ctx, {
+            type: isMobile ? 'bar' : 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Qtd Viagens',
+                        data: dataViagens,
+                        borderColor: '#FF6B35', 
+                        backgroundColor: isMobile ? '#FF6B35' : 'rgba(255, 107, 53, 0.1)',
+                        yAxisID: 'y',
+                        tension: 0.3,
+                        fill: !isMobile,
+                        pointRadius: 4,
+                        order: 2
+                    },
+                    {
+                        label: 'Valor Total (R$)',
+                        data: dataValor,
+                        borderColor: '#28a745', 
+                        backgroundColor: 'transparent',
+                        yAxisID: 'y1',
+                        tension: 0.3,
+                        borderDash: isMobile ? [] : [5, 5],
+                        pointRadius: 4,
+                        type: 'line', // Valor sempre linha para contraste
+                        order: 1
+                    }
+                ]
             },
-            plugins: {
-                legend: {
-                    labels: { color: colorText }
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.dataset.label || '';
-                            if (label) label += ': ';
-                            if (context.parsed.y !== null) {
-                                if(context.dataset.yAxisID === 'y1') {
-                                    label += formatarMoeda(context.parsed.y);
-                                } else {
-                                    label += context.parsed.y;
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { labels: { color: colorText } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) label += ': ';
+                                if (context.parsed.y !== null) {
+                                    if(context.dataset.yAxisID === 'y1') label += formatarMoeda(context.parsed.y);
+                                    else label += context.parsed.y;
                                 }
+                                return label;
                             }
-                            return label;
                         }
                     }
-                }
-            },
-            scales: {
-                x: {
-                    grid: { display: false }, // Remove grade vertical para limpar o visual
-                    ticks: { color: colorText }
                 },
-                y: {
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    title: { display: !isMobile, text: 'Viagens', color: colorText }, // Esconde título no mobile para economizar espaço
-                    grid: { color: colorGrid },
-                    ticks: { color: colorText }
-                },
-                y1: {
-                    type: 'linear',
-                    display: !isMobile, // Esconde eixo direito no mobile para não espremer o gráfico
-                    position: 'right',
-                    title: { display: !isMobile, text: 'Valor (R$)', color: colorText },
-                    grid: { drawOnChartArea: false },
-                    ticks: { color: colorText }
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: colorText } },
+                    y: {
+                        type: 'linear', display: true, position: 'left',
+                        title: { display: !isMobile, text: 'Viagens', color: colorText },
+                        grid: { color: colorGrid }, ticks: { color: colorText }
+                    },
+                    y1: {
+                        type: 'linear', display: !isMobile, position: 'right',
+                        title: { display: !isMobile, text: 'Valor (R$)', color: colorText },
+                        grid: { drawOnChartArea: false }, ticks: { color: colorText }
+                    }
                 }
             }
-        }
-    });
-}
+        });
+    };
 
+    // Renderiza o gráfico
+    desenharGrafico();
+
+    // Adiciona evento para atualizar se redimensionar a tela (PC <-> Mobile)
+    // Removemos listener anterior para não acumular
+    if (window.resizeChartListener) window.removeEventListener('resize', window.resizeChartListener);
+    window.resizeChartListener = () => desenharGrafico();
+    window.addEventListener('resize', window.resizeChartListener);
+}
 function mostrarRelatorioMotoristas(resumo) {
     const gerarClick = (nome) => `onclick="abrirDetalhesMotorista('${nome}')" style="cursor:pointer"`;
     if (window.innerWidth < 768) {
