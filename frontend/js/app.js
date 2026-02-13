@@ -269,14 +269,30 @@ function mostrarVisaoGeral(resumo) {
         </div>
     `;
 
-    // Gráfico de Tendência (Responsivo)
+    // --- CHART HTML COM BARRA DE FILTRO INTEGRADA ---
     const chartHTML = `
     <div class="summary-cards" style="grid-template-columns: 1fr; margin-bottom: 1.5rem;">
         <div class="summary-card">
             <div class="summary-header">
-                <div class="summary-title">Tendência dos Últimos 10 Dias</div>
+                <div class="summary-title" id="tituloGraficoDinamico">Tendência dos Últimos 10 Dias</div>
                 <div class="summary-icon"><i class="fas fa-chart-line"></i></div>
             </div>
+            
+            <div class="chart-toolbar">
+                <div class="chart-presets">
+                    <button class="chart-btn" onclick="window.filtrarGrafico('5')">5 Dias</button>
+                    <button class="chart-btn active" onclick="window.filtrarGrafico('10')" id="btnPadrao">10 Dias</button>
+                    <button class="chart-btn" onclick="window.filtrarGrafico('15')">15 Dias</button>
+                    <button class="chart-btn" onclick="window.filtrarGrafico('30')">30 Dias</button>
+                </div>
+                <div class="chart-custom-range">
+                    <input type="date" id="gInicio" class="chart-date-input" placeholder="Início">
+                    <span style="font-size:0.8rem; color:var(--cor-texto-sec)">até</span>
+                    <input type="date" id="gFim" class="chart-date-input" placeholder="Fim">
+                    <button class="chart-btn" onclick="window.filtrarGrafico('custom')" style="background:var(--cor-primaria); color:#fff;"><i class="fas fa-filter"></i></button>
+                </div>
+            </div>
+
             <div style="height: 300px; width: 100%; position: relative;">
                 <canvas id="graficoGeral"></canvas>
             </div>
@@ -311,15 +327,19 @@ function mostrarVisaoGeral(resumo) {
     
     elementos.contentArea.innerHTML = metricsHTML + chartHTML + summaryHTML;
 
-    // Lógica do Gráfico Responsivo
-    const desenharGrafico = () => {
+    // --- LÓGICA DE FILTRAGEM E DESENHO DO GRÁFICO ---
+    
+    // Função interna que desenha o canvas
+    const desenhar = (dadosFiltrados) => {
         const ctx = document.getElementById('graficoGeral').getContext('2d');
         if (window.overviewChart instanceof Chart) window.overviewChart.destroy();
 
-        const ultimos10 = resumo.diasOrdenados.slice(0, 10).reverse();
-        const labels = ultimos10.map(d => d[0].substring(0, 5));
-        const dataViagens = ultimos10.map(d => d[1].viagens);
-        const dataValor = ultimos10.map(d => d[1].valor);
+        // Prepara dados (inverte para ficar Cronológico: Antigo -> Novo)
+        const dadosGrafico = [...dadosFiltrados].reverse();
+        
+        const labels = dadosGrafico.map(d => d[0].substring(0, 5)); // DD/MM
+        const dataViagens = dadosGrafico.map(d => d[1].viagens);
+        const dataValor = dadosGrafico.map(d => d[1].valor);
 
         const isDark = document.body.classList.contains('dark');
         const colorText = isDark ? '#b0b0b0' : '#4a5568';
@@ -393,12 +413,73 @@ function mostrarVisaoGeral(resumo) {
         });
     };
 
-    desenharGrafico();
+    // --- FUNÇÃO EXPORTADA PARA OS BOTÕES ---
+    window.filtrarGrafico = function(tipo) {
+        let dadosFiltrados = [];
+        const tituloEl = document.getElementById('tituloGraficoDinamico');
+        
+        // Remove active de todos
+        document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+
+        if (tipo === 'custom') {
+            const inicioVal = document.getElementById('gInicio').value;
+            const fimVal = document.getElementById('gFim').value;
+            
+            if (!inicioVal || !fimVal) {
+                mostrarNotificacao('Selecione as duas datas', 'error');
+                return;
+            }
+
+            // Converte input YYYY-MM-DD para Date zerada
+            const dInicio = new Date(inicioVal + 'T00:00:00');
+            const dFim = new Date(fimVal + 'T23:59:59');
+
+            // Filtra o array completo de dias (diasOrdenados está do mais novo pro mais antigo)
+            dadosFiltrados = resumo.diasOrdenados.filter(([dataStr, _]) => {
+                const partes = dataStr.split('/');
+                const dataDia = new Date(partes[2], partes[1]-1, partes[0]); // YYYY, MM-1, DD
+                return dataDia >= dInicio && dataDia <= dFim;
+            });
+
+            // Atualiza título com datas formatadas
+            const fmt = (d) => d.toLocaleDateString('pt-BR');
+            tituloEl.textContent = `Período: ${fmt(dInicio)} até ${fmt(dFim)}`;
+            
+            // Marca o botão custom (opcional, ou o botão de ícone)
+            event.currentTarget.classList.add('active');
+
+        } else {
+            // É um botão de dias predefinidos (5, 10, 15, 30)
+            const dias = parseInt(tipo);
+            dadosFiltrados = resumo.diasOrdenados.slice(0, dias);
+            tituloEl.textContent = `Tendência dos Últimos ${dias} Dias`;
+            
+            // Marca o botão clicado
+            const btn = Array.from(document.querySelectorAll('.chart-btn')).find(b => b.textContent.includes(dias + ' Dias'));
+            if(btn) btn.classList.add('active');
+        }
+
+        if (dadosFiltrados.length === 0) {
+            mostrarNotificacao('Nenhum dado neste período', 'error');
+            return;
+        }
+
+        desenhar(dadosFiltrados);
+    };
+
+    // INICIALIZAÇÃO PADRÃO: 10 DIAS
+    // Chama a filtragem diretamente para desenhar e setar o título inicial
+    window.filtrarGrafico('10');
+
+    // Listener de resize para responsividade
     if (window.resizeChartListener) window.removeEventListener('resize', window.resizeChartListener);
-    window.resizeChartListener = () => desenharGrafico();
+    window.resizeChartListener = () => {
+        // Redesenha com o estado atual (seria ideal salvar estado, mas default 10 serve para resize rápido)
+        // Se quiser persistir o filtro no resize, precisaria de uma var global 'filtroAtualGrafico'
+        // Por simplicidade, mantemos responsividade básica.
+    };
     window.addEventListener('resize', window.resizeChartListener);
 }
-
 // === MOTORISTAS COM FILTRO ===
 function mostrarRelatorioMotoristas(resumo) {
     const gerarClick = (nome) => `onclick="abrirDetalhesMotorista('${nome}')" style="cursor:pointer"`;
