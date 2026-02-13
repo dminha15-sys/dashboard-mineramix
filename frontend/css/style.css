@@ -710,3 +710,63 @@ body.dark .day-count { background: rgba(255,255,255,0.1); }
     color: var(--cor-secundaria); /* Laranja ao passar o mouse */
     transform: scale(1.2);
 }
+
+/* --- BARRA DE FERRAMENTAS DO GRÁFICO --- */
+.chart-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+    background: rgba(0,0,0,0.02);
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--cor-borda);
+}
+
+.chart-presets {
+    display: flex;
+    gap: 5px;
+}
+
+.chart-btn {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--cor-borda);
+    background: var(--cor-card);
+    color: var(--cor-texto-sec);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+}
+
+.chart-btn:hover, .chart-btn.active {
+    background: var(--cor-secundaria);
+    color: white;
+    border-color: var(--cor-secundaria);
+}
+
+.chart-custom-range {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.chart-date-input {
+    padding: 5px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--cor-borda);
+    font-size: 0.75rem;
+    background: var(--cor-card);
+    color: var(--cor-texto);
+    max-width: 110px;
+}
+
+@media (max-width: 768px) {
+    .chart-toolbar { flex-direction: column; align-items: stretch; }
+    .chart-presets { justify-content: space-between; }
+    .chart-btn { flex: 1; }
+    .chart-custom-range { justify-content: space-between; }
+}
