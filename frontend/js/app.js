@@ -7,7 +7,7 @@ const CUSTOS = {
     MANUTENCAO_PCT: 0.12 // 12% sobre o faturamento
 };
 
-// A constante CONFIG vem do arquivo config.js (certifique-se que ele é carregado antes)
+// A constante CONFIG vem do arquivo config.js
 
 const CUSTO_PEDAGIOS = {
     'AUTOPISTA_FLUMINENSE': 6.90, // Pedágio BR-101
@@ -19,9 +19,9 @@ const CUSTO_PEDAGIOS = {
 // Variáveis de Estado
 let dadosAnalisados = null;
 let dadosOriginais = null;
-let dadosCombustivelOriginais = null; // DADOS DA ABA COMBUSTÍVEL
+let dadosCombustivelOriginais = null;
 let indiceColunaData = null;
-let chartInstance = null; // Para o gráfico
+let chartInstance = null; // Para o gráfico de modal
 let overviewChart = null; // Para o gráfico da visão geral
 
 // Elementos do DOM
@@ -179,13 +179,14 @@ function analisarDadosMineramix(dados) {
     resumo.veiculosOrdenados = Object.entries(resumo.veiculos).sort((a, b) => b[1].valor - a[1].valor);
     resumo.clientesOrdenados = Object.entries(resumo.clientes).sort((a, b) => b[1].valor - a[1].valor);
     resumo.rotasOrdenadas = Object.entries(resumo.rotas).sort((a, b) => b[1].viagens - a[1].viagens).slice(0, 10);
+    // Ordena dias por data (padrão)
     resumo.diasOrdenados = Object.entries(resumo.dias).sort((a, b) => new Date(b[0].split('/').reverse().join('-')) - new Date(a[0].split('/').reverse().join('-')));
 
     return resumo;
 }
 
 // ==========================================
-// 3. FUNÇÕES DE VISUALIZAÇÃO E UI
+// 3. UI HELPER FUNCTIONS
 // ==========================================
 
 function formatarMoeda(valor) {
@@ -223,7 +224,7 @@ function toggleDarkMode() {
 }
 
 // ==========================================
-// 4. RELATÓRIOS (COM FILTROS E NOVOS RECURSOS)
+// 4. SISTEMA DE RELATÓRIOS E GRÁFICOS
 // ==========================================
 
 function mostrarRelatorio(tipo) {
@@ -268,7 +269,7 @@ function mostrarVisaoGeral(resumo) {
         </div>
     `;
 
-    // CONTAINER DO GRÁFICO (NOVO)
+    // Gráfico de Tendência (Responsivo)
     const chartHTML = `
     <div class="summary-cards" style="grid-template-columns: 1fr; margin-bottom: 1.5rem;">
         <div class="summary-card">
@@ -310,13 +311,10 @@ function mostrarVisaoGeral(resumo) {
     
     elementos.contentArea.innerHTML = metricsHTML + chartHTML + summaryHTML;
 
-    // --- RENDERIZAÇÃO DO GRÁFICO ---
+    // Lógica do Gráfico Responsivo
     const desenharGrafico = () => {
         const ctx = document.getElementById('graficoGeral').getContext('2d');
-        
-        if (window.overviewChart instanceof Chart) {
-            window.overviewChart.destroy();
-        }
+        if (window.overviewChart instanceof Chart) window.overviewChart.destroy();
 
         const ultimos10 = resumo.diasOrdenados.slice(0, 10).reverse();
         const labels = ultimos10.map(d => d[0].substring(0, 5));
@@ -416,19 +414,10 @@ function mostrarRelatorioMotoristas(resumo) {
         <table class="summary-table">
             <thead>
                 <tr>
-                    <th>
-                        Motorista 
-                        <i class="fas fa-sort-alpha-down btn-sort" onclick="ordenarRelatorio('motoristas', 'key')" title="Ordenar A-Z"></i>
-                    </th>
-                    <th class="center">
-                        Viagens 
-                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('motoristas', 'viagens')" title="Ordenar Qtd"></i>
-                    </th>
+                    <th>Motorista <i class="fas fa-sort-alpha-down btn-sort" onclick="ordenarRelatorio('motoristas', 'key')"></i></th>
+                    <th class="center">Viagens <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('motoristas', 'viagens')"></i></th>
                     <th class="center">KM Total</th>
-                    <th class="money">
-                        Total Faturado
-                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('motoristas', 'valor')" title="Ordenar Valor"></i>
-                    </th>
+                    <th class="money">Total Faturado <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('motoristas', 'valor')"></i></th>
                     <th class="center">Detalhes</th>
                 </tr>
             </thead>
@@ -453,19 +442,10 @@ function mostrarRelatorioVeiculos(resumo) {
         <table class="summary-table">
             <thead>
                 <tr>
-                    <th>
-                        Placa 
-                        <i class="fas fa-sort-alpha-down btn-sort" onclick="ordenarRelatorio('veiculos', 'key')" title="Ordenar A-Z"></i>
-                    </th>
-                    <th class="center">
-                        Viagens 
-                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('veiculos', 'viagens')" title="Ordenar Qtd"></i>
-                    </th>
+                    <th>Placa <i class="fas fa-sort-alpha-down btn-sort" onclick="ordenarRelatorio('veiculos', 'key')"></i></th>
+                    <th class="center">Viagens <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('veiculos', 'viagens')"></i></th>
                     <th class="center">KM Total</th>
-                    <th class="money">
-                        Total Faturado
-                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('veiculos', 'valor')" title="Ordenar Valor"></i>
-                    </th>
+                    <th class="money">Total Faturado <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('veiculos', 'valor')"></i></th>
                     <th class="center">Ação</th>
                 </tr>
             </thead>
@@ -500,18 +480,9 @@ function mostrarRelatorioClientes(resumo) {
         <table class="summary-table">
             <thead>
                 <tr>
-                    <th>
-                        Cliente 
-                        <i class="fas fa-sort-alpha-down btn-sort" onclick="ordenarRelatorio('clientes', 'key')" title="Ordenar A-Z"></i>
-                    </th>
-                    <th class="center">
-                        Viagens 
-                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('clientes', 'viagens')" title="Ordenar Qtd"></i>
-                    </th>
-                    <th class="money">
-                        Total Faturado
-                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('clientes', 'valor')" title="Ordenar Valor"></i>
-                    </th>
+                    <th>Cliente <i class="fas fa-sort-alpha-down btn-sort" onclick="ordenarRelatorio('clientes', 'key')"></i></th>
+                    <th class="center">Viagens <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('clientes', 'viagens')"></i></th>
+                    <th class="money">Total Faturado <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('clientes', 'valor')"></i></th>
                     <th class="money">Média/Viagem</th>
                     <th class="center">Ação</th>
                 </tr>
@@ -563,19 +534,10 @@ function mostrarRelatorioRotas(resumo) {
         <table class="summary-table">
             <thead>
                 <tr>
-                    <th>
-                        Rota 
-                        <i class="fas fa-sort-alpha-down btn-sort" onclick="ordenarRelatorio('rotas', 'key')" title="Ordenar A-Z"></i>
-                    </th>
-                    <th class="center">
-                        Viagens 
-                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('rotas', 'viagens')" title="Ordenar Qtd"></i>
-                    </th>
+                    <th>Rota <i class="fas fa-sort-alpha-down btn-sort" onclick="ordenarRelatorio('rotas', 'key')"></i></th>
+                    <th class="center">Viagens <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('rotas', 'viagens')"></i></th>
                     <th class="center">KM Acumulado</th>
-                    <th class="money">
-                        Faturamento
-                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('rotas', 'valor')" title="Ordenar Valor"></i>
-                    </th>
+                    <th class="money">Faturamento <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('rotas', 'valor')"></i></th>
                     <th class="center">Detalhes</th>
                 </tr>
             </thead>
@@ -594,6 +556,7 @@ function mostrarRelatorioRotas(resumo) {
     </div>`;
 }
 
+// === DIÁRIO COM FILTRO E ALINHAMENTO CORRIGIDO ===
 function mostrarRelatorioDiario(resumo) {
     const listaDias = resumo.diasOrdenados;
     const gerarClick = (dia) => `onclick="abrirDetalhesDia('${dia}')" style="cursor:pointer"`;
@@ -615,13 +578,35 @@ function mostrarRelatorioDiario(resumo) {
     elementos.contentArea.innerHTML = `
         <div class="summary-card">
             <div class="summary-header"><div class="summary-title">Histórico Completo por Dia</div><div class="summary-icon"><i class="fas fa-calendar-day"></i></div></div>
-            <table class="summary-table"><thead><tr><th>Data</th><th class="center">Viagens</th><th class="money">Faturamento Total</th><th class="money">Média</th><th class="center">Dia da Semana</th><th class="center">Ação</th></tr></thead><tbody>
-                ${listaDias.map(([dia, dados]) => {
-                    const dataObj = parsearDataBR(dia);
-                    const diaSemana = dataObj ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][dataObj.getDay()] : '';
-                    return `<tr ${gerarClick(dia)} class="hover-row"><td>${dia}</td><td class="center">${dados.viagens}</td><td class="money">${formatarMoeda(dados.valor)}</td><td class="money">${formatarMoeda(dados.valor / dados.viagens)}</td><td class="center">${diaSemana}</td><td class="center"><i class="fas fa-chart-bar" style="color:var(--cor-secundaria)"></i></td></tr>`;
-                }).join('')}
-            </tbody></table>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Data <i class="fas fa-sort-numeric-down btn-sort" onclick="ordenarRelatorio('diario', 'key')" title="Ordenar por Data"></i></th>
+                        
+                        <th class="center">Viagens <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('diario', 'viagens')" title="Ordenar por Qtd"></i></th>
+                        
+                        <th class="money">Faturamento Total <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('diario', 'valor')" title="Ordenar por Valor"></i></th>
+                        
+                        <th class="money">Média</th>
+                        <th class="center">Dia da Semana</th>
+                        <th class="center">Ação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${listaDias.map(([dia, dados]) => {
+                        const dataObj = parsearDataBR(dia);
+                        const diaSemana = dataObj ? ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'][dataObj.getDay()] : '';
+                        return `<tr ${gerarClick(dia)} class="hover-row">
+                            <td>${dia}</td>
+                            <td class="center">${dados.viagens}</td>
+                            <td class="money">${formatarMoeda(dados.valor)}</td>
+                            <td class="money">${formatarMoeda(dados.valor / dados.viagens)}</td>
+                            <td class="center">${diaSemana}</td>
+                            <td class="center"><i class="fas fa-chart-bar" style="color:var(--cor-secundaria)"></i></td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>
         </div>`;
 }
 
@@ -657,7 +642,7 @@ function mostrarRelatorioKM(resumo) {
 }
 
 // ==========================================
-// 5. MODAIS E INTERAÇÕES
+// 5. MODAIS E LÓGICA
 // ==========================================
 
 function fecharModalGlobal() {
@@ -685,7 +670,6 @@ function abrirModalComHistorico(idModal) {
     }
 }
 
-// --- FUNÇÕES DE ABERTURA DE MODAIS ---
 function abrirDetalhesDia(diaClicado) {
     if(!dadosOriginais) return;
     const cabecalho = dadosOriginais[0];
@@ -848,7 +832,6 @@ function abrirDetalhesVeiculo(placa) {
             elRealContainer.style.display = 'none';
         }
 
-        // Motorista e Rota principal
         let motoristaPrincipal = "---", rotaPrincipal = "---";
         if(dadosOriginais && indiceColunaData !== null) {
              let viagensFiltradas = dadosOriginais.slice(1).filter(linha => {
@@ -877,14 +860,12 @@ function abrirDetalhesVeiculo(placa) {
     }
 }
 
-// Funções de Fechar
 function fecharModalMotorista() { fecharModalGlobal(); }
 function fecharModal() { fecharModalGlobal(); }
 function fecharModalVeiculo() { fecharModalGlobal(); }
 function fecharModalRota() { fecharModalGlobal(); }
 function fecharModalCliente() { document.getElementById('modalDetalheCliente').style.display = 'none'; }
 
-// --- MAPA E ROTAS ---
 const TABELA_ROTAS_INTELIGENTE = {
     'CABO FRIO': { km: 52.5, pedagios: [{nome: "Não Há", custo_eixo: 0.0}] },
     'MACAÉ': { km: 40.6, pedagios: [{nome: "Não Há", custo_eixo: 0.0}] },
@@ -899,7 +880,6 @@ function buscarRotaInteligente(destino) {
     for (let chave of chaves) {
         if (destinoLimpo.includes(chave)) return { nome: chave, ...TABELA_ROTAS_INTELIGENTE[chave] };
     }
-    // Fallback: Tenta calcular pedagio manualmente
     const infoPedagio = calcularCustoPedagio(destino);
     return { km: 0, pedagios: infoPedagio.lista, nome: destino };
 }
@@ -919,7 +899,7 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
 
         if (pedagios.length > 0) {
             listaPedagiosHtml = pedagios.map(p => {
-                const custo = p.custo_eixo || 0; // Garante que não é undefined
+                const custo = p.custo_eixo || 0; 
                 total5Eixos += custo * 5;
                 total6Eixos += custo * 6;
                 return `<div class="toll-row"><span style="color:#ccc;">${p.nome || p}</span><span style="color:#fff;">${custo > 0 ? formatarMoeda(custo) + '/eixo' : 'Isento'}</span></div>`;
@@ -931,7 +911,6 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
         const modalContainer = document.getElementById('modalRotaContainer');
         const cardBody = modalContainer.querySelector('.card-body');
         
-        // Mapa Fake ou Real
         const htmlMapa = `<div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555; background:#111;"><i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:10px;"></i><span>Visualização de Mapa</span></div>`;
 
         cardBody.innerHTML = ''; 
@@ -970,7 +949,6 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
     } catch (erro) { console.error("Erro rota:", erro); }
 }
 
-// --- DETALHE CLIENTE (Accordion) ---
 function abrirDetalhesCliente(nomeCliente) {
     if (!dadosOriginais) return;
     const cabecalho = dadosOriginais[0];
@@ -981,7 +959,6 @@ function abrirDetalhesCliente(nomeCliente) {
     const idxMotorista = colunas.find(c => c.tipo === 'motorista')?.indice;
     const idxCavalo = colunas.find(c => c.tipo === 'veiculo')?.indice;
     
-    // Filtro
     const inicioInput = document.getElementById('dataInicio').value;
     const fimInput = document.getElementById('dataFim').value;
     let dInicio = inicioInput ? new Date(inicioInput + 'T00:00:00') : new Date(1900, 0, 1);
@@ -1008,8 +985,6 @@ function abrirDetalhesCliente(nomeCliente) {
         }
     });
 
-    // Cria Modal Dinamicamente se não existir (Opcional, mas garante funcionamento)
-    // Assumindo que você tem o HTML do modalDetalheCliente no index.html
     const modal = document.getElementById('modalDetalheCliente');
     if(modal) {
         document.getElementById('mClienteNome').innerText = nomeCliente;
@@ -1034,8 +1009,6 @@ function abrirDetalhesCliente(nomeCliente) {
         });
         modal.style.display = 'flex';
         window.history.pushState({modalOpen: true}, "", "#detalheCliente");
-    } else {
-        alert("Modal de Detalhes do Cliente não encontrado no HTML.");
     }
 }
 
@@ -1046,7 +1019,7 @@ function toggleDia(idElemento, elementoClicado) {
 }
 
 // ==========================================
-// FUNÇÃO DE ORDENAÇÃO (FILTRO) - NOVO!
+// FUNÇÃO DE ORDENAÇÃO (FILTRO) COM CORREÇÃO DE DATAS
 // ==========================================
 let ordemAtual = {}; 
 
@@ -1056,7 +1029,8 @@ function ordenarRelatorio(tipo, campo) {
         'rotas': 'rotasOrdenadas',
         'motoristas': 'motoristasOrdenados',
         'veiculos': 'veiculosOrdenados',
-        'clientes': 'clientesOrdenados'
+        'clientes': 'clientesOrdenados',
+        'diario': 'diasOrdenados' // Mapeamento do diário
     };
     const nomeLista = mapaListas[tipo];
     if (!nomeLista) return;
@@ -1072,10 +1046,23 @@ function ordenarRelatorio(tipo, campo) {
 
     dadosAnalisados[nomeLista].sort((a, b) => {
         let valA, valB;
+        
+        // ORDENAÇÃO POR NOME/CHAVE
         if (campo === 'key') {
-            valA = a[0]; valB = b[0];
-            return valA.localeCompare(valB) * (direcao * -1); 
-        } else {
+            // Se for data (diário), converte para objeto Date para ordenar corretamente
+            if (tipo === 'diario') {
+                const dateA = new Date(a[0].split('/').reverse().join('-'));
+                const dateB = new Date(b[0].split('/').reverse().join('-'));
+                // Se direcao é 1 (asc), menor data primeiro (a - b)
+                // Se direcao é -1 (desc), maior data primeiro (b - a)
+                return (dateA - dateB) * (direcao * -1); // * -1 para inverter padrão texto
+            } else {
+                valA = a[0]; valB = b[0];
+                return valA.localeCompare(valB) * (direcao * -1); 
+            }
+        } 
+        // ORDENAÇÃO POR VALORES NUMÉRICOS
+        else {
             valA = a[1][campo]; valB = b[1][campo];
             return (valA - valB) * direcao;
         }
