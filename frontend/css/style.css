@@ -694,3 +694,19 @@ body.dark .day-count { background: rgba(255,255,255,0.1); }
     }
     .t-value::before { content: "Faturamento"; font-size: 0.75rem; color: var(--cor-texto-sec); font-weight: 400; float: left; }
 }
+
+/* Botão de Ordenação nas Tabelas */
+.btn-sort {
+    cursor: pointer;
+    margin-left: 8px;
+    color: var(--cor-texto-sec); /* Cinza discreto */
+    font-size: 0.8rem;
+    transition: color 0.2s;
+    background: none;
+    border: none;
+}
+
+.btn-sort:hover {
+    color: var(--cor-secundaria); /* Laranja ao passar o mouse */
+    transform: scale(1.2);
+}
