@@ -22,6 +22,7 @@ let dadosOriginais = null;
 let dadosCombustivelOriginais = null; // DADOS DA ABA COMBUSTÍVEL
 let indiceColunaData = null;
 let chartInstance = null; // Para o gráfico
+let overviewChart = null; // Para o gráfico da visão geral
 
 // Elementos do DOM
 const elementos = {
@@ -222,7 +223,7 @@ function toggleDarkMode() {
 }
 
 // ==========================================
-// 4. RELATÓRIOS
+// 4. RELATÓRIOS (COM FILTROS E NOVOS RECURSOS)
 // ==========================================
 
 function mostrarRelatorio(tipo) {
@@ -231,7 +232,6 @@ function mostrarRelatorio(tipo) {
         return;
     }
 
-    // Sincroniza menu
     const menuItems = document.querySelectorAll('.menu-item');
     menuItems.forEach(item => {
         item.classList.remove('active');
@@ -268,7 +268,7 @@ function mostrarVisaoGeral(resumo) {
         </div>
     `;
 
-    // Container do Gráfico
+    // CONTAINER DO GRÁFICO (NOVO)
     const chartHTML = `
     <div class="summary-cards" style="grid-template-columns: 1fr; margin-bottom: 1.5rem;">
         <div class="summary-card">
@@ -310,7 +310,7 @@ function mostrarVisaoGeral(resumo) {
     
     elementos.contentArea.innerHTML = metricsHTML + chartHTML + summaryHTML;
 
-    // --- FUNÇÃO PARA DESENHAR/ATUALIZAR O GRÁFICO ---
+    // --- RENDERIZAÇÃO DO GRÁFICO ---
     const desenharGrafico = () => {
         const ctx = document.getElementById('graficoGeral').getContext('2d');
         
@@ -353,7 +353,7 @@ function mostrarVisaoGeral(resumo) {
                         tension: 0.3,
                         borderDash: isMobile ? [] : [5, 5],
                         pointRadius: 4,
-                        type: 'line', // Valor sempre linha para contraste
+                        type: 'line', 
                         order: 1
                     }
                 ]
@@ -395,15 +395,13 @@ function mostrarVisaoGeral(resumo) {
         });
     };
 
-    // Renderiza o gráfico
     desenharGrafico();
-
-    // Adiciona evento para atualizar se redimensionar a tela (PC <-> Mobile)
-    // Removemos listener anterior para não acumular
     if (window.resizeChartListener) window.removeEventListener('resize', window.resizeChartListener);
     window.resizeChartListener = () => desenharGrafico();
     window.addEventListener('resize', window.resizeChartListener);
 }
+
+// === MOTORISTAS COM FILTRO ===
 function mostrarRelatorioMotoristas(resumo) {
     const gerarClick = (nome) => `onclick="abrirDetalhesMotorista('${nome}')" style="cursor:pointer"`;
     if (window.innerWidth < 768) {
@@ -415,12 +413,33 @@ function mostrarRelatorioMotoristas(resumo) {
     elementos.contentArea.innerHTML = `
     <div class="summary-card">
         <div class="summary-header"><div class="summary-title">Resumo por Motorista</div></div>
-        <table class="summary-table"><thead><tr><th>Motorista</th><th class="center">Viagens</th><th class="money">Total</th><th class="center">Detalhes</th></tr></thead><tbody>
-        ${resumo.motoristasOrdenados.map(([nome, d]) => `<tr ${gerarClick(nome)}><td>${nome}</td><td class="center">${d.viagens}</td><td class="money">${formatarMoeda(d.valor)}</td><td class="center"><i class="fas fa-search"></i></td></tr>`).join('')}
-        </tbody></table>
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>
+                        Motorista 
+                        <i class="fas fa-sort-alpha-down btn-sort" onclick="ordenarRelatorio('motoristas', 'key')" title="Ordenar A-Z"></i>
+                    </th>
+                    <th class="center">
+                        Viagens 
+                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('motoristas', 'viagens')" title="Ordenar Qtd"></i>
+                    </th>
+                    <th class="center">KM Total</th>
+                    <th class="money">
+                        Total Faturado
+                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('motoristas', 'valor')" title="Ordenar Valor"></i>
+                    </th>
+                    <th class="center">Detalhes</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${resumo.motoristasOrdenados.map(([nome, d]) => `<tr ${gerarClick(nome)} class="hover-row"><td>${nome}</td><td class="center">${d.viagens}</td><td class="center">${formatarNumero(d.km)}</td><td class="money">${formatarMoeda(d.valor)}</td><td class="center"><i class="fas fa-search"></i></td></tr>`).join('')}
+            </tbody>
+        </table>
     </div>`;
 }
 
+// === VEÍCULOS COM FILTRO ===
 function mostrarRelatorioVeiculos(resumo) {
     if (window.innerWidth < 768) {
         const list = resumo.veiculosOrdenados.map(([placa, d]) => 
@@ -431,17 +450,37 @@ function mostrarRelatorioVeiculos(resumo) {
     elementos.contentArea.innerHTML = `
     <div class="summary-card">
         <div class="summary-header"><div class="summary-title">Resumo por Veículo</div></div>
-        <table class="summary-table"><thead><tr><th>Placa</th><th class="center">Viagens</th><th class="center">KM Total</th><th class="money">Total</th><th class="center">Ação</th></tr></thead><tbody>
-        ${resumo.veiculosOrdenados.map(([placa, d]) => `<tr onclick="abrirDetalhesVeiculo('${placa}')" style="cursor:pointer"><td>${placa}</td><td class="center">${d.viagens}</td><td class="center">${formatarNumero(d.km)}</td><td class="money">${formatarMoeda(d.valor)}</td><td class="center"><i class="fas fa-search"></i></td></tr>`).join('')}
-        </tbody></table>
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>
+                        Placa 
+                        <i class="fas fa-sort-alpha-down btn-sort" onclick="ordenarRelatorio('veiculos', 'key')" title="Ordenar A-Z"></i>
+                    </th>
+                    <th class="center">
+                        Viagens 
+                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('veiculos', 'viagens')" title="Ordenar Qtd"></i>
+                    </th>
+                    <th class="center">KM Total</th>
+                    <th class="money">
+                        Total Faturado
+                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('veiculos', 'valor')" title="Ordenar Valor"></i>
+                    </th>
+                    <th class="center">Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${resumo.veiculosOrdenados.map(([placa, d]) => `<tr onclick="abrirDetalhesVeiculo('${placa}')" style="cursor:pointer" class="hover-row"><td>${placa}</td><td class="center">${d.viagens}</td><td class="center">${formatarNumero(d.km)}</td><td class="money">${formatarMoeda(d.valor)}</td><td class="center"><i class="fas fa-search-plus" style="color:var(--cor-secundaria)"></i></td></tr>`).join('')}
+            </tbody>
+        </table>
     </div>`;
 }
 
+// === CLIENTES COM FILTRO ===
 function mostrarRelatorioClientes(resumo) {
-    // Versão Mobile (Cards)
     if (window.innerWidth < 768) {
         const list = resumo.clientesOrdenados.slice(0, 50).map(([c, d]) => 
-            `<div class="mobile-card" onclick="abrirDetalhesCliente('${c}')" style="cursor: pointer;">
+            `<div class="mobile-card" onclick="abrirDetalhesCliente('${c}')">
                 <strong>${c}</strong>
                 <div style="display:flex; justify-content:space-between; margin-top:5px;">
                     <span class="status-badge status-analise">${d.viagens} viagens</span>
@@ -452,8 +491,6 @@ function mostrarRelatorioClientes(resumo) {
         elementos.contentArea.innerHTML = `<h3 class="mobile-title">Clientes (Toque para detalhar)</h3><div class="mobile-card-list">${list}</div>`;
         return;
     }
-
-    // Versão Desktop (Tabela)
     elementos.contentArea.innerHTML = `
     <div class="summary-card">
         <div class="summary-header">
@@ -463,9 +500,18 @@ function mostrarRelatorioClientes(resumo) {
         <table class="summary-table">
             <thead>
                 <tr>
-                    <th>Cliente</th>
-                    <th class="center">Viagens</th>
-                    <th class="money">Total</th>
+                    <th>
+                        Cliente 
+                        <i class="fas fa-sort-alpha-down btn-sort" onclick="ordenarRelatorio('clientes', 'key')" title="Ordenar A-Z"></i>
+                    </th>
+                    <th class="center">
+                        Viagens 
+                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('clientes', 'viagens')" title="Ordenar Qtd"></i>
+                    </th>
+                    <th class="money">
+                        Total Faturado
+                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('clientes', 'valor')" title="Ordenar Valor"></i>
+                    </th>
                     <th class="money">Média/Viagem</th>
                     <th class="center">Ação</th>
                 </tr>
@@ -484,15 +530,13 @@ function mostrarRelatorioClientes(resumo) {
     </div>`;
 }
 
+// === ROTAS COM FILTRO ===
 function mostrarRelatorioRotas(resumo) {
-    // Função auxiliar para gerar o clique seguro (codificando caracteres especiais)
     const gerarClick = (rota, km) => {
         const rotaSafe = encodeURIComponent(rota);
-        // Passa a rota codificada e o KM total (ou 0 se não tiver)
         return `onclick="abrirDetalhesRota('${rotaSafe}', ${km || 0})" style="cursor:pointer"`;
     };
 
-    // --- VERSÃO MOBILE ---
     if (window.innerWidth < 768) {
         const list = resumo.rotasOrdenadas.map(([r, d]) => 
             `<div class="mobile-card" ${gerarClick(r, d.km)}>
@@ -513,19 +557,25 @@ function mostrarRelatorioRotas(resumo) {
         return;
     }
 
-    // --- VERSÃO DESKTOP ---
     elementos.contentArea.innerHTML = `
     <div class="summary-card">
-        <div class="summary-header">
-            <div class="summary-title">Rotas Frequentes</div>
-        </div>
+        <div class="summary-header"><div class="summary-title">Rotas Frequentes</div></div>
         <table class="summary-table">
             <thead>
                 <tr>
-                    <th>Rota</th>
-                    <th class="center">Viagens</th>
+                    <th>
+                        Rota 
+                        <i class="fas fa-sort-alpha-down btn-sort" onclick="ordenarRelatorio('rotas', 'key')" title="Ordenar A-Z"></i>
+                    </th>
+                    <th class="center">
+                        Viagens 
+                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('rotas', 'viagens')" title="Ordenar Qtd"></i>
+                    </th>
                     <th class="center">KM Acumulado</th>
-                    <th class="money">Faturamento</th>
+                    <th class="money">
+                        Faturamento
+                        <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('rotas', 'valor')" title="Ordenar Valor"></i>
+                    </th>
                     <th class="center">Detalhes</th>
                 </tr>
             </thead>
@@ -607,14 +657,12 @@ function mostrarRelatorioKM(resumo) {
 }
 
 // ==========================================
-// 5. MODAIS (LÓGICA E CONTROLES)
+// 5. MODAIS E INTERAÇÕES
 // ==========================================
 
-// CONTROLE GLOBAL DE MODAIS (Histórico e Fechamento)
 function fecharModalGlobal() {
     document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
     document.querySelectorAll('.modal-overlay-rota').forEach(m => m.style.display = 'none');
-    
     if (window.history.state && window.history.state.modalOpen) {
         window.history.back();
     }
@@ -626,9 +674,7 @@ window.onpopstate = function(event) {
 };
 
 document.addEventListener('keydown', function(event) {
-    if (event.key === "Escape") {
-        fecharModalGlobal();
-    }
+    if (event.key === "Escape") fecharModalGlobal();
 });
 
 function abrirModalComHistorico(idModal) {
@@ -639,7 +685,7 @@ function abrirModalComHistorico(idModal) {
     }
 }
 
-// Funções específicas de abrir
+// --- FUNÇÕES DE ABERTURA DE MODAIS ---
 function abrirDetalhesDia(diaClicado) {
     if(!dadosOriginais) return;
     const cabecalho = dadosOriginais[0];
@@ -647,7 +693,6 @@ function abrirDetalhesDia(diaClicado) {
     const idxData = colunas.find(c => c.tipo === 'data')?.indice;
     const idxMotorista = colunas.find(c => c.tipo === 'motorista')?.indice;
     const idxValor = colunas.find(c => c.tipo === 'valor')?.indice;
-    
     if(idxData === undefined) return alert('Erro ao identificar data');
 
     const registrosDia = dadosOriginais.slice(1).filter(linha => {
@@ -660,7 +705,6 @@ function abrirDetalhesDia(diaClicado) {
 
     const porMotorista = {};
     let totalDia = 0;
-    
     registrosDia.forEach(linha => {
         const mot = linha[idxMotorista] || 'Indefinido';
         const val = extrairNumero(linha[idxValor]);
@@ -689,9 +733,6 @@ function gerarGraficoModal(dadosMotoristas) {
     if(chartInstance) chartInstance.destroy();
     const labels = dadosMotoristas.map(d => d[0].split(' ')[0]);
     const valores = dadosMotoristas.map(d => d[1].valor);
-    const viagens = dadosMotoristas.map(d => d[1].viagens);
-    const maiorValor = Math.max(...valores);
-    const tetoGrafico = maiorValor > 0 ? maiorValor * 1.2 : 100;
     const isDark = document.body.classList.contains('dark');
     const corTexto = isDark ? '#e9ecef' : '#1f2933';
 
@@ -699,20 +740,18 @@ function gerarGraficoModal(dadosMotoristas) {
         type: 'bar',
         data: {
             labels: labels,
-            datasets: [{ data: valores, backgroundColor: '#FF6B35', hoverBackgroundColor: '#e55a2b', borderRadius: 4, barPercentage: 0.6, categoryPercentage: 0.8 }]
+            datasets: [{ data: valores, backgroundColor: '#FF6B35', borderRadius: 4 }]
         },
         plugins: [ChartDataLabels],
         options: {
             responsive: true, maintainAspectRatio: false,
-            layout: { padding: { top: 30, left: 10, right: 10, bottom: 10 } },
             plugins: {
                 legend: { display: false },
-                tooltip: { callbacks: { label: (ctx) => `${formatarMoeda(ctx.raw)} (${viagens[ctx.dataIndex]} viagens)` } },
-                datalabels: { align: 'end', anchor: 'end', formatter: (value) => value.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}), color: corTexto, font: { weight: 'bold', size: 11 }, offset: 4 }
+                datalabels: { color: corTexto, font: { weight: 'bold' }, anchor: 'end', align: 'end', formatter: (val) => formatarMoeda(val) }
             },
             scales: {
-                y: { display: false, beginAtZero: true, max: tetoGrafico, grid: { display: false } },
-                x: { grid: { display: false }, ticks: { color: corTexto, font: { size: 11, weight: '500' } } }
+                x: { ticks: { color: corTexto }, grid: { display: false } },
+                y: { display: false }
             }
         }
     });
@@ -721,7 +760,7 @@ function gerarGraficoModal(dadosMotoristas) {
 function abrirDetalhesMotorista(nomeMotorista) {
     if(!dadosAnalisados) return;
     const dadosMot = dadosAnalisados.motoristas[nomeMotorista];
-    if(!dadosMot) return alert('Dados não encontrados para este motorista.');
+    if(!dadosMot) return alert('Dados não encontrados.');
     const faturamento = dadosMot.valor;
     const kmTotal = dadosMot.km;
     const litros = kmTotal > 0 ? kmTotal / CUSTOS.CONSUMO_MEDIO : 0;
@@ -738,9 +777,6 @@ function abrirDetalhesMotorista(nomeMotorista) {
     abrirModalComHistorico('modalMotorista');
 }
 
-// ------------------------------------
-// ABRIR VEÍCULO (COM VISUAL DE LISTA LIMPA)
-// ------------------------------------
 function abrirDetalhesVeiculo(placa) {
     if (!dadosAnalisados || !dadosAnalisados.veiculos[placa]) {
         alert("Dados não encontrados.");
@@ -749,7 +785,6 @@ function abrirDetalhesVeiculo(placa) {
     try {
         const d = dadosAnalisados.veiculos[placa];
         
-        // 1. DADOS ESTIMADOS
         const faturamento = d.valor;
         const kmTotalEstimado = d.km;
         const litrosEstimados = kmTotalEstimado > 0 ? kmTotalEstimado / CUSTOS.CONSUMO_MEDIO : 0;
@@ -757,49 +792,33 @@ function abrirDetalhesVeiculo(placa) {
         const custoManutencao = faturamento * CUSTOS.MANUTENCAO_PCT;
         const lucroLiquidoEstimado = faturamento - custoDieselEstimado - custoManutencao;
 
-        // 2. DADOS REAIS (COMBUSTÍVEL)
-        let litrosDieselReal = 0;
-        let valorDieselReal = 0;
-        let litrosArlaReal = 0;
-        let valorArlaReal = 0;
+        let litrosDieselReal = 0, valorDieselReal = 0, litrosArlaReal = 0, valorArlaReal = 0;
         let encontrouDadosReais = false;
 
-        // FILTRO DE DATA
         const inicioInput = document.getElementById('dataInicio').value;
         const fimInput = document.getElementById('dataFim').value;
-        
         let dInicio = inicioInput ? new Date(inicioInput + 'T00:00:00') : new Date(1900, 0, 1);
         let dFim = fimInput ? new Date(fimInput + 'T23:59:59') : new Date(2100, 0, 1);
 
         if (dadosCombustivelOriginais && dadosCombustivelOriginais.length > 1) {
             const idxC = { placa: 0, data: 1, litros: 3, tipo: 6, valor: 7 };
-
             dadosCombustivelOriginais.slice(1).forEach(linha => {
                 const placaLinha = String(linha[idxC.placa] || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
                 const placaAlvo = placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
-
                 if (placaLinha === placaAlvo) {
                     const dataReal = parsearDataBR(linha[idxC.data]);
                     if (dataReal && dataReal >= dInicio && dataReal <= dFim) {
                         encontrouDadosReais = true;
-                        
                         const qtd = extrairNumero(linha[idxC.litros]);
                         const vlr = extrairNumero(linha[idxC.valor]);
                         const tipo = String(linha[idxC.tipo] || '').toUpperCase();
-
-                        if (tipo.includes('ARLA')) {
-                            litrosArlaReal += qtd;
-                            valorArlaReal += vlr;
-                        } else {
-                            litrosDieselReal += qtd;
-                            valorDieselReal += vlr;
-                        }
+                        if (tipo.includes('ARLA')) { litrosArlaReal += qtd; valorArlaReal += vlr; } 
+                        else { litrosDieselReal += qtd; valorDieselReal += vlr; }
                     }
                 }
             });
         }
 
-        // 3. ATUALIZAR TELA
         document.getElementById('textoPlaca').textContent = placa;
         document.getElementById('modalFaturamento').textContent = formatarMoeda(faturamento);
         document.getElementById('modalKM').textContent = formatarNumero(kmTotalEstimado) + ' km';
@@ -809,56 +828,37 @@ function abrirDetalhesVeiculo(placa) {
         elLucroLiq.textContent = formatarMoeda(lucroLiquidoEstimado);
         elLucroLiq.style.color = lucroLiquidoEstimado >= 0 ? 'var(--cor-pago)' : '#dc3545';
 
-        // 4. ATUALIZAR HTML DOS DADOS REAIS (LISTA LIMPA)
         const elRealContainer = document.getElementById('containerDadosReais');
         if (encontrouDadosReais) {
-            if(elRealContainer) {
-                elRealContainer.style.display = 'block';
-                elRealContainer.style.background = 'transparent';
-                elRealContainer.style.border = 'none';
-                elRealContainer.style.padding = '0';
-
-                // Usando a classe driver-list-item para manter consistência com o modal diário
-                elRealContainer.innerHTML = `
-                <h4 style="font-size: 0.9rem; color: var(--cor-primaria); margin: 1.5rem 0 0.5rem 0.5rem; border-left: 3px solid var(--cor-secundaria); padding-left: 8px;">
-                    Consumo Real (Abastecimentos)
-                </h4>
-                
-                <div style="background: var(--cor-fundo-menu); border-radius: 8px; border: 1px solid var(--cor-borda); overflow: hidden;">
-                    <div class="driver-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid var(--cor-borda);">
-                        <div>
-                            <strong style="color:var(--cor-primaria); font-size: 0.95rem;">DIESEL S-10</strong><br>
-                            <small style="color:var(--cor-texto-sec); font-size: 0.8rem;">${formatarNumero(litrosDieselReal)} Litros</small>
-                        </div>
-                        <div class="money" style="color: #dc3545; font-size: 1rem;">- ${formatarMoeda(valorDieselReal)}</div>
-                    </div>
-
-                    <div class="driver-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem;">
-                        <div>
-                            <strong style="color:var(--cor-primaria); font-size: 0.95rem;">ARLA 32</strong><br>
-                            <small style="color:var(--cor-texto-sec); font-size: 0.8rem;">${formatarNumero(litrosArlaReal)} Litros</small>
-                        </div>
-                        <div class="money" style="color: #dc3545; font-size: 1rem;">- ${formatarMoeda(valorArlaReal)}</div>
-                    </div>
-                </div>`;
-            }
+            elRealContainer.style.display = 'block';
+            elRealContainer.style.background = 'transparent'; elRealContainer.style.border = 'none'; elRealContainer.style.padding = '0';
+            elRealContainer.innerHTML = `
+            <h4 style="font-size: 0.9rem; color: var(--cor-primaria); margin: 1.5rem 0 0.5rem 0.5rem; border-left: 3px solid var(--cor-secundaria); padding-left: 8px;">Consumo Real (Abastecimentos)</h4>
+            <div style="background: var(--cor-fundo-menu); border-radius: 8px; border: 1px solid var(--cor-borda); overflow: hidden;">
+                <div class="driver-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid var(--cor-borda);">
+                    <div><strong style="color:var(--cor-primaria); font-size: 0.95rem;">DIESEL S-10</strong><br><small style="color:var(--cor-texto-sec); font-size: 0.8rem;">${formatarNumero(litrosDieselReal)} Litros</small></div>
+                    <div class="money" style="color: #dc3545; font-size: 1rem;">- ${formatarMoeda(valorDieselReal)}</div>
+                </div>
+                <div class="driver-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem;">
+                    <div><strong style="color:var(--cor-primaria); font-size: 0.95rem;">ARLA 32</strong><br><small style="color:var(--cor-texto-sec); font-size: 0.8rem;">${formatarNumero(litrosArlaReal)} Litros</small></div>
+                    <div class="money" style="color: #dc3545; font-size: 1rem;">- ${formatarMoeda(valorArlaReal)}</div>
+                </div>
+            </div>`;
         } else {
-            if(elRealContainer) elRealContainer.style.display = 'none';
+            elRealContainer.style.display = 'none';
         }
 
-        // Lógica Motorista/Rota
-        let motoristaPrincipal = "---";
-        let rotaPrincipal = "---";
+        // Motorista e Rota principal
+        let motoristaPrincipal = "---", rotaPrincipal = "---";
         if(dadosOriginais && indiceColunaData !== null) {
              let viagensFiltradas = dadosOriginais.slice(1).filter(linha => {
                  const dt = parsearDataBR(linha[indiceColunaData]);
                  return dt >= dInicio && dt <= dFim && linha.toString().includes(placa);
              });
              const cols = detectColumnsGlobal(dadosOriginais[0]); 
-             const contMot = {};
-             const contRota = {};
+             const contMot = {}, contRota = {};
              viagensFiltradas.forEach(v => {
-                 if(cols.motorista !== undefined) { const m = v[cols.motorista] || 'Desconhecido'; contMot[m] = (contMot[m] || 0) + 1; }
+                 if(cols.motorista !== undefined) { const m = v[cols.motorista] || 'Desc'; contMot[m] = (contMot[m] || 0) + 1; }
                  if(cols.origem !== undefined && cols.destino !== undefined) { const r = `${v[cols.origem]} -> ${v[cols.destino]}`; contRota[r] = (contRota[r] || 0) + 1; }
              });
              const sortMot = Object.entries(contMot).sort((a,b)=>b[1]-a[1]);
@@ -872,73 +872,57 @@ function abrirDetalhesVeiculo(placa) {
 
         abrirModalComHistorico('modalVeiculo');
     } catch (e) {
-        console.error("Erro detalhes veiculo", e);
+        console.error(e);
         alert("Erro: " + e.message);
     }
 }
 
-// Funções de Fechar (Redirecionam para o Global)
+// Funções de Fechar
 function fecharModalMotorista() { fecharModalGlobal(); }
 function fecharModal() { fecharModalGlobal(); }
 function fecharModalVeiculo() { fecharModalGlobal(); }
 function fecharModalRota() { fecharModalGlobal(); }
-function fecharModalCliente() { 
-    document.getElementById('modalDetalheCliente').style.display = 'none'; 
-}
+function fecharModalCliente() { document.getElementById('modalDetalheCliente').style.display = 'none'; }
 
-// Rota e Pedágio
-function calcularCustoPedagio(destino) {
-    let destLimpo = String(destino || "").toUpperCase();
-    if (destLimpo.includes('→')) { destLimpo = destLimpo.split('→')[1] || destLimpo; }
-    destLimpo = destLimpo.trim(); 
-    let custo = 0;
-    let detalhes = [];
-    if (destLimpo.includes('CABO FRIO') || destLimpo.includes('BUZIOS') || destLimpo.includes('ARRAIAL') || destLimpo.includes('SAO PEDRO') || destLimpo.includes('IGUABA')) {
-        custo += CUSTO_PEDAGIOS.VIA_LAGOS;
-        detalhes.push(`Via Lagos (${formatarMoeda(CUSTO_PEDAGIOS.VIA_LAGOS)})`);
+// --- MAPA E ROTAS ---
+const TABELA_ROTAS_INTELIGENTE = {
+    'CABO FRIO': { km: 52.5, pedagios: [{nome: "Não Há", custo_eixo: 0.0}] },
+    'MACAÉ': { km: 40.6, pedagios: [{nome: "Não Há", custo_eixo: 0.0}] },
+    'RIO DE JANEIRO': { km: 180, pedagios: [{nome: "Pedágio Casimiro", custo_eixo: 7.5}, {nome: "Ponte", custo_eixo: 7.5}] },
+    'NITEROI': { km: 65, pedagios: [{nome: "Pedágio Manilha", custo_eixo: 6.90}] }
+};
+
+function buscarRotaInteligente(destino) {
+    if (!destino) return null;
+    const destinoLimpo = destino.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
+    const chaves = Object.keys(TABELA_ROTAS_INTELIGENTE);
+    for (let chave of chaves) {
+        if (destinoLimpo.includes(chave)) return { nome: chave, ...TABELA_ROTAS_INTELIGENTE[chave] };
     }
-    if (destLimpo.includes('MACAE') || destLimpo.includes('RIO DAS OSTRAS') || destLimpo.includes('CAMPOS') || destLimpo.includes('CASIMIRO')) {
-        custo += CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE;
-        detalhes.push(`Praça BR-101 (R$ ${formatarMoeda(CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE)})`);
-    }
-    if (destLimpo.includes('RIO DE JANEIRO') || destLimpo.includes('NITEROI') || destLimpo.includes('SAO GONCALO') || destLimpo.includes('ITABORAI') || destLimpo.includes('DUQUE')) {
-        custo += CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE; 
-        detalhes.push(`Pedágio Manilha (R$ ${formatarMoeda(CUSTO_PEDAGIOS.AUTOPISTA_FLUMINENSE)})`);
-        if(destLimpo.includes('RIO DE JANEIRO') || destLimpo.includes('DUQUE')) {
-            custo += CUSTO_PEDAGIOS.PONTE_RIO_NITEROI;
-            detalhes.push(`Ponte Rio-Niterói (R$ ${formatarMoeda(CUSTO_PEDAGIOS.PONTE_RIO_NITEROI)})`);
-        }
-    }
-    if (custo === 0) { detalhes.push("Rota local ou sem pedágio mapeado"); }
-    return { total: custo, lista: detalhes };
+    // Fallback: Tenta calcular pedagio manualmente
+    const infoPedagio = calcularCustoPedagio(destino);
+    return { km: 0, pedagios: infoPedagio.lista, nome: destino };
 }
 
 window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
     try {
         const destinoBruto = decodeURIComponent(rotaCodificada || '');
         let destinoNome = destinoBruto.replace(/.*→/, '').trim(); 
-        if (!destinoNome || destinoNome.length === 0) { destinoNome = "Destino Não Identificado"; }
+        if (!destinoNome) destinoNome = "Destino Não Identificado";
         
-        const dadosRota = buscarRotaInteligente(destinoNome) || { 
-            km: 0, pedagios: [], nome: destinoNome, mapaUrl: null 
-        };
-        
+        const dadosRota = buscarRotaInteligente(destinoNome);
         const kmReal = (dadosRota.km && dadosRota.km > 0) ? dadosRota.km : (kmPlanilha || 0);
         
-        let total5Eixos = 0;
-        let total6Eixos = 0;
+        let total5Eixos = 0, total6Eixos = 0;
         let listaPedagiosHtml = '';
         const pedagios = dadosRota.pedagios || [];
 
         if (pedagios.length > 0) {
             listaPedagiosHtml = pedagios.map(p => {
-                total5Eixos += p.custo_eixo * 5;
-                total6Eixos += p.custo_eixo * 6;
-                return `
-                <div class="toll-row">
-                    <span style="color:#ccc;">${p.nome}</span>
-                    <span style="color:#fff;">${formatarMoeda(p.custo_eixo)}/eixo</span>
-                </div>`;
+                const custo = p.custo_eixo || 0; // Garante que não é undefined
+                total5Eixos += custo * 5;
+                total6Eixos += custo * 6;
+                return `<div class="toll-row"><span style="color:#ccc;">${p.nome || p}</span><span style="color:#fff;">${custo > 0 ? formatarMoeda(custo) + '/eixo' : 'Isento'}</span></div>`;
             }).join('');
         } else {
             listaPedagiosHtml = '<div style="color:#666; font-size:0.8rem; font-style:italic;">Nenhum pedágio cadastrado.</div>';
@@ -947,9 +931,8 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
         const modalContainer = document.getElementById('modalRotaContainer');
         const cardBody = modalContainer.querySelector('.card-body');
         
-        const htmlMapa = dadosRota.mapaUrl 
-            ? `<iframe src="${dadosRota.mapaUrl}" allowfullscreen="" loading="lazy"></iframe>`
-            : `<div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555; background:#111;"><i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:10px;"></i><span>Mapa não configurado</span></div>`;
+        // Mapa Fake ou Real
+        const htmlMapa = `<div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555; background:#111;"><i class="fas fa-map-marked-alt" style="font-size:3rem; margin-bottom:10px;"></i><span>Visualização de Mapa</span></div>`;
 
         cardBody.innerHTML = ''; 
         const divMapa = document.createElement('div');
@@ -959,152 +942,206 @@ window.abrirDetalhesRota = function(rotaCodificada, kmPlanilha) {
 
         const divInfo = document.createElement('div');
         divInfo.className = 'route-info-col';
-        
         divInfo.innerHTML = `
             <div class="info-scroll-area">
                 <div class="route-box">
                     <div class="route-stop">
-                        <div class="stop-icon">
-                            <i class="fas fa-circle" style="color:#fff; font-size:0.7rem; margin-top:4px;"></i>
-                            <div class="stop-line"></div>
-                        </div>
-                        <div>
-                            <strong style="color:#fff; display:block;">Areal Tosana</strong>
-                            <small style="color:#888;">Origem</small>
-                        </div>
+                        <div class="stop-icon"><i class="fas fa-circle" style="color:#fff; font-size:0.7rem; margin-top:4px;"></i><div class="stop-line"></div></div>
+                        <div><strong style="color:#fff; display:block;">Areal Tosana</strong><small style="color:#888;">Origem</small></div>
                     </div>
-                    
                     <div class="route-stop">
-                        <div class="stop-icon">
-                            <i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria); font-size:1.1rem;"></i>
-                        </div>
-                        <div>
-                            <strong style="color:#fff; display:block;">${destinoNome}</strong>
-                            <small style="color:#888;">Destino (${formatarNumero(kmReal)} km)</small>
-                        </div>
+                        <div class="stop-icon"><i class="fas fa-map-marker-alt" style="color:var(--cor-secundaria); font-size:1.1rem;"></i></div>
+                        <div><strong style="color:#fff; display:block;">${destinoNome}</strong><small style="color:#888;">Destino (${formatarNumero(kmReal)} km)</small></div>
                     </div>
                 </div>
-
                 <div class="route-box">
-                    <strong style="display:block; margin-bottom:10px; color:#FF6B35; text-transform:uppercase; font-size:0.75rem;">
-                        <i class="fas fa-ticket-alt"></i> Pedágios na Rota
-                    </strong>
-                    <div class="toll-list">
-                        ${listaPedagiosHtml}
-                    </div>
+                    <strong style="display:block; margin-bottom:10px; color:#FF6B35; text-transform:uppercase; font-size:0.75rem;"><i class="fas fa-ticket-alt"></i> Pedágios</strong>
+                    <div class="toll-list">${listaPedagiosHtml}</div>
                 </div>
             </div>
-
             <div class="info-footer">
                 <div class="axle-grid">
-                    <div class="axle-box">
-                        <span class="axle-title">Total 5 Eixos</span>
-                        <div class="axle-price">${formatarMoeda(total5Eixos)}</div>
-                    </div>
-                    <div class="axle-box">
-                        <span class="axle-title">Total 6 Eixos</span>
-                        <div class="axle-price">${formatarMoeda(total6Eixos)}</div>
-                    </div>
+                    <div class="axle-box"><span class="axle-title">Total 5 Eixos</span><div class="axle-price">${formatarMoeda(total5Eixos)}</div></div>
+                    <div class="axle-box"><span class="axle-title">Total 6 Eixos</span><div class="axle-price">${formatarMoeda(total6Eixos)}</div></div>
                 </div>
-            </div>
-        `;
+            </div>`;
         cardBody.appendChild(divInfo);
-        modalContainer.style.display = 'flex';
-    } catch (erro) { 
-        console.error("Erro rota:", erro); 
-        alert("Erro ao abrir rota: " + erro.message);
+        abrirModalComHistorico('modalRotaContainer');
+    } catch (erro) { console.error("Erro rota:", erro); }
+}
+
+// --- DETALHE CLIENTE (Accordion) ---
+function abrirDetalhesCliente(nomeCliente) {
+    if (!dadosOriginais) return;
+    const cabecalho = dadosOriginais[0];
+    const colunas = detectarColunas(cabecalho);
+    const idxCliente = colunas.find(c => c.tipo === 'cliente')?.indice;
+    const idxData = colunas.find(c => c.tipo === 'data')?.indice;
+    const idxValor = colunas.find(c => c.tipo === 'valor')?.indice;
+    const idxMotorista = colunas.find(c => c.tipo === 'motorista')?.indice;
+    const idxCavalo = colunas.find(c => c.tipo === 'veiculo')?.indice;
+    
+    // Filtro
+    const inicioInput = document.getElementById('dataInicio').value;
+    const fimInput = document.getElementById('dataFim').value;
+    let dInicio = inicioInput ? new Date(inicioInput + 'T00:00:00') : new Date(1900, 0, 1);
+    let dFim = fimInput ? new Date(fimInput + 'T23:59:59') : new Date(2100, 0, 1);
+
+    const diasMap = {};
+    let totalPeriodo = 0;
+
+    dadosOriginais.slice(1).forEach((linha) => {
+        if (linha[idxCliente] === nomeCliente) {
+            const dataObj = parsearDataBR(linha[idxData]);
+            if (dataObj && dataObj >= dInicio && dataObj <= dFim) {
+                const dataStr = dataObj.toLocaleDateString('pt-BR');
+                const valor = idxValor !== undefined ? extrairNumero(linha[idxValor]) : 0;
+                if (!diasMap[dataStr]) diasMap[dataStr] = { objData: dataObj, total: 0, viagens: [] };
+                diasMap[dataStr].total += valor;
+                diasMap[dataStr].viagens.push({
+                    motorista: idxMotorista !== undefined ? (linha[idxMotorista] || '---') : '---',
+                    cavalo: idxCavalo !== undefined ? (linha[idxCavalo] || '---') : '---',
+                    valor: valor
+                });
+                totalPeriodo += valor;
+            }
+        }
+    });
+
+    // Cria Modal Dinamicamente se não existir (Opcional, mas garante funcionamento)
+    // Assumindo que você tem o HTML do modalDetalheCliente no index.html
+    const modal = document.getElementById('modalDetalheCliente');
+    if(modal) {
+        document.getElementById('mClienteNome').innerText = nomeCliente;
+        document.getElementById('mClienteTotal').innerText = formatarMoeda(totalPeriodo);
+        const container = document.getElementById('listaViagensAccordion');
+        container.innerHTML = '';
+        
+        const diasOrdenados = Object.entries(diasMap).sort((a, b) => b[1].objData - a[1].objData);
+        diasOrdenados.forEach(([data, info], index) => {
+            const idUnico = `dia-${index}`;
+            const htmlResumo = `
+                <div class="day-summary-row" onclick="toggleDia('${idUnico}', this)">
+                    <div class="day-info"><i class="fas fa-chevron-down toggle-icon"></i><span class="day-date">${data}</span><span class="day-count">${info.viagens.length} viagens</span></div>
+                    <span class="day-total">${formatarMoeda(info.total)}</span>
+                </div>`;
+            let htmlDetalhes = `<div id="${idUnico}" class="day-details-box">`;
+            info.viagens.forEach(v => {
+                htmlDetalhes += `<div class="trip-card"><div class="t-driver"><i class="fas fa-user-tie"></i> ${v.motorista}</div><div class="t-plate"><i class="fas fa-truck"></i> ${v.cavalo}</div><div class="t-value">${formatarMoeda(v.valor)}</div></div>`;
+            });
+            htmlDetalhes += `</div>`;
+            container.innerHTML += (htmlResumo + htmlDetalhes);
+        });
+        modal.style.display = 'flex';
+        window.history.pushState({modalOpen: true}, "", "#detalheCliente");
+    } else {
+        alert("Modal de Detalhes do Cliente não encontrado no HTML.");
     }
 }
 
-function fecharModalRota() {
-    document.getElementById('modalRotaContainer').style.display = 'none';
-    if(document.getElementById('modalRota')) document.getElementById('modalRota').style.display = 'none';
+function toggleDia(idElemento, elementoClicado) {
+    const detalhes = document.getElementById(idElemento);
+    if (detalhes.style.display === 'block') { detalhes.style.display = 'none'; elementoClicado.classList.remove('active'); }
+    else { detalhes.style.display = 'block'; elementoClicado.classList.add('active'); }
 }
 
+// ==========================================
+// FUNÇÃO DE ORDENAÇÃO (FILTRO) - NOVO!
+// ==========================================
+let ordemAtual = {}; 
+
+function ordenarRelatorio(tipo, campo) {
+    if (!dadosAnalisados) return;
+    const mapaListas = {
+        'rotas': 'rotasOrdenadas',
+        'motoristas': 'motoristasOrdenados',
+        'veiculos': 'veiculosOrdenados',
+        'clientes': 'clientesOrdenados'
+    };
+    const nomeLista = mapaListas[tipo];
+    if (!nomeLista) return;
+
+    if (!ordemAtual[tipo]) ordemAtual[tipo] = { campo: '', dir: 'desc' };
+    if (ordemAtual[tipo].campo === campo) {
+        ordemAtual[tipo].dir = ordemAtual[tipo].dir === 'desc' ? 'asc' : 'desc';
+    } else {
+        ordemAtual[tipo].campo = campo;
+        ordemAtual[tipo].dir = 'desc'; 
+    }
+    const direcao = ordemAtual[tipo].dir === 'desc' ? -1 : 1;
+
+    dadosAnalisados[nomeLista].sort((a, b) => {
+        let valA, valB;
+        if (campo === 'key') {
+            valA = a[0]; valB = b[0];
+            return valA.localeCompare(valB) * (direcao * -1); 
+        } else {
+            valA = a[1][campo]; valB = b[1][campo];
+            return (valA - valB) * direcao;
+        }
+    });
+    mostrarRelatorio(tipo);
+}
+
+// ==========================================
+// INICIALIZAÇÃO
+// ==========================================
 function aplicarFiltroData() {
-    if (!dadosOriginais) { mostrarNotificacao('❌ Dados ainda não carregados', 'error'); return; }
-    if (indiceColunaData === null) { mostrarNotificacao('❌ Coluna de data não encontrada', 'error'); return; }
-    
+    if (!dadosOriginais) { mostrarNotificacao('❌ Dados não carregados', 'error'); return; }
     const inicio = document.getElementById('dataInicio').value;
     const fim = document.getElementById('dataFim').value;
     
-    // === NOVA LÓGICA: LIMPAR FILTRO ===
     if (!inicio && !fim) {
         dadosAnalisados = analisarDadosMineramix(dadosOriginais);
-        const itemAtivo = document.querySelector('.menu-item.active');
-        const relatorioAtual = itemAtivo ? itemAtivo.getAttribute('data-report') : 'overview';
-        mostrarRelatorio(relatorioAtual);
-        mostrarNotificacao('📅 Filtro removido: Exibindo todo o período', 'success');
+        mostrarRelatorio(document.querySelector('.menu-item.active').getAttribute('data-report'));
         return;
     }
-    // ==================================
-
-    if (!inicio || !fim) { mostrarNotificacao('⚠️ Selecione as duas datas (ou limpe ambas para ver tudo)', 'error'); return; }
+    if (!inicio || !fim) { mostrarNotificacao('⚠️ Selecione ambas as datas', 'error'); return; }
     
     const [anoI, mesI, diaI] = inicio.split('-').map(Number);
     const dataInicio = new Date(anoI, mesI - 1, diaI, 0, 0, 0, 0);
-
     const [anoF, mesF, diaF] = fim.split('-').map(Number);
     const dataFim = new Date(anoF, mesF - 1, diaF, 23, 59, 59, 999);
     
-    const cabecalho = dadosOriginais[0];
-    const linhas = dadosOriginais.slice(1);
-    
-    const linhasFiltradas = linhas.filter(linha => {
+    const linhas = dadosOriginais.slice(1).filter(linha => {
         const data = parsearDataBR(linha[indiceColunaData]);
         return data && data >= dataInicio && data <= dataFim;
     });
     
-    if (!linhasFiltradas.length) { mostrarNotificacao('⚠️ Nenhum registro no período', 'error'); return; }
-    
-    dadosAnalisados = analisarDadosMineramix([cabecalho, ...linhasFiltradas]);
-    const itemAtivo = document.querySelector('.menu-item.active');
-    const relatorioAtual = itemAtivo ? itemAtivo.getAttribute('data-report') : 'overview';
-    mostrarRelatorio(relatorioAtual);
-    mostrarNotificacao(`📅 Período aplicado: ${linhasFiltradas.length} registros`, 'success');
+    dadosAnalisados = analisarDadosMineramix([dadosOriginais[0], ...linhas]);
+    mostrarRelatorio(document.querySelector('.menu-item.active').getAttribute('data-report'));
 }
 
-// esta função estava faltando e causava o erro ao clicar no botão de plug
 async function testarConexao() {
     try {
-        atualizarStatus(false, '🔄 Testando conexão...');
-        const resposta = await fetch(CONFIG.API_URL);
-        if (resposta.ok) {
-            atualizarStatus(true, '✅ Conexão estabelecida');
-            mostrarNotificacao('✅ Conexão com o servidor bem-sucedida!', 'success');
-        } else { throw new Error(`Erro ${resposta.status}`); }
-    } catch (erro) {
-        atualizarStatus(false, `❌ Falha na conexão: ${erro.message}`);
-        mostrarNotificacao('❌ Não foi possível conectar ao servidor', 'error');
-    }
+        atualizarStatus(false, '🔄 Testando...');
+        const resp = await fetch(CONFIG.API_URL);
+        if(resp.ok) { atualizarStatus(true, '✅ Online'); mostrarNotificacao('Conexão OK', 'success'); }
+    } catch(e) { atualizarStatus(false, '❌ Offline'); }
 }
 
 async function carregarDados() {
     try {
         atualizarStatus(false, '🔄 Conectando...');
-        const resposta = await fetch(CONFIG.API_URL);
-        const resultado = await resposta.json();
+        const resp = await fetch(CONFIG.API_URL);
+        const json = await resp.json();
+        dadosOriginais = json.dados;
+        dadosCombustivelOriginais = json.dadosCombustivel;
         
-        dadosOriginais = resultado.dados;
-        dadosCombustivelOriginais = resultado.dadosCombustivel;
-        
-        const cabecalhos = dadosOriginais[0];
-        const colunasDetectadas = detectarColunas(cabecalhos);
-        const colunaData = colunasDetectadas.find(c => c.tipo === 'data');
-        indiceColunaData = colunaData ? colunaData.indice : null;
+        const cols = detectarColunas(dadosOriginais[0]);
+        indiceColunaData = cols.find(c => c.tipo === 'data').indice;
         
         dadosAnalisados = analisarDadosMineramix(dadosOriginais);
         mostrarRelatorio('overview');
-        atualizarStatus(true, `✅ Online`);
-    } catch (erro) {
-        console.error(erro);
-        atualizarStatus(false, `❌ Erro`);
+        atualizarStatus(true, '✅ Online');
+    } catch (e) {
+        console.error(e);
+        atualizarStatus(false, '❌ Erro');
     }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const menuItems = document.querySelectorAll('.menu-item');
-    menuItems.forEach(item => {
+    document.querySelectorAll('.menu-item').forEach(item => {
         item.addEventListener('click', function() {
             const report = this.getAttribute('data-report');
             if (report) mostrarRelatorio(report);
@@ -1112,259 +1149,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     if (localStorage.getItem('darkMode') === 'on') toggleDarkMode();
-    setTimeout(() => { carregarDados(); testarConexao(); }, 1000);
+    carregarDados();
 });
 
-window.onclick = function(event) {
-    if (event.target.classList.contains('modal-overlay') || event.target.classList.contains('modal-overlay-rota')) {
-        fecharModalGlobal();
-    }
-}
-
-// EDITE AQUI OS VALORES REAIS DA SUA OPERAÇÃO
-const TABELA_ROTAS_INTELIGENTE = {
-    'CABO FRIO': {
-        km: 52.5,
-        mapaUrl: 'https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d3683.4106022275396!2d-42.0256325!3d-22.601137299999998!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e0!4m5!1s0x97ae1259163945%3A0x3e29485642a05fee!2sMinerare%20Minera%C3%A7%C3%A3o%2C%20Estr.%20Mico-Le%C3%A3o-Dourado%2C%20s%2Fn%20-%20Tamoios%2C%20Cabo%20Frio%20-%20RJ%2C%2028925-440!3m2!1d-22.6009967!2d-42.025559!4m5!1s0x97073d3c0566d5%3A0x5115f34a20c5ad67!2sCabo%20Frio%2C%20RJ!3m2!1d-22.8868925!2d-42.0266568!5e0!3m2!1spt-BR!2sbr!4v1769184172669!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade',
-        pedagios: [ { nome: "Não Há", custo_eixo: 0.0 }, ]
-    },
-    'MACAÉ': { 
-        km: 40.6,
-        mapaUrl: 'https://www.google.com/maps/embed?pb=!1m28!1m12!1m3!1d257175.06074194243!2d-41.997661641280054!3d-22.547188464946306!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m13!3e0!4m5!1s0x97ae1259163945%3A0x3e29485642a05fee!2sMinerare%20Minera%C3%A7%C3%A3o%2C%20Estr.%20Mico-Le%C3%A3o-Dourado%2C%20s%2Fn%20-%20Tamoios%2C%20Cabo%20Frio%20-%20RJ%2C%2028925-440!3m2!1d-22.6009967!2d-42.025559!4m5!1s0x9630267844443b%3A0x9840d1e83fd0de59!2zTWFjYcOpLCBSSg!3m2!1d-22.3836956!2d-41.7827676!5e0!3m2!1spt-BR!2sbr!4v1769184397919!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade',
-        pedagios: [ { nome: "Não Há", custo_eixo: 0.0 }, ]
-    },
-    
-    'RIO DE JANEIRO': {
-        km: 180,
-        mapaUrl: 'https://www.google.com/maps/embed?pb=!1m34!1m12!1m3!1d3683.4106022275846!2d-42.02745899543678!3d-22.601137299999994!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!4m19!3e0!4m5!1s0x97ae1259163945%3A0x3e29485642a05fee!2sMinerare%20Minera%C3%A7%C3%A3o%2C%20Estr.%20Mico-Le%C3%A3o-Dourado%2C%20s%2Fn%20-%20Tamoios%2C%20Cabo%20Frio%20-%20RJ%2C%2028925-440!3m2!1d-22.6009967!2d-42.025559!4m5!1s0x97bac04db8ab0f%3A0xd0da30b53c3fb75f!2sCasimiro%20de%20Abreu%2C%20RJ%2C%2028860-000!3m2!1d-22.479796699999998!2d-42.202903!4m5!1s0x9bde559108a05b%3A0x50dc426c672fd24e!2sRio%20de%20Janeiro%2C%20RJ!3m2!1d-22.9068467!2d-43.1728965!5e0!3m2!1spt-BR!2sbr!4v1769184000835!5m2!1spt-BR!2sbr" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade',
-        pedagios: [ 
-            { nome: "Pedágio Casimiro de Abreu", custo_eixo: 7.5 },
-            { nome: "Pedágio Rio Bonito", custo_eixo: 7.5 },
-            { nome: "Ponte São Gonçalo", custo_eixo: 7.5 },
-        ]
-    },
-    'NITEROI': {
-        km: 65,
-        pedagios: [ { nome: "Pedágio Manilha", custo_eixo: 6.90 } ]
-    },
-    'CAMPOS': {
-        km: 210,
-        pedagios: [ 
-            { nome: "Praça Casimiro", custo_eixo: 6.90 },
-            { nome: "Praça Campos", custo_eixo: 6.90 }
-        ]
-    }
-};
-
-function buscarRotaInteligente(destino) {
-    if (!destino) return null;
-    const destinoLimpo = destino.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); 
-    const chaves = Object.keys(TABELA_ROTAS_INTELIGENTE);
-    for (let chave of chaves) {
-        const chaveLimpa = chave.toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        if (destinoLimpo.includes(chaveLimpa)) {
-            return { nome: chave, ...TABELA_ROTAS_INTELIGENTE[chave] };
-        }
-    }
-    return { km: 0, pedagios: [], nome: destino, mapaUrl: null };
-}
-
-// --- FUNÇÃO PRINCIPAL: ABRE O MODAL E GERA A LISTA DE DIAS ---
-function abrirDetalhesCliente(nomeCliente) {
-    if (!dadosOriginais) return;
-
-    // 1. Mapear Colunas
-    const cabecalho = dadosOriginais[0];
-    const colunas = detectarColunas(cabecalho);
-    
-    const idxCliente = colunas.find(c => c.tipo === 'cliente')?.indice;
-    const idxData = colunas.find(c => c.tipo === 'data')?.indice;
-    const idxValor = colunas.find(c => c.tipo === 'valor')?.indice;
-    const idxMotorista = colunas.find(c => c.tipo === 'motorista')?.indice;
-    const idxCavalo = colunas.find(c => c.tipo === 'veiculo')?.indice;
-    
-    // Procura coluna de Carreta/Reboque
-    let idxCarreta = -1;
-    cabecalho.forEach((col, i) => {
-        const t = String(col).toUpperCase();
-        if (t.includes('CARRETA') || t.includes('REBOQUE')) idxCarreta = i;
-    });
-
-    if (idxCliente === undefined || idxData === undefined) {
-        alert("Colunas não identificadas.");
-        return;
-    }
-
-    // 2. Filtros de Data
-    const inicioInput = document.getElementById('dataInicio').value;
-    const fimInput = document.getElementById('dataFim').value;
-    let dInicio = inicioInput ? new Date(inicioInput + 'T00:00:00') : new Date(1900, 0, 1);
-    let dFim = fimInput ? new Date(fimInput + 'T23:59:59') : new Date(2100, 0, 1);
-
-    // 3. Agrupar dados
-    const diasMap = {};
-    let totalPeriodo = 0;
-
-    dadosOriginais.slice(1).forEach((linha, index) => {
-        if (linha[idxCliente] === nomeCliente) {
-            const dataObj = parsearDataBR(linha[idxData]);
-            
-            if (dataObj && dataObj >= dInicio && dataObj <= dFim) {
-                const dataStr = dataObj.toLocaleDateString('pt-BR');
-                const valor = idxValor !== undefined ? extrairNumero(linha[idxValor]) : 0;
-                
-                if (!diasMap[dataStr]) {
-                    diasMap[dataStr] = { 
-                        objData: dataObj, // Para ordenar
-                        total: 0, 
-                        viagens: [] 
-                    };
-                }
-
-                diasMap[dataStr].total += valor;
-                diasMap[dataStr].viagens.push({
-                    motorista: idxMotorista !== undefined ? (linha[idxMotorista] || '---') : '---',
-                    cavalo: idxCavalo !== undefined ? (linha[idxCavalo] || '---') : '---',
-                    carreta: idxCarreta !== -1 ? (linha[idxCarreta] || '---') : '---',
-                    valor: valor,
-                    id: index // ID único para controle se precisar
-                });
-                totalPeriodo += valor;
-            }
-        }
-    });
-
-    // 4. Preencher Header
-    document.getElementById('mClienteNome').innerText = nomeCliente;
-    document.getElementById('mClienteTotal').innerText = formatarMoeda(totalPeriodo);
-
-    // 5. Gerar HTML (Accordion)
-    const container = document.getElementById('listaViagensAccordion');
-    container.innerHTML = '';
-
-    // Ordena do dia mais recente para o mais antigo
-    const diasOrdenados = Object.entries(diasMap).sort((a, b) => b[1].objData - a[1].objData);
-
-    if (diasOrdenados.length === 0) {
-        container.innerHTML = '<div style="padding:40px; text-align:center; color:var(--cor-texto-sec);"><i class="fas fa-folder-open" style="font-size: 2rem; margin-bottom: 10px; display:block;"></i>Nenhuma viagem encontrada neste período.</div>';
-    } else {
-        diasOrdenados.forEach(([data, info], index) => {
-            const idUnico = `dia-${index}`; // ID para vincular o clique
-            
-            // HTML DO DIA (RESUMO)
-            const htmlResumo = `
-                <div class="day-summary-row" onclick="toggleDia('${idUnico}', this)">
-                    <div class="day-info">
-                        <i class="fas fa-chevron-down toggle-icon"></i>
-                        <span class="day-date">${data}</span>
-                        <span class="day-count">${info.viagens.length} viagens</span>
-                    </div>
-                    <span class="day-total">${formatarMoeda(info.total)}</span>
-                </div>
-            `;
-
-            // HTML DOS DETALHES (LISTA DE VIAGENS)
-            let htmlDetalhes = `<div id="${idUnico}" class="day-details-box">`;
-            
-            info.viagens.forEach(v => {
-                htmlDetalhes += `
-                    <div class="trip-card">
-                        <div class="t-driver" title="Motorista">
-                            <i class="fas fa-user-tie"></i> ${v.motorista}
-                        </div>
-                        <div class="t-plate cav" title="Placa do Cavalo">
-                            <i class="fas fa-truck-moving"></i> ${v.cavalo}
-                        </div>
-                        <div class="t-plate car" title="Placa da Carreta">
-                            <i class="fas fa-trailer"></i> ${v.carreta}
-                        </div>
-                        <div class="t-value" title="Valor Faturado">
-                            ${formatarMoeda(v.valor)}
-                        </div>
-                    </div>
-                `;
-            });
-            htmlDetalhes += `</div>`;
-
-            container.innerHTML += (htmlResumo + htmlDetalhes);
-        });
-    }
-
-    document.getElementById('modalDetalheCliente').style.display = 'flex';
-    window.history.pushState({modalOpen: true}, "", "#detalheCliente");
-}
-
-// --- FUNÇÃO DE CLIQUE PARA EXPANDIR/RECOLHER ---
-function toggleDia(idElemento, elementoClicado) {
-    const detalhes = document.getElementById(idElemento);
-    
-    if (detalhes.style.display === 'block') {
-        detalhes.style.display = 'none';
-        elementoClicado.classList.remove('active');
-    } else {
-        detalhes.style.display = 'block';
-        elementoClicado.classList.add('active');
-    }
-}
-
-// ==========================================
-// FUNÇÃO DE ORDENAÇÃO (FILTRO)
-// ==========================================
-let ordemAtual = {}; // Guarda o estado atual para saber se inverte
-
-function ordenarRelatorio(tipo, campo) {
-    if (!dadosAnalisados) return;
-
-    // Define a lista correta baseada no tipo (rotas, motoristas, etc)
-    const mapaListas = {
-        'rotas': 'rotasOrdenadas',
-        'motoristas': 'motoristasOrdenados',
-        'veiculos': 'veiculosOrdenados',
-        'clientes': 'clientesOrdenados'
-    };
-
-    const nomeLista = mapaListas[tipo];
-    if (!nomeLista) return;
-
-    // Inverte a direção se clicar no mesmo botão duas vezes
-    if (!ordemAtual[tipo]) ordemAtual[tipo] = { campo: '', dir: 'desc' };
-    
-    if (ordemAtual[tipo].campo === campo) {
-        ordemAtual[tipo].dir = ordemAtual[tipo].dir === 'desc' ? 'asc' : 'desc';
-    } else {
-        ordemAtual[tipo].campo = campo;
-        ordemAtual[tipo].dir = 'desc'; // Padrão começa do maior para o menor
-    }
-
-    const direcao = ordemAtual[tipo].dir === 'desc' ? -1 : 1;
-
-    // Realiza a ordenação
-    dadosAnalisados[nomeLista].sort((a, b) => {
-        let valA, valB;
-
-        // Se for ordenar pelo Nome (Chave principal)
-        if (campo === 'key') {
-            valA = a[0];
-            valB = b[0];
-            // Texto deve ser A-Z por padrão (inverso do número)
-            return valA.localeCompare(valB) * (direcao * -1); 
-        } 
-        // Se for ordenar por Valores (Objeto interno)
-        else {
-            valA = a[1][campo]; // campo pode ser 'viagens', 'valor', 'km'
-            valB = b[1][campo];
-            return (valA - valB) * direcao;
-        }
-    });
-
-    // Atualiza a tela chamando a função original de exibir
-    mostrarRelatorio(tipo);
-}
-
-// Exporta para o HTML usar
+// EXPORTAÇÕES GLOBAIS
 window.ordenarRelatorio = ordenarRelatorio;
-
-// Exporta globalmente
 window.abrirDetalhesCliente = abrirDetalhesCliente;
 window.toggleDia = toggleDia;
 window.fecharModalVeiculo = fecharModalVeiculo;
@@ -1379,3 +1168,4 @@ window.carregarDados = carregarDados;
 window.testarConexao = testarConexao; 
 window.toggleDarkMode = toggleDarkMode;
 window.fecharModalRota = fecharModalRota;
+window.abrirDetalhesRota = abrirDetalhesRota;
