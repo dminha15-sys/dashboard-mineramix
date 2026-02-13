@@ -1307,6 +1307,63 @@ function toggleDia(idElemento, elementoClicado) {
     }
 }
 
+// ==========================================
+// FUNÇÃO DE ORDENAÇÃO (FILTRO)
+// ==========================================
+let ordemAtual = {}; // Guarda o estado atual para saber se inverte
+
+function ordenarRelatorio(tipo, campo) {
+    if (!dadosAnalisados) return;
+
+    // Define a lista correta baseada no tipo (rotas, motoristas, etc)
+    const mapaListas = {
+        'rotas': 'rotasOrdenadas',
+        'motoristas': 'motoristasOrdenados',
+        'veiculos': 'veiculosOrdenados',
+        'clientes': 'clientesOrdenados'
+    };
+
+    const nomeLista = mapaListas[tipo];
+    if (!nomeLista) return;
+
+    // Inverte a direção se clicar no mesmo botão duas vezes
+    if (!ordemAtual[tipo]) ordemAtual[tipo] = { campo: '', dir: 'desc' };
+    
+    if (ordemAtual[tipo].campo === campo) {
+        ordemAtual[tipo].dir = ordemAtual[tipo].dir === 'desc' ? 'asc' : 'desc';
+    } else {
+        ordemAtual[tipo].campo = campo;
+        ordemAtual[tipo].dir = 'desc'; // Padrão começa do maior para o menor
+    }
+
+    const direcao = ordemAtual[tipo].dir === 'desc' ? -1 : 1;
+
+    // Realiza a ordenação
+    dadosAnalisados[nomeLista].sort((a, b) => {
+        let valA, valB;
+
+        // Se for ordenar pelo Nome (Chave principal)
+        if (campo === 'key') {
+            valA = a[0];
+            valB = b[0];
+            // Texto deve ser A-Z por padrão (inverso do número)
+            return valA.localeCompare(valB) * (direcao * -1); 
+        } 
+        // Se for ordenar por Valores (Objeto interno)
+        else {
+            valA = a[1][campo]; // campo pode ser 'viagens', 'valor', 'km'
+            valB = b[1][campo];
+            return (valA - valB) * direcao;
+        }
+    });
+
+    // Atualiza a tela chamando a função original de exibir
+    mostrarRelatorio(tipo);
+}
+
+// Exporta para o HTML usar
+window.ordenarRelatorio = ordenarRelatorio;
+
 // Exporta globalmente
 window.abrirDetalhesCliente = abrirDetalhesCliente;
 window.toggleDia = toggleDia;
