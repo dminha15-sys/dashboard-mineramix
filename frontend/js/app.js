@@ -1247,6 +1247,160 @@ document.addEventListener('DOMContentLoaded', function() {
     carregarDados();
 });
 
+// ==========================================
+// FUNÇÃO DE IMPRESSÃO DO RELATÓRIO UNIFICADO
+// ==========================================
+window.imprimirRelatorioUnificado = function() {
+    if (!dadosAnalisados) {
+        mostrarNotificacao('Os dados ainda não foram carregados.', 'error');
+        return;
+    }
+
+    const resumo = dadosAnalisados;
+    
+    // Helpers de formatação
+    const fmtMoeda = (v) => 'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const fmtNum = (v) => v.toFixed(0).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    // Prepara Listas Específicas
+    const topDias = [...resumo.diasOrdenados].sort((a,b) => b[1].valor - a[1].valor).slice(0, 5); // 5 dias com maior faturamento
+    const topClientes = resumo.clientesOrdenados.slice(0, 5);
+    const topRotas = resumo.rotasOrdenadas.slice(0, 10);
+    
+    // Pega o período do filtro para mostrar no cabeçalho
+    const inputInicio = document.getElementById('dataInicio') ? document.getElementById('dataInicio').value : '';
+    const inputFim = document.getElementById('dataFim') ? document.getElementById('dataFim').value : '';
+    let periodoTexto = "Todo o período";
+    if (inputInicio && inputFim) {
+        periodoTexto = `De ${inputInicio.split('-').reverse().join('/')} até ${inputFim.split('-').reverse().join('/')}`;
+    }
+
+    const dataImpressao = new Date().toLocaleString('pt-BR');
+
+    // Constrói o layout do documento para impressão (Limpo e minimalista)
+    const html = `
+    <!DOCTYPE html>
+    <html lang="pt-br">
+    <head>
+        <meta charset="UTF-8">
+        <title>Relatório Gerencial - Mineramix</title>
+        <style>
+            @page { margin: 15mm; }
+            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #222; margin: 0; padding: 0; font-size: 11px; }
+            .header { text-align: center; border-bottom: 2px solid #FF6B35; padding-bottom: 10px; margin-bottom: 20px; }
+            h1 { margin: 0; color: #1f2933; font-size: 20px; text-transform: uppercase; }
+            h2 { color: #FF6B35; font-size: 14px; margin-top: 25px; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 3px; }
+            .info { color: #666; font-size: 10px; margin-top: 5px; }
+            
+            .grid-cards { display: flex; gap: 10px; margin-bottom: 20px; }
+            .card { flex: 1; border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fdfdfd; text-align: center; }
+            .card-title { font-size: 9px; color: #777; text-transform: uppercase; margin-bottom: 5px; font-weight: bold; }
+            .card-value { font-size: 14px; font-weight: bold; color: #1f2933; }
+            
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            th, td { border: 1px solid #ddd; padding: 5px 6px; }
+            th { background-color: #f4f4f4; font-weight: bold; font-size: 10px; text-transform: uppercase; color: #444; }
+            
+            .center { text-align: center; }
+            .right { text-align: right; }
+            .bold { font-weight: bold; }
+            
+            .page-break { page-break-before: always; }
+            
+            /* Botão escondido na hora de imprimir de verdade */
+            @media print {
+                .no-print { display: none; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>MINERAMIX - Relatório Gerencial</h1>
+            <div class="info">Período Analisado: <b>${periodoTexto}</b> | Emitido em: ${dataImpressao}</div>
+        </div>
+
+        <h2>1. Visão Geral Financeira e Operacional</h2>
+        <div class="grid-cards">
+            <div class="card"><div class="card-title">Total de Viagens</div><div class="card-value">${resumo.totalLinhas}</div></div>
+            <div class="card"><div class="card-title">Faturamento Total</div><div class="card-value">${fmtMoeda(resumo.totalValor)}</div></div>
+            <div class="card"><div class="card-title">Média por Viagem</div><div class="card-value">${fmtMoeda(resumo.mediaValor)}</div></div>
+            <div class="card"><div class="card-title">KM Total Rodado</div><div class="card-value">${fmtNum(resumo.totalKM)} km</div></div>
+        </div>
+
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 1;">
+                <h2>2. Top 5 Clientes</h2>
+                <table>
+                    <thead><tr><th>Cliente</th><th class="center">Vgs</th><th class="right">Faturamento</th></tr></thead>
+                    <tbody>
+                        ${topClientes.map(c => `<tr><td>${c[0]}</td><td class="center">${c[1].viagens}</td><td class="right bold">${fmtMoeda(c[1].valor)}</td></tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="flex: 1;">
+                <h2>3. Top 5 Dias (Maior Faturamento)</h2>
+                <table>
+                    <thead><tr><th>Data</th><th class="center">Vgs</th><th class="right">Faturamento</th></tr></thead>
+                    <tbody>
+                        ${topDias.map(d => `<tr><td>${d[0]}</td><td class="center">${d[1].viagens}</td><td class="right bold">${fmtMoeda(d[1].valor)}</td></tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <h2>4. Rotas Mais Rodadas (Top 10)</h2>
+        <table>
+            <thead><tr><th>Rota</th><th class="center">Viagens</th><th class="center">KM Total</th><th class="right">Faturamento</th></tr></thead>
+            <tbody>
+                ${topRotas.map(r => `<tr><td>${r[0]}</td><td class="center">${r[1].viagens}</td><td class="center">${fmtNum(r[1].km)}</td><td class="right bold">${fmtMoeda(r[1].valor)}</td></tr>`).join('')}
+            </tbody>
+        </table>
+
+        <div class="page-break"></div>
+        <div class="header"><h1>MINERAMIX - Análise de Frota e Equipe</h1></div>
+
+        <h2>5. Relatório de Veículos / KM</h2>
+        <table>
+            <thead><tr><th>Placa</th><th class="center">Viagens</th><th class="center">KM Total</th><th class="right">Receita Bruta</th><th class="right">Receita/KM</th></tr></thead>
+            <tbody>
+                ${resumo.veiculosOrdenados.map(v => `<tr><td>${v[0]}</td><td class="center">${v[1].viagens}</td><td class="center">${fmtNum(v[1].km)}</td><td class="right bold">${fmtMoeda(v[1].valor)}</td><td class="right" style="color:#FF6B35">${fmtMoeda(v[1].km > 0 ? v[1].valor / v[1].km : 0)}</td></tr>`).join('')}
+            </tbody>
+        </table>
+
+        <h2>6. Relatório de Motoristas</h2>
+        <table>
+            <thead><tr><th>Motorista</th><th class="center">Viagens</th><th class="center">KM Total</th><th class="right">Total Faturado</th></tr></thead>
+            <tbody>
+                ${resumo.motoristasOrdenados.map(m => `<tr><td>${m[0]}</td><td class="center">${m[1].viagens}</td><td class="center">${fmtNum(m[1].km)}</td><td class="right bold">${fmtMoeda(m[1].valor)}</td></tr>`).join('')}
+            </tbody>
+        </table>
+        
+        <div class="no-print" style="text-align: center; margin-top: 30px; padding: 20px; background: #f9f9f9; border-top: 1px solid #ddd;">
+            <p style="margin-bottom: 10px; color: #555;">Caso a janela de impressão não tenha aberto automaticamente, clique no botão abaixo.</p>
+            <button onclick="window.print()" style="padding: 10px 20px; font-size: 14px; background: #FF6B35; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">Imprimir Relatório</button>
+        </div>
+    </body>
+    </html>
+    `;
+
+    // Abre uma nova janela e injeta o HTML
+    const printWindow = window.open('', '_blank');
+    if(printWindow) {
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+        
+        // Aguarda 0.5 segundos para o navegador renderizar as margens e chama a impressora
+        setTimeout(() => {
+            printWindow.print();
+        }, 500);
+    } else {
+        mostrarNotificacao('Seu navegador bloqueou o pop-up de impressão. Permita pop-ups para este site.', 'error');
+    }
+};
+
 // EXPORTAÇÕES GLOBAIS
 window.ordenarRelatorio = ordenarRelatorio;
 window.abrirDetalhesCliente = abrirDetalhesCliente;
