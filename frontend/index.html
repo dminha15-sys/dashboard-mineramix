@@ -92,19 +92,21 @@
     </button>
 </div>
 
-    <div class="top-actions">
+   <div class="top-actions">
         <button class="icon-btn" onclick="carregarDados()" title="Atualizar">
             <i class="fas fa-arrows-rotate"></i>
         </button>
 
+        <button class="icon-btn" onclick="imprimirRelatorioUnificado()" title="Imprimir Relatório" style="color: var(--cor-secundaria);">
+            <i class="fas fa-print"></i>
+        </button>
         <button class="icon-btn" onclick="testarConexao()" title="Testar conexão">
             <i class="fas fa-plug"></i>
         </button>
 
-    <button class="icon-btn" onclick="toggleDarkMode()" id="btnDark" title="Modo claro/noturno">
-        <i class="fas fa-moon"></i>
-    </button>
-
+        <button class="icon-btn" onclick="toggleDarkMode()" id="btnDark" title="Modo claro/noturno">
+            <i class="fas fa-moon"></i>
+        </button>
     </div>
 </div>
 
@@ -392,8 +394,5 @@
         <script src="config.js"></script>
         <script src="js/app.js"></script>
 
-    <button onclick="imprimirRelatorioUnificado()" style="background: var(--cor-secundaria); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 8px;">
-    <i class="fas fa-print"></i> Imprimir Relatório Unificado
-</button>
 </body>
 </html>
