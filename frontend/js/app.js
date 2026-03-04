@@ -1432,27 +1432,29 @@ function mostrarRelatorioCombustivel(resumo) {
             };
         });
 
-        // 2. Lê os abastecimentos e procura a coluna do Hodômetro
+        // 2. Lê os abastecimentos e mapeia as colunas exatas da sua planilha
         if (dadosCombustivelOriginais && dadosCombustivelOriginais.length > 1) {
             const cabecalhoComb = dadosCombustivelOriginais[0];
             let idxC = { placa: -1, data: -1, litros: -1, valor: -1, tipo: -1, hodometro: -1 };
             
             cabecalhoComb.forEach((c, i) => {
                 const col = String(c).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                if (col.includes('PLACA') || col.includes('VEICULO')) idxC.placa = i;
+                if (col.includes('PLACA') || col.includes('FROTA')) idxC.placa = i;
                 else if (col.includes('DATA')) idxC.data = i;
-                else if (col.includes('LITRO') || col.includes('QTD')) idxC.litros = i;
-                else if (col.includes('VALOR') || col.includes('TOTAL')) idxC.valor = i;
+                else if (col.includes('ABASTECIDO') || col.includes('LITRO') || col.includes('QTD')) idxC.litros = i;
+                else if (col === 'TOTAL' || (col.includes('VALOR') && !col.includes('LITRO'))) idxC.valor = i;
                 else if (col.includes('TIPO') || col.includes('COMBUSTIVEL')) idxC.tipo = i;
-                else if (col.includes('KM') || col.includes('HODOMETRO') || col.includes('ODOMETRO')) idxC.hodometro = i;
+                // AQUI ESTÁ A CORREÇÃO: Agora ele acha a palavra QUILOMETRAGEM
+                else if (col.includes('QUILOMETRAGEM') || col.includes('HODOMETRO') || col.includes('KM')) idxC.hodometro = i;
             });
 
-            // Fallbacks padrão caso as colunas mudem
-            if(idxC.placa === -1) idxC.placa = 0;
-            if(idxC.data === -1) idxC.data = 1;
-            if(idxC.litros === -1) idxC.litros = 3;
-            if(idxC.tipo === -1) idxC.tipo = 6;
-            if(idxC.valor === -1) idxC.valor = 7;
+            // Fallbacks de segurança baseados na sua foto
+            if(idxC.placa === -1) idxC.placa = 0;      // Coluna A
+            if(idxC.data === -1) idxC.data = 1;        // Coluna B
+            if(idxC.litros === -1) idxC.litros = 3;    // Coluna D
+            if(idxC.hodometro === -1) idxC.hodometro = 4; // Coluna E
+            if(idxC.tipo === -1) idxC.tipo = 6;        // Coluna G
+            if(idxC.valor === -1) idxC.valor = 7;      // Coluna H
 
             dadosCombustivelOriginais.slice(1).forEach(linha => {
                 const dataReal = parsearDataBR(linha[idxC.data]);
@@ -1469,7 +1471,7 @@ function mostrarRelatorioCombustivel(resumo) {
                     if(placaAlvo && placaAlvo !== "INDEFINIDO") {
                         const qtd = extrairNumero(linha[idxC.litros]);
                         const vlr = extrairNumero(linha[idxC.valor]);
-                        const hodometroLido = idxC.hodometro !== -1 ? extrairNumero(linha[idxC.hodometro]) : 0;
+                        const hodometroLido = extrairNumero(linha[idxC.hodometro]); // Agora lê a coluna E corretamente
                         const tipo = String(linha[idxC.tipo] || '').toUpperCase();
 
                         if (tipo.includes('ARLA')) {
@@ -1479,7 +1481,7 @@ function mostrarRelatorioCombustivel(resumo) {
                             consumoPorPlaca[placaAlvo].litrosDiesel += qtd;
                             consumoPorPlaca[placaAlvo].gastoDiesel += vlr;
                             
-                            // Guarda o hodômetro apenas se for Diesel (onde o consumo real importa)
+                            // Guarda o hodômetro de cada abastecimento de Diesel
                             if (hodometroLido > 0) {
                                 consumoPorPlaca[placaAlvo].abastecimentos.push({
                                     dataObj: dataReal,
@@ -1492,7 +1494,7 @@ function mostrarRelatorioCombustivel(resumo) {
             });
         }
 
-        // 3. INTELIGÊNCIA DE CÁLCULO DE HODÔMETRO (O pulo do gato)
+        // 3. INTELIGÊNCIA DE CÁLCULO DE HODÔMETRO
         Object.keys(consumoPorPlaca).forEach(p => {
             const c = consumoPorPlaca[p];
             
@@ -1508,11 +1510,11 @@ function mostrarRelatorioCombustivel(resumo) {
                 if (hAtual > 0) {
                     if (ultimoHodometro > 0) {
                         if (hAtual < ultimoHodometro) {
-                            // ERRO DETECTADO: Hodômetro atual menor que o anterior (Esqueceu um dígito)
+                            // ERRO: Hodômetro atual é menor que o anterior (Motorista errou a digitação)
                             c.erroDigitacao = true;
                         } else {
                             let dist = hAtual - ultimoHodometro;
-                            // Trava de segurança: Se andou mais de 15.000km entre um tanque e outro, é erro de digitação absurdo
+                            // Trava: se andou mais de 15.000km entre um tanque e outro, é digitação errada
                             if (dist > 15000) {
                                 c.erroDigitacao = true;
                             } else {
@@ -1520,25 +1522,23 @@ function mostrarRelatorioCombustivel(resumo) {
                             }
                         }
                     }
-                    ultimoHodometro = hAtual; // Atualiza para comparar com o próximo tanque
+                    ultimoHodometro = hAtual; 
                 }
             });
 
             c.kmReal = kmCalculado;
 
-            // Calcula Média e Desvio (Se deu erro no Hodômetro, usa o KM Viagem como quebra-galho)
-            const kmUsado = c.kmReal > 0 && !c.erroDigitacao ? c.kmReal : c.kmViagens;
+            // Calcula Média e Desvio (Se der erro no hodômetro ou só tiver 1 abastecimento, usa o KM das Viagens como estepe)
+            const kmUsado = (c.kmReal > 0 && !c.erroDigitacao) ? c.kmReal : c.kmViagens;
             
             c.media = c.litrosDiesel > 0 ? (kmUsado / c.litrosDiesel) : 0;
-            c.desvio = c.kmReal > 0 && !c.erroDigitacao ? (c.kmReal - c.kmViagens) : 0;
+            c.desvio = (c.kmReal > 0 && !c.erroDigitacao) ? (c.kmReal - c.kmViagens) : 0;
         });
 
-        // Remove quem não rodou e não abasteceu
         veiculosArr = Object.entries(consumoPorPlaca).filter(v => v[1].gastoDiesel > 0 || v[1].kmViagens > 0).sort((a, b) => b[1].gastoDiesel - a[1].gastoDiesel);
         resumo.combustivelOrdenado = veiculosArr; 
     }
 
-    // Soma Totais Globais
     veiculosArr.forEach(v => {
         totalLitrosDiesel += v[1].litrosDiesel;
         totalGastoDiesel += v[1].gastoDiesel;
@@ -1550,28 +1550,38 @@ function mostrarRelatorioCombustivel(resumo) {
     const kmFrota = veiculosArr.reduce((acc, v) => acc + (v[1].kmReal > 0 && !v[1].erroDigitacao ? v[1].kmReal : v[1].kmViagens), 0);
     const mediaFrota = totalLitrosDiesel > 0 ? (kmFrota / totalLitrosDiesel) : 0;
 
+    const veiculosParaMedia = veiculosArr.filter(v => v[1].media > 0 && !v[1].erroDigitacao);
+    let melhorMediaTexto = "N/A";
+    let piorMediaTexto = "N/A";
+    
+    if (veiculosParaMedia.length > 0) {
+        const melhor = [...veiculosParaMedia].sort((a,b) => b[1].media - a[1].media)[0];
+        const pior = [...veiculosParaMedia].sort((a,b) => a[1].media - b[1].media)[0];
+        melhorMediaTexto = `${melhor[0]} <br> <span style="font-size:0.8rem">(${formatarNumero(melhor[1].media)} km/l)</span>`;
+        piorMediaTexto = `${pior[0]} <br> <span style="font-size:0.8rem">(${formatarNumero(pior[1].media)} km/l)</span>`;
+    }
+
     const metricsHTML = `
         <div class="metrics-grid">
             <div class="metric-card" style="border-bottom: 3px solid #dc3545;"><div class="metric-icon"><i class="fas fa-gas-pump" style="color:#dc3545;"></i></div><div class="metric-value" style="color:#dc3545;">${formatarMoeda(totalGasto)}</div><div class="metric-label">Gasto Total (Diesel + Arla)</div></div>
             <div class="metric-card"><div class="metric-icon"><i class="fas fa-oil-can"></i></div><div class="metric-value">${formatarNumero(totalLitrosDiesel)} L</div><div class="metric-label">Total Diesel Consumido</div></div>
             <div class="metric-card"><div class="metric-icon"><i class="fas fa-tachometer-alt"></i></div><div class="metric-value">${formatarNumero(mediaFrota)} km/l</div><div class="metric-label">Média Real da Frota</div></div>
             <div class="metric-card"><div class="metric-icon"><i class="fas fa-tint"></i></div><div class="metric-value">${formatarNumero(totalLitrosArla)} L</div><div class="metric-label">Total Arla Consumido</div></div>
+            <div class="metric-card"><div class="metric-icon" style="color: #28a745; background: rgba(40,167,69,0.1);"><i class="fas fa-arrow-up"></i></div><div class="metric-value" style="font-size:1rem; padding: 5px 0;">${melhorMediaTexto}</div><div class="metric-label">Veículo Mais Econômico</div></div>
+            <div class="metric-card"><div class="metric-icon" style="color: #dc3545; background: rgba(220,53,69,0.1);"><i class="fas fa-arrow-down"></i></div><div class="metric-value" style="font-size:1rem; padding: 5px 0;">${piorMediaTexto}</div><div class="metric-label">Veículo Mais Gastão</div></div>
         </div>
     `;
 
-    // LÓGICA DE AUDITORIA: Erros, Roubo, Normal e Anormal
     const gerarDiagnostico = (kmViagens, kmReal, litros, media, erroDigitacao) => {
-        if (erroDigitacao) return `<span class="status-badge" style="background:#6f42c1; color:white; font-weight:bold; box-shadow: 0 2px 4px rgba(111, 66, 193, 0.3);"><i class="fas fa-keyboard"></i> ERRO DE HODÔMETRO</span>`;
-        
+        if (erroDigitacao) return `<span class="status-badge" style="background:#6f42c1; color:white; font-weight:bold;"><i class="fas fa-keyboard"></i> ERRO HODÔMETRO</span>`;
         if (litros == 0 && kmViagens > 0) return `<span class="status-badge" style="background:#e2e3e5; color:#383d41;">❔ Falta Abastecimento</span>`;
         if (kmViagens == 0 && kmReal == 0 && litros > 0) return `<span class="status-badge status-pendente">⚠️ Abast. Sem Viagem</span>`;
         
-        // REGRAS DE MEDIA DEFINIDAS
-        if (media < 1.0 && media > 0) return `<span class="status-badge" style="background:#f8d7da; color:#dc3545; font-weight:bold; border: 1px solid #dc3545;"><i class="fas fa-exclamation-triangle"></i> ROUBO / VAZAMENTO</span>`;
+        if (media < 1.0 && media > 0) return `<span class="status-badge" style="background:#f8d7da; color:#dc3545; font-weight:bold;"><i class="fas fa-exclamation-triangle"></i> ROUBO/VAZAMENTO</span>`;
         if (media > 3.0) return `<span class="status-badge status-pendente">🟠 Anormal (>3 km/l)</span>`;
         if (media >= 1.0 && media <= 3.0) return `<span class="status-badge status-pago">✅ Normal (~2 km/l)</span>`;
         
-        return `<span class="status-badge" style="background:#e2e3e5; color:#383d41;">Sem dados p/ Média</span>`;
+        return `<span class="status-badge" style="background:#e2e3e5; color:#383d41;">S/ Dados p/ Média</span>`;
     };
 
     if (window.innerWidth < 768) {
@@ -1604,9 +1614,9 @@ function mostrarRelatorioCombustivel(resumo) {
                 <thead>
                     <tr>
                         <th>Placa <i class="fas fa-sort-alpha-down btn-sort" onclick="ordenarRelatorio('combustivel', 'key')"></i></th>
-                        <th class="center" title="Soma das distâncias das viagens lançadas">KM Viagens <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('combustivel', 'kmViagens')"></i></th>
-                        <th class="center" style="background: rgba(255,107,53,0.05);" title="Calculado pelo Hodômetro no abastecimento">KM Real <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('combustivel', 'kmReal')"></i></th>
-                        <th class="center" title="Diferença entre Real e Viagens">Fuga/Desvio <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('combustivel', 'desvio')"></i></th>
+                        <th class="center">KM Viagens <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('combustivel', 'kmViagens')"></i></th>
+                        <th class="center" style="background: rgba(255,107,53,0.05);">KM Real <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('combustivel', 'kmReal')"></i></th>
+                        <th class="center">Fuga/Desvio <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('combustivel', 'desvio')"></i></th>
                         <th class="center">Litros <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('combustivel', 'litrosDiesel')"></i></th>
                         <th class="center">Média Real <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('combustivel', 'media')"></i></th>
                         <th class="money">Gasto (R$) <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('combustivel', 'gastoDiesel')"></i></th>
@@ -1615,10 +1625,9 @@ function mostrarRelatorioCombustivel(resumo) {
                 </thead>
                 <tbody>
                     ${veiculosArr.map(([placa, dados]) => {
-                        // Se houver erro de digitação, anula a visualização do desvio para não assustar
                         const txtDesvio = dados.erroDigitacao ? '--' : (dados.desvio > 0 ? '+' : '') + formatarNumero(dados.desvio);
                         const corDesvio = (!dados.erroDigitacao && dados.desvio > 100) ? 'color:#dc3545; font-weight:bold;' : 'color:var(--cor-texto-sec);';
-                        const txtMedia = dados.erroDigitacao ? '<i class="fas fa-ban" style="color:#ccc" title="Impossível calcular com hodômetro errado"></i>' : formatarNumero(dados.media);
+                        const txtMedia = dados.erroDigitacao ? '<i class="fas fa-ban" style="color:#ccc" title="Erro no hodômetro"></i>' : formatarNumero(dados.media);
 
                         return `
                         <tr onclick="abrirDetalhesVeiculo('${placa}')" style="cursor:pointer" class="hover-row">
