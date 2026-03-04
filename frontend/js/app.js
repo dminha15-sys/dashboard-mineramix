@@ -253,6 +253,7 @@ function mostrarRelatorio(tipo) {
         case 'rotas': mostrarRelatorioRotas(resumo); break;
         case 'diario': mostrarRelatorioDiario(resumo); break;
         case 'km': mostrarRelatorioKM(resumo); break;
+        case 'combustivel': mostrarRelatorioCombustivel(resumo); break; 
         default: mostrarVisaoGeral(resumo);
     }
 }
@@ -1138,7 +1139,8 @@ function ordenarRelatorio(tipo, campo) {
         'motoristas': 'motoristasOrdenados',
         'veiculos': 'veiculosOrdenados',
         'clientes': 'clientesOrdenados',
-        'diario': 'diasOrdenados' // Mapeamento do diário
+        'diario': 'diasOrdenados',
+        'combustivel': 'combustivelOrdenado' // <--- ADICIONE ESTA LINHA
     };
     const nomeLista = mapaListas[tipo];
     if (!nomeLista) return;
@@ -1400,6 +1402,182 @@ window.imprimirRelatorioUnificado = function() {
         mostrarNotificacao('Seu navegador bloqueou o pop-up de impressão. Permita pop-ups para este site.', 'error');
     }
 };
+
+// ==========================================
+// NOVO: RELATÓRIO E AUDITORIA DE COMBUSTÍVEL
+// ==========================================
+function mostrarRelatorioCombustivel(resumo) {
+    // Se a lista já foi processada (ou ordenada clicando na seta), usa ela. 
+    // Se não, fazemos o cruzamento de dados das duas abas (Viagens x Abastecimento).
+    let veiculosArr = resumo.combustivelOrdenado;
+
+    let totalLitrosDiesel = 0;
+    let totalGastoDiesel = 0;
+    let totalLitrosArla = 0;
+    let totalGastoArla = 0;
+    let consumoPorPlaca = {};
+
+    if (!veiculosArr) {
+        // 1. Pega os filtros de data atuais
+        const inicioInput = document.getElementById('dataInicio').value;
+        const fimInput = document.getElementById('dataFim').value;
+        let dInicio = inicioInput ? new Date(inicioInput + 'T00:00:00') : new Date(1900, 0, 1);
+        let dFim = fimInput ? new Date(fimInput + 'T23:59:59') : new Date(2100, 0, 1);
+
+        // 2. Prepara a base com os veículos que tiveram viagem (da aba principal)
+        Object.entries(resumo.veiculos).forEach(([placa, d]) => {
+            consumoPorPlaca[placa] = { km: d.km, viagens: d.viagens, faturamento: d.valor, litrosDiesel: 0, gastoDiesel: 0, litrosArla: 0, gastoArla: 0, media: 0 };
+        });
+
+        // 3. Lê os abastecimentos (da aba combustível) e soma nos veículos corretos
+        if (dadosCombustivelOriginais && dadosCombustivelOriginais.length > 1) {
+            const idxC = { placa: 0, data: 1, litros: 3, tipo: 6, valor: 7 };
+            dadosCombustivelOriginais.slice(1).forEach(linha => {
+                const dataReal = parsearDataBR(linha[idxC.data]);
+                
+                // Filtra o abastecimento pelo mesmo período do filtro global
+                if (dataReal && dataReal >= dInicio && dataReal <= dFim) {
+                    let placaLinha = String(linha[idxC.placa] || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+                    
+                    // Tenta achar a placa no nosso resumo (independente de hífens)
+                    let placaAlvo = Object.keys(consumoPorPlaca).find(p => p.toUpperCase().replace(/[^A-Z0-9]/g, '') === placaLinha);
+                    
+                    // Se o veículo abasteceu mas NÃO viajou no período, nós adicionamos ele na lista
+                    if (!placaAlvo && placaLinha) {
+                        placaAlvo = linha[idxC.placa] || "INDEFINIDO";
+                        consumoPorPlaca[placaAlvo] = { km: 0, viagens: 0, faturamento: 0, litrosDiesel: 0, gastoDiesel: 0, litrosArla: 0, gastoArla: 0, media: 0 };
+                    }
+
+                    if(placaAlvo && placaAlvo !== "INDEFINIDO") {
+                        const qtd = extrairNumero(linha[idxC.litros]);
+                        const vlr = extrairNumero(linha[idxC.valor]);
+                        const tipo = String(linha[idxC.tipo] || '').toUpperCase();
+
+                        if (tipo.includes('ARLA')) {
+                            consumoPorPlaca[placaAlvo].litrosArla += qtd;
+                            consumoPorPlaca[placaAlvo].gastoArla += vlr;
+                        } else {
+                            consumoPorPlaca[placaAlvo].litrosDiesel += qtd;
+                            consumoPorPlaca[placaAlvo].gastoDiesel += vlr;
+                        }
+                    }
+                }
+            });
+        }
+
+        // 4. Calcula a média final (KM/L) de cada veículo
+        Object.keys(consumoPorPlaca).forEach(p => {
+            const c = consumoPorPlaca[p];
+            c.media = c.litrosDiesel > 0 ? (c.km / c.litrosDiesel) : 0;
+        });
+
+        // Transforma em array, remove vazios e ordena pelo maior gasto por padrão
+        veiculosArr = Object.entries(consumoPorPlaca).filter(v => v[1].gastoDiesel > 0 || v[1].km > 0).sort((a, b) => b[1].gastoDiesel - a[1].gastoDiesel);
+        
+        // Salva no objeto principal para que o botão de Filtro na tabela funcione!
+        resumo.combustivelOrdenado = veiculosArr; 
+    }
+
+    // Calcula os totais globais
+    veiculosArr.forEach(v => {
+        totalLitrosDiesel += v[1].litrosDiesel;
+        totalGastoDiesel += v[1].gastoDiesel;
+        totalLitrosArla += v[1].litrosArla;
+        totalGastoArla += v[1].gastoArla;
+    });
+
+    const totalGasto = totalGastoDiesel + totalGastoArla;
+    const kmFrota = veiculosArr.reduce((acc, v) => acc + v[1].km, 0);
+    const mediaFrota = totalLitrosDiesel > 0 ? (kmFrota / totalLitrosDiesel) : 0;
+
+    // Identifica Extremos
+    const veiculosParaMedia = veiculosArr.filter(v => v[1].km > 0 && v[1].litrosDiesel > 0);
+    let melhorMediaTexto = "N/A";
+    let piorMediaTexto = "N/A";
+    
+    if (veiculosParaMedia.length > 0) {
+        const melhor = [...veiculosParaMedia].sort((a,b) => b[1].media - a[1].media)[0];
+        const pior = [...veiculosParaMedia].sort((a,b) => a[1].media - b[1].media)[0];
+        melhorMediaTexto = `${melhor[0]} <br> <span style="font-size:0.8rem">(${formatarNumero(melhor[1].media)} km/l)</span>`;
+        piorMediaTexto = `${pior[0]} <br> <span style="font-size:0.8rem">(${formatarNumero(pior[1].media)} km/l)</span>`;
+    }
+
+    // GERA O HTML DO TOPO
+    const metricsHTML = `
+        <div class="metrics-grid">
+            <div class="metric-card" style="border-bottom: 3px solid #dc3545;"><div class="metric-icon"><i class="fas fa-gas-pump" style="color:#dc3545;"></i></div><div class="metric-value" style="color:#dc3545;">${formatarMoeda(totalGasto)}</div><div class="metric-label">Gasto Total (Diesel + Arla)</div></div>
+            <div class="metric-card"><div class="metric-icon"><i class="fas fa-oil-can"></i></div><div class="metric-value">${formatarNumero(totalLitrosDiesel)} L</div><div class="metric-label">Total Diesel Consumido</div></div>
+            <div class="metric-card"><div class="metric-icon"><i class="fas fa-tachometer-alt"></i></div><div class="metric-value">${formatarNumero(mediaFrota)} km/l</div><div class="metric-label">Média Geral da Frota</div></div>
+            <div class="metric-card"><div class="metric-icon"><i class="fas fa-tint"></i></div><div class="metric-value">${formatarNumero(totalLitrosArla)} L</div><div class="metric-label">Total Arla Consumido</div></div>
+            
+            <div class="metric-card"><div class="metric-icon" style="color: #28a745; background: rgba(40,167,69,0.1);"><i class="fas fa-arrow-up"></i></div><div class="metric-value" style="font-size:1rem; padding: 5px 0;">${melhorMediaTexto}</div><div class="metric-label">Veículo Mais Econômico</div></div>
+            <div class="metric-card"><div class="metric-icon" style="color: #dc3545; background: rgba(220,53,69,0.1);"><i class="fas fa-arrow-down"></i></div><div class="metric-value" style="font-size:1rem; padding: 5px 0;">${piorMediaTexto}</div><div class="metric-label">Veículo Mais Gastão</div></div>
+        </div>
+    `;
+
+    // FUNÇÃO QUE DEFINE O DIAGNÓSTICO COM BASE NA MÉDIA
+    const gerarDiagnostico = (km, litros, media) => {
+        if (litros == 0 && km > 0) return `<span class="status-badge" style="background:#e2e3e5; color:#383d41;">❔ Falta Lançar Abast.</span>`;
+        if (km == 0 && litros > 0) return `<span class="status-badge status-pendente">⚠️ Abast. s/ Viagem Lançada</span>`;
+        if (media >= 2.1) return `<span class="status-badge status-pago">✅ Excelente</span>`;
+        if (media >= 1.7) return `<span class="status-badge status-analise">🔵 Operação Normal</span>`;
+        return `<span class="status-badge" style="background:#f8d7da; color:#dc3545; font-weight:bold;">🔴 Alerta: Roubo/Vazamento</span>`;
+    };
+
+    // GERA A TABELA DESKTOP OU LISTA MOBILE
+    if (window.innerWidth < 768) {
+        const listCards = veiculosArr.map(([placa, dados]) => `
+            <div class="mobile-card" onclick="abrirDetalhesVeiculo('${placa}')" style="cursor:pointer;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>${placa}</strong>
+                    ${gerarDiagnostico(dados.km, dados.litrosDiesel, dados.media)}
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:0.85rem; color:var(--cor-texto-sec);">
+                    <span>${formatarNumero(dados.km)} km</span>
+                    <span>${formatarNumero(dados.litrosDiesel)} Litros</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:8px; align-items:flex-end;">
+                    <span style="font-weight:bold; color:var(--cor-primaria);">Média: ${formatarNumero(dados.media)} km/l</span>
+                    <span class="money" style="color:#dc3545;">- ${formatarMoeda(dados.gastoDiesel)}</span>
+                </div>
+            </div>`).join('');
+        elementos.contentArea.innerHTML = metricsHTML + `<h3 class="mobile-title" style="margin-top:1.5rem;">Auditoria por Veículo</h3><div class="mobile-card-list">${listCards}</div>`;
+        return;
+    }
+
+    elementos.contentArea.innerHTML = metricsHTML + `
+        <div class="summary-card">
+            <div class="summary-header">
+                <div class="summary-title">Auditoria e Diagnóstico de Consumo</div>
+                <small style="color:var(--cor-texto-sec);">Clique na placa para ver o detalhamento completo no modal.</small>
+            </div>
+            <table class="summary-table">
+                <thead>
+                    <tr>
+                        <th>Placa <i class="fas fa-sort-alpha-down btn-sort" onclick="ordenarRelatorio('combustivel', 'key')"></i></th>
+                        <th class="center">KM Rodado <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('combustivel', 'km')"></i></th>
+                        <th class="center">Litros (Diesel) <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('combustivel', 'litrosDiesel')"></i></th>
+                        <th class="money">Gasto Custo (R$) <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('combustivel', 'gastoDiesel')"></i></th>
+                        <th class="center">Média KM/L <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('combustivel', 'media')"></i></th>
+                        <th class="center">Diagnóstico do Sistema</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${veiculosArr.map(([placa, dados]) => `
+                        <tr onclick="abrirDetalhesVeiculo('${placa}')" style="cursor:pointer" class="hover-row">
+                            <td><strong>${placa}</strong></td>
+                            <td class="center">${formatarNumero(dados.km)}</td>
+                            <td class="center">${formatarNumero(dados.litrosDiesel)}</td>
+                            <td class="money" style="color:#dc3545;">- ${formatarMoeda(dados.gastoDiesel)}</td>
+                            <td class="center" style="font-weight:bold; color:var(--cor-primaria);">${formatarNumero(dados.media)}</td>
+                            <td class="center">${gerarDiagnostico(dados.km, dados.litrosDiesel, dados.media)}</td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
 
 // EXPORTAÇÕES GLOBAIS
 window.ordenarRelatorio = ordenarRelatorio;
