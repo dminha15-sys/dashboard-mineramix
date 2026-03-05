@@ -1432,29 +1432,36 @@ function mostrarRelatorioCombustivel(resumo) {
             };
         });
 
-        // 2. Lê os abastecimentos e mapeia as colunas exatas da sua planilha
+        // 2. Lê os abastecimentos e mapeia as NOVAS colunas da planilha
         if (dadosCombustivelOriginais && dadosCombustivelOriginais.length > 1) {
             const cabecalhoComb = dadosCombustivelOriginais[0];
             let idxC = { placa: -1, data: -1, litros: -1, valor: -1, tipo: -1, hodometro: -1 };
             
             cabecalhoComb.forEach((c, i) => {
-                const col = String(c).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                if (col.includes('PLACA') || col.includes('FROTA')) idxC.placa = i;
-                else if (col.includes('DATA')) idxC.data = i;
-                else if (col.includes('ABASTECIDO') || col.includes('LITRO') || col.includes('QTD')) idxC.litros = i;
-                else if (col === 'TOTAL' || (col.includes('VALOR') && !col.includes('LITRO'))) idxC.valor = i;
-                else if (col.includes('TIPO') || col.includes('COMBUSTIVEL')) idxC.tipo = i;
-                // AQUI ESTÁ A CORREÇÃO: Agora ele acha a palavra QUILOMETRAGEM
-                else if (col.includes('QUILOMETRAGEM') || col.includes('HODOMETRO') || col.includes('KM')) idxC.hodometro = i;
+                const col = String(c).toUpperCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                
+                if (col === 'PLACA/FROTA' || col.includes('PLACA') || col.includes('FROTA')) idxC.placa = i;
+                else if (col === 'DATA DO ABASTECIMENTO' || col.includes('DATA')) idxC.data = i;
+                
+                // Mapeia exato a coluna "LITROS"
+                else if (col === 'LITROS' || col.includes('ABASTECIDO')) idxC.litros = i;
+                
+                // Mapeia exato a coluna "QUILOMETRAGEM DO EQUIPAMENTO"
+                else if (col === 'QUILOMETRAGEM DO EQUIPAMENTO' || col.includes('QUILOMETRAGEM') || col.includes('HODOMETRO')) idxC.hodometro = i;
+                
+                // Mapeia exato a coluna "TOTAL" (Ignora a coluna "VALOR" do preço unitário)
+                else if (col === 'TOTAL' || col === 'VALOR TOTAL') idxC.valor = i;
+                
+                else if (col === 'TIPO COMBUSTIVEL' || col.includes('TIPO')) idxC.tipo = i;
             });
 
-            // Fallbacks de segurança baseados na sua foto
-            if(idxC.placa === -1) idxC.placa = 0;      // Coluna A
-            if(idxC.data === -1) idxC.data = 1;        // Coluna B
-            if(idxC.litros === -1) idxC.litros = 3;    // Coluna D
+            // Fallbacks de segurança baseados na sua nova foto (Caso o cabeçalho mude)
+            if(idxC.placa === -1) idxC.placa = 0;         // Coluna A
+            if(idxC.data === -1) idxC.data = 1;           // Coluna B
+            if(idxC.litros === -1) idxC.litros = 3;       // Coluna D
             if(idxC.hodometro === -1) idxC.hodometro = 4; // Coluna E
-            if(idxC.tipo === -1) idxC.tipo = 6;        // Coluna G
-            if(idxC.valor === -1) idxC.valor = 7;      // Coluna H
+            if(idxC.tipo === -1) idxC.tipo = 6;           // Coluna G
+            if(idxC.valor === -1) idxC.valor = 7;         // Coluna H (TOTAL)
 
             dadosCombustivelOriginais.slice(1).forEach(linha => {
                 const dataReal = parsearDataBR(linha[idxC.data]);
@@ -1470,8 +1477,8 @@ function mostrarRelatorioCombustivel(resumo) {
 
                     if(placaAlvo && placaAlvo !== "INDEFINIDO") {
                         const qtd = extrairNumero(linha[idxC.litros]);
-                        const vlr = extrairNumero(linha[idxC.valor]);
-                        const hodometroLido = extrairNumero(linha[idxC.hodometro]); // Agora lê a coluna E corretamente
+                        const vlr = extrairNumero(linha[idxC.valor]); // Agora puxa do TOTAL
+                        const hodometroLido = idxC.hodometro !== -1 ? extrairNumero(linha[idxC.hodometro]) : 0;
                         const tipo = String(linha[idxC.tipo] || '').toUpperCase();
 
                         if (tipo.includes('ARLA')) {
@@ -1648,7 +1655,6 @@ function mostrarRelatorioCombustivel(resumo) {
         </div>
     `;
 }
-
 
 // EXPORTAÇÕES GLOBAIS
 window.ordenarRelatorio = ordenarRelatorio;
