@@ -95,22 +95,44 @@ function extrairNumero(valor) {
 
 function parsearDataBR(dataStr) {
     if (!dataStr) return null;
-    if (dataStr instanceof Date) return dataStr; 
-    
-    try {
-        let str = String(dataStr).trim().replace(/-/g, '/');
-        if (str.includes('T')) return new Date(str); 
-        
+    if (dataStr instanceof Date) return isNaN(dataStr) ? null : dataStr;
+
+    let str = String(dataStr).trim();
+    if (str === '') return null;
+
+    // Remove qualquer timestamp antes da data (ex: "07/11/2025 02:43:30")
+    if (str.includes(' ')) {
+        str = str.split(' ')[0];
+    }
+
+    // Formato brasileiro DD/MM/YYYY
+    if (str.includes('/')) {
         const partes = str.split('/');
-        if (partes.length >= 3) {
-            const dia = parseInt(partes[0]);
-            const mes = parseInt(partes[1]) - 1;
-            let ano = parseInt(partes[2].substring(0, 4));
-            ano = ano < 100 ? 2000 + ano : ano;
-            return new Date(ano, mes, dia);
+        if (partes.length === 3) {
+            let dia = parseInt(partes[0], 10);
+            let mes = parseInt(partes[1], 10) - 1;
+            let ano = parseInt(partes[2], 10);
+            if (ano < 100) ano = 2000 + ano; // ano com dois dígitos
+            const data = new Date(ano, mes, dia);
+            if (!isNaN(data) && data.getDate() === dia) return data;
         }
-        return new Date(str);
-    } catch (e) { return null; }
+    }
+
+    // Formato ISO YYYY-MM-DD
+    if (str.includes('-')) {
+        const partes = str.split('-');
+        if (partes.length === 3) {
+            let ano = parseInt(partes[0], 10);
+            let mes = parseInt(partes[1], 10) - 1;
+            let dia = parseInt(partes[2], 10);
+            const data = new Date(ano, mes, dia);
+            if (!isNaN(data) && data.getDate() === dia) return data;
+        }
+    }
+
+    // Fallback
+    const data = new Date(str);
+    return isNaN(data) ? null : data;
 }
 function analisarDadosMineramix(dados) {
     if (!dados || dados.length < 5) return null;
