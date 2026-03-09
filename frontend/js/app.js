@@ -74,10 +74,28 @@ function detectarColunas(cabecalhos) {
     return colunas;
 }
 
-function extrairNumero(texto) {
-    if (!texto) return 0;
-    const limpo = String(texto).replace('R$', '').replace(/\./g, '').replace(',', '.').replace(/[^\d.-]/g, '').trim();
+function extrairNumero(valor) {
+    // 1. Se a célula estiver vazia, retorna zero
+    if (valor === null || valor === undefined || valor === '') return 0;
+
+    // 2. A MÁGICA AQUI: Se o Google já enviou como Número matemático puro, apenas devolve ele intacto!
+    if (typeof valor === 'number') {
+        return valor;
+    }
+
+    // 3. Se for um Texto digitado (Ex: "R$ 1.500,50"), fazemos a limpeza
+    let texto = String(valor).trim();
+
+    // Se o texto tiver vírgula, assumimos que é padrão brasileiro
+    if (texto.includes(',')) {
+        // Tira os pontos de milhar e troca a vírgula dos centavos por ponto
+        texto = texto.replace(/\./g, '').replace(',', '.');
+    }
+
+    // Arranca fora o "R$", letras e espaços, deixando só números e o ponto decimal
+    const limpo = texto.replace(/[^\d.-]/g, '');
     const numero = parseFloat(limpo);
+
     return isNaN(numero) ? 0 : numero;
 }
 
