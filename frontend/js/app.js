@@ -1277,6 +1277,8 @@ async function carregarDados() {
         if(elementos.contentArea) {
             elementos.contentArea.innerHTML = `<div class="loading"><i class="fas fa-exclamation-triangle"></i><p>Erro ao analisar dados: ${erro.message}</p><button class="btn btn-primary" onclick="carregarDados()" style="margin-top: 1rem;">Tentar Novamente</button></div>`;
         }
+    }
+}
 // ==========================================
 // INICIALIZAÇÃO E SISTEMA DE LOGIN (RIGOROSO)
 // ==========================================
