@@ -48,7 +48,9 @@ function detectColumnsGlobal(cabecalhos) {
     });
     return map;
 }
-
+if (typeof ChartDataLabels !== 'undefined') {
+    Chart.register(ChartDataLabels);
+}
 function detectarColunas(cabecalhos) {
     console.log("🔍 Cabeçalhos recebidos:", cabecalhos);
     const mapeamento = {};
@@ -822,21 +824,21 @@ function gerarGraficoModal(dadosMotoristas) {
 
     chartInstance = new Chart(ctx, {
         type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{ data: valores, backgroundColor: '#FF6B35', borderRadius: 4 }]
-        },
-        plugins: [ChartDataLabels],
+        data: { labels: labels, datasets: [{ ... }] },
         options: {
-            responsive: true, maintainAspectRatio: false,
+            responsive: true,
+            maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                datalabels: { color: corTexto, font: { weight: 'bold' }, anchor: 'end', align: 'end', formatter: (val) => formatarMoeda(val) }
+                datalabels: {
+                    color: corTexto,
+                    font: { weight: 'bold' },
+                    anchor: 'end',
+                    align: 'end',
+                    formatter: (val) => formatarMoeda(val)
+                }
             },
-            scales: {
-                x: { ticks: { color: corTexto }, grid: { display: false } },
-                y: { display: false }
-            }
+            scales: { ... }
         }
     });
 }
@@ -1178,13 +1180,11 @@ function ordenarRelatorio(tipo, campo) {
         // ORDENAÇÃO POR NOME/CHAVE
         if (campo === 'key') {
             // Se for data (diário), converte para objeto Date para ordenar corretamente
-            if (tipo === 'diario') {
-                const dateA = new Date(a[0].split('/').reverse().join('-'));
-                const dateB = new Date(b[0].split('/').reverse().join('-'));
-                // Se direcao é 1 (asc), menor data primeiro (a - b)
-                // Se direcao é -1 (desc), maior data primeiro (b - a)
-                return (dateA - dateB) * (direcao * -1); // * -1 para inverter padrão texto
-            } else {
+        if (tipo === 'diario') {
+            const dateA = new Date(a[0].split('/').reverse().join('-'));
+            const dateB = new Date(b[0].split('/').reverse().join('-'));
+            return direcao === 1 ? dateA - dateB : dateB - dateA;
+        } else {
                 valA = a[0]; valB = b[0];
                 return valA.localeCompare(valB) * (direcao * -1); 
             }
