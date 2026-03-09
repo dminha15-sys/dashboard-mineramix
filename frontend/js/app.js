@@ -1237,7 +1237,11 @@ async function carregarDados() {
     }
 }
 
+// ==========================================
+// INICIALIZAÇÃO E SISTEMA DE LOGIN
+// ==========================================
 document.addEventListener('DOMContentLoaded', function() {
+    // Carrega botões do menu
     document.querySelectorAll('.menu-item').forEach(item => {
         item.addEventListener('click', function() {
             const report = this.getAttribute('data-report');
@@ -1245,8 +1249,80 @@ document.addEventListener('DOMContentLoaded', function() {
             if (this.id === 'btn-refresh') carregarDados();
         });
     });
+    
     if (localStorage.getItem('darkMode') === 'on') toggleDarkMode();
-    carregarDados();
+    
+    // VERIFICA SE JÁ FEZ LOGIN ANTES
+    if (sessionStorage.getItem('mineramix_logado') === 'true') {
+        document.getElementById('loginOverlay').style.display = 'none';
+        carregarDados(); // Já tem acesso, então carrega a planilha
+        testarConexao();
+    } else {
+        document.getElementById('loginOverlay').style.display = 'flex'; // Bloqueia a tela
+    }
+});
+
+// AÇÃO DO BOTÃO ENTRAR
+document.getElementById('formLogin').addEventListener('submit', async function(e) {
+    e.preventDefault(); // Impede o site de piscar (e ativa o Salvar Senha do Chrome)
+    
+    const user = document.getElementById('loginUser').value;
+    const pass = document.getElementById('loginPass').value;
+    const btn = document.getElementById('btnEntrar');
+    const msg = document.getElementById('loginMsg');
+
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+    btn.disabled = true;
+    msg.style.display = 'none';
+
+    try {
+        // Puxa a planilha para ler as senhas
+        const resp = await fetch(CONFIG.API_URL);
+        const json = await resp.json();
+        
+        const usuarios = json.dadosUsuarios; 
+        let validado = false;
+
+        // Procura na aba USUARIOS
+        if (usuarios && usuarios.length > 1) {
+            for (let i = 1; i < usuarios.length; i++) {
+                const uPlanilha = String(usuarios[i][0]).trim();
+                const pPlanilha = String(usuarios[i][1]).trim();
+                
+                if (uPlanilha === user && pPlanilha === pass) {
+                    validado = true;
+                    break;
+                }
+            }
+        }
+
+        if (validado) {
+            // LOGIN COM SUCESSO
+            sessionStorage.setItem('mineramix_logado', 'true'); 
+            document.getElementById('loginOverlay').style.display = 'none'; // Esconde a tela de login
+            
+            // Aproveita que já baixou os dados para mostrar o dashboard
+            dadosOriginais = json.dados;
+            dadosCombustivelOriginais = json.dadosCombustivel;
+            const cols = detectarColunas(dadosOriginais[0]);
+            indiceColunaData = cols.find(c => c.tipo === 'data').indice;
+            
+            dadosAnalisados = analisarDadosMineramix(dadosOriginais);
+            mostrarRelatorio('overview');
+            atualizarStatus(true, '✅ Bem-vindo!');
+            mostrarNotificacao('Login realizado com sucesso', 'success');
+        } else {
+            msg.textContent = 'Usuário ou senha incorretos.';
+            msg.style.display = 'block';
+            btn.innerHTML = 'Entrar no Sistema';
+            btn.disabled = false;
+        }
+    } catch(error) {
+        msg.textContent = 'Erro ao verificar a senha.';
+        msg.style.display = 'block';
+        btn.innerHTML = 'Entrar no Sistema';
+        btn.disabled = false;
+    }
 });
 
 // ==========================================
