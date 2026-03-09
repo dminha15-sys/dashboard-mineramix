@@ -75,22 +75,20 @@ function detectarColunas(cabecalhos) {
 }
 
 function extrairNumero(valor) {
-    // 1. Se a célula estiver vazia, retorna zero
     if (valor === null || valor === undefined || valor === '') return 0;
+    if (valor instanceof Date) return 0; // Impede que datas quebrem o cálculo
 
-    // 2. Se o Google já enviou como Número matemático (o que causava os quadrilhões), devolve intacto!
-    if (typeof valor === 'number') {
-        return valor;
-    }
+    if (typeof valor === 'number') return valor;
 
-    // 3. Se for Texto ("R$ 1.500,50"), fazemos a limpeza
     let texto = String(valor).trim();
+    
+    // Limpeza pesada padrão BR
     if (texto.includes(',')) {
-        // Tira os pontos de milhar e troca a vírgula dos centavos por ponto
         texto = texto.replace(/\./g, '').replace(',', '.');
+    } else if ((texto.match(/\./g) || []).length > 1) {
+        texto = texto.replace(/\./g, '');
     }
 
-    // Arranca fora o "R$", letras e espaços
     const limpo = texto.replace(/[^\d.-]/g, '');
     const numero = parseFloat(limpo);
 
@@ -99,19 +97,26 @@ function extrairNumero(valor) {
 
 function parsearDataBR(dataStr) {
     if (!dataStr) return null;
+    if (dataStr instanceof Date) return dataStr; // Se o Google mandar data nativa, aceita direto
+
     try {
-        const partes = dataStr.split('/');
-        if (partes.length === 3) {
+        let str = String(dataStr).trim();
+        // Converte datas com traço (02-02-2026) para barra (02/02/2026)
+        str = str.replace(/-/g, '/');
+        
+        if (str.includes('T')) return new Date(str); // Se for formato ISO de servidor
+
+        const partes = str.split('/');
+        if (partes.length >= 3) {
             const dia = parseInt(partes[0]);
             const mes = parseInt(partes[1]) - 1;
-            const ano = parseInt(partes[2]);
-            const anoCompleto = ano < 100 ? 2000 + ano : ano;
-            return new Date(anoCompleto, mes, dia);
+            let ano = parseInt(partes[2].substring(0, 4));
+            ano = ano < 100 ? 2000 + ano : ano;
+            return new Date(ano, mes, dia);
         }
-        return new Date(dataStr);
+        return new Date(str);
     } catch (e) { return null; }
 }
-
 function analisarDadosMineramix(dados) {
     if (!dados || dados.length < 5) return null;
     let indiceCabecalho = -1;
@@ -1493,7 +1498,7 @@ window.imprimirRelatorioUnificado = function() {
 };
 
 // ==========================================
-// NOVO: RELATÓRIO E AUDITORIA DE COMBUSTÍVEL (COM MÉDIA EXATA TANQUE A TANQUE)
+// NOVO: RELATÓRIO E AUDITORIA DE COMBUSTÍVEL (BLINDADO)
 // ==========================================
 function mostrarRelatorioCombustivel(resumo) {
     let veiculosArr = resumo.combustivelOrdenado;
@@ -1508,20 +1513,14 @@ function mostrarRelatorioCombustivel(resumo) {
         let dInicio = inicioInput ? new Date(inicioInput + 'T00:00:00') : new Date(1900, 0, 1);
         let dFim = fimInput ? new Date(fimInput + 'T23:59:59') : new Date(2100, 0, 1);
 
-        // 1. Inicia com os veículos da aba principal (Viagens)
         Object.entries(resumo.veiculos).forEach(([placa, d]) => {
             consumoPorPlaca[placa] = { 
-                kmViagens: d.km, 
-                kmReal: 0, 
-                litrosDiesel: 0, gastoDiesel: 0, 
-                litrosArla: 0, gastoArla: 0, 
-                media: 0, desvio: 0,
-                abastecimentos: [], 
-                erroDigitacao: false 
+                kmViagens: d.km, kmReal: 0, 
+                litrosDiesel: 0, gastoDiesel: 0, litrosArla: 0, gastoArla: 0, 
+                media: 0, desvio: 0, abastecimentos: [], erroDigitacao: false 
             };
         });
 
-        // 2. Lê os abastecimentos e mapeia as colunas
         if (dadosCombustivelOriginais && dadosCombustivelOriginais.length > 1) {
             const cabecalhoComb = dadosCombustivelOriginais[0];
             let idxC = { placa: -1, data: -1, litros: -1, valor: -1, tipo: -1, hodometro: -1 };
@@ -1529,12 +1528,12 @@ function mostrarRelatorioCombustivel(resumo) {
             cabecalhoComb.forEach((c, i) => {
                 const col = String(c).toUpperCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 
-                if (col === 'PLACA/FROTA' || col.includes('PLACA') || col.includes('FROTA')) idxC.placa = i;
-                else if (col === 'DATA DO ABASTECIMENTO' || col.includes('DATA')) idxC.data = i;
+                if (col.includes('PLACA') || col.includes('FROTA')) idxC.placa = i;
+                else if (col.includes('DATA')) idxC.data = i;
                 else if (col === 'LITROS' || col.includes('ABASTECIDO')) idxC.litros = i;
-                else if (col === 'QUILOMETRAGEM DO EQUIPAMENTO' || col.includes('QUILOMETRAGEM') || col.includes('HODOMETRO')) idxC.hodometro = i;
+                else if (col.includes('QUILOMETRAGEM') || col.includes('HODOMETRO')) idxC.hodometro = i;
                 else if (col === 'TOTAL' || col === 'VALOR TOTAL') idxC.valor = i;
-                else if (col === 'TIPO COMBUSTIVEL' || col.includes('TIPO')) idxC.tipo = i;
+                else if (col.includes('TIPO')) idxC.tipo = i;
             });
 
             if(idxC.placa === -1) idxC.placa = 0;
@@ -1571,7 +1570,6 @@ function mostrarRelatorioCombustivel(resumo) {
                             
                             if (hodometroLido > 0) {
                                 consumoPorPlaca[placaAlvo].abastecimentos.push({
-                                    dataObj: dataReal,
                                     hodometro: hodometroLido,
                                     litros: qtd
                                 });
@@ -1582,17 +1580,12 @@ function mostrarRelatorioCombustivel(resumo) {
             });
         }
 
-        // 3. INTELIGÊNCIA MATEMÁTICA
+        // CÁLCULO BLINDADO DE HODÔMETRO
         Object.keys(consumoPorPlaca).forEach(p => {
             const c = consumoPorPlaca[p];
             
-            // ORDENAÇÃO BLINDADA: Ordena por Data. Se for no mesmo dia, ordena pelo menor Hodômetro primeiro!
-            c.abastecimentos.sort((a, b) => {
-                if (a.dataObj.getTime() === b.dataObj.getTime()) {
-                    return a.hodometro - b.hodometro;
-                }
-                return a.dataObj - b.dataObj;
-            });
+            // Ordenação infalível: Do menor hodômetro para o maior (ignora erros de digitação de data)
+            c.abastecimentos.sort((a, b) => a.hodometro - b.hodometro);
 
             let kmCalculado = 0;
             let litrosValidosParaMedia = 0;
@@ -1600,19 +1593,14 @@ function mostrarRelatorioCombustivel(resumo) {
 
             c.abastecimentos.forEach(abast => {
                 let hAtual = abast.hodometro;
-                
                 if (hAtual > 0) {
                     if (ultimoHodometro > 0) {
-                        if (hAtual < ultimoHodometro) {
-                            c.erroDigitacao = true;
-                        } else {
-                            let dist = hAtual - ultimoHodometro;
-                            if (dist > 15000) {
-                                c.erroDigitacao = true; 
-                            } else {
-                                kmCalculado += dist;
-                                litrosValidosParaMedia += abast.litros;
-                            }
+                        let dist = hAtual - ultimoHodometro;
+                        if (dist > 15000) {
+                            c.erroDigitacao = true; // Trava de erro grotesco (ex: digitou um zero a mais)
+                        } else if (dist > 0) {
+                            kmCalculado += dist;
+                            litrosValidosParaMedia += abast.litros;
                         }
                     }
                     ultimoHodometro = hAtual; 
