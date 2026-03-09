@@ -78,21 +78,19 @@ function extrairNumero(valor) {
     // 1. Se a célula estiver vazia, retorna zero
     if (valor === null || valor === undefined || valor === '') return 0;
 
-    // 2. A MÁGICA AQUI: Se o Google já enviou como Número matemático puro, apenas devolve ele intacto!
+    // 2. Se o Google já enviou como Número matemático (o que causava os quadrilhões), devolve intacto!
     if (typeof valor === 'number') {
         return valor;
     }
 
-    // 3. Se for um Texto digitado (Ex: "R$ 1.500,50"), fazemos a limpeza
+    // 3. Se for Texto ("R$ 1.500,50"), fazemos a limpeza
     let texto = String(valor).trim();
-
-    // Se o texto tiver vírgula, assumimos que é padrão brasileiro
     if (texto.includes(',')) {
         // Tira os pontos de milhar e troca a vírgula dos centavos por ponto
         texto = texto.replace(/\./g, '').replace(',', '.');
     }
 
-    // Arranca fora o "R$", letras e espaços, deixando só números e o ponto decimal
+    // Arranca fora o "R$", letras e espaços
     const limpo = texto.replace(/[^\d.-]/g, '');
     const numero = parseFloat(limpo);
 
@@ -1518,8 +1516,8 @@ function mostrarRelatorioCombustivel(resumo) {
                 litrosDiesel: 0, gastoDiesel: 0, 
                 litrosArla: 0, gastoArla: 0, 
                 media: 0, desvio: 0,
-                abastecimentos: [], // Guarda o histórico para calcular a diferença
-                erroDigitacao: false // Flag de inteligência
+                abastecimentos: [], 
+                erroDigitacao: false 
             };
         });
 
@@ -1539,7 +1537,6 @@ function mostrarRelatorioCombustivel(resumo) {
                 else if (col === 'TIPO COMBUSTIVEL' || col.includes('TIPO')) idxC.tipo = i;
             });
 
-            // Fallbacks de segurança
             if(idxC.placa === -1) idxC.placa = 0;
             if(idxC.data === -1) idxC.data = 1;
             if(idxC.litros === -1) idxC.litros = 3;
@@ -1572,7 +1569,6 @@ function mostrarRelatorioCombustivel(resumo) {
                             consumoPorPlaca[placaAlvo].litrosDiesel += qtd;
                             consumoPorPlaca[placaAlvo].gastoDiesel += vlr;
                             
-                            // Guarda o hodômetro E os litros do abastecimento para a conta perfeita
                             if (hodometroLido > 0) {
                                 consumoPorPlaca[placaAlvo].abastecimentos.push({
                                     dataObj: dataReal,
@@ -1586,15 +1582,20 @@ function mostrarRelatorioCombustivel(resumo) {
             });
         }
 
-        // 3. INTELIGÊNCIA MATEMÁTICA (MÉDIA DE TANQUE A TANQUE)
+        // 3. INTELIGÊNCIA MATEMÁTICA
         Object.keys(consumoPorPlaca).forEach(p => {
             const c = consumoPorPlaca[p];
             
-            // Ordena os abastecimentos do mais antigo para o mais novo
-            c.abastecimentos.sort((a, b) => a.dataObj - b.dataObj);
+            // ORDENAÇÃO BLINDADA: Ordena por Data. Se for no mesmo dia, ordena pelo menor Hodômetro primeiro!
+            c.abastecimentos.sort((a, b) => {
+                if (a.dataObj.getTime() === b.dataObj.getTime()) {
+                    return a.hodometro - b.hodometro;
+                }
+                return a.dataObj - b.dataObj;
+            });
 
             let kmCalculado = 0;
-            let litrosValidosParaMedia = 0; // Vai somar só os litros que geraram KM
+            let litrosValidosParaMedia = 0;
             let ultimoHodometro = 0;
 
             c.abastecimentos.forEach(abast => {
@@ -1603,15 +1604,13 @@ function mostrarRelatorioCombustivel(resumo) {
                 if (hAtual > 0) {
                     if (ultimoHodometro > 0) {
                         if (hAtual < ultimoHodometro) {
-                            // ERRO: Hodômetro atual é menor que o anterior
                             c.erroDigitacao = true;
                         } else {
                             let dist = hAtual - ultimoHodometro;
                             if (dist > 15000) {
-                                c.erroDigitacao = true; // Previne erro de digitação absurdo
+                                c.erroDigitacao = true; 
                             } else {
                                 kmCalculado += dist;
-                                // A MÁGICA: Só soma os litros SE ouve deslocamento do último tanque pra cá!
                                 litrosValidosParaMedia += abast.litros;
                             }
                         }
@@ -1623,12 +1622,9 @@ function mostrarRelatorioCombustivel(resumo) {
             c.kmReal = kmCalculado;
             c.desvio = (c.kmReal > 0 && !c.erroDigitacao) ? (c.kmReal - c.kmViagens) : 0;
 
-            // Calcula a Média Perfeita
             if (c.kmReal > 0 && !c.erroDigitacao) {
-                // Se tem hodômetro, usa os Litros Válidos (ignora os litros do 1º tanque do mês)
                 c.media = litrosValidosParaMedia > 0 ? (c.kmReal / litrosValidosParaMedia) : 0;
             } else {
-                // Se não tem hodômetro, usa o KM da Viagem e divide por todos os litros como "quebra galho"
                 c.media = c.litrosDiesel > 0 ? (c.kmViagens / c.litrosDiesel) : 0;
             }
         });
