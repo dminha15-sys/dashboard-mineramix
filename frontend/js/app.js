@@ -467,8 +467,9 @@ function mostrarVisaoGeral(resumo) {
             tituloEl.textContent = `Período: ${fmt(dInicio)} até ${fmt(dFim)}`;
             
             // Marca o botão custom (opcional, ou o botão de ícone)
-            event.currentTarget.classList.add('active');
-
+         if (event && event.currentTarget) {
+    event.currentTarget.classList.add('active');
+}
         } else {
             // É um botão de dias predefinidos (5, 10, 15, 30)
             const dias = parseInt(tipo);
@@ -816,7 +817,7 @@ function abrirDetalhesDia(diaClicado) {
 
 function gerarGraficoModal(dadosMotoristas) {
     const ctx = document.getElementById('graficoDia').getContext('2d');
-    if(chartInstance) chartInstance.destroy();
+    if (chartInstance) chartInstance.destroy();
     const labels = dadosMotoristas.map(d => d[0].split(' ')[0]);
     const valores = dadosMotoristas.map(d => d[1].valor);
     const isDark = document.body.classList.contains('dark');
@@ -824,7 +825,14 @@ function gerarGraficoModal(dadosMotoristas) {
 
     chartInstance = new Chart(ctx, {
         type: 'bar',
-        data: { labels: labels, datasets: [{ ... }] },
+        data: {
+            labels: labels,
+            datasets: [{
+                data: valores,
+                backgroundColor: '#FF6B35',
+                borderRadius: 4
+            }]
+        },
         options: {
             responsive: true,
             maintainAspectRatio: false,
@@ -838,7 +846,10 @@ function gerarGraficoModal(dadosMotoristas) {
                     formatter: (val) => formatarMoeda(val)
                 }
             },
-            scales: { ... }
+            scales: {
+                x: { ticks: { color: corTexto }, grid: { display: false } },
+                y: { display: false }
+            }
         }
     });
 }
