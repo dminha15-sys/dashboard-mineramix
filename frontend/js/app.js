@@ -76,36 +76,29 @@ function detectarColunas(cabecalhos) {
 
 function extrairNumero(valor) {
     if (valor === null || valor === undefined || valor === '') return 0;
-    if (valor instanceof Date) return 0; // Impede que datas quebrem o cálculo
-
+    if (valor instanceof Date) return 0; // Proteção contra datas
     if (typeof valor === 'number') return valor;
-
-    let texto = String(valor).trim();
     
-    // Limpeza pesada padrão BR
+    let texto = String(valor).trim();
     if (texto.includes(',')) {
         texto = texto.replace(/\./g, '').replace(',', '.');
     } else if ((texto.match(/\./g) || []).length > 1) {
         texto = texto.replace(/\./g, '');
     }
-
+    
     const limpo = texto.replace(/[^\d.-]/g, '');
     const numero = parseFloat(limpo);
-
     return isNaN(numero) ? 0 : numero;
 }
 
 function parsearDataBR(dataStr) {
     if (!dataStr) return null;
-    if (dataStr instanceof Date) return dataStr; // Se o Google mandar data nativa, aceita direto
-
+    if (dataStr instanceof Date) return dataStr; 
+    
     try {
-        let str = String(dataStr).trim();
-        // Converte datas com traço (02-02-2026) para barra (02/02/2026)
-        str = str.replace(/-/g, '/');
+        let str = String(dataStr).trim().replace(/-/g, '/');
+        if (str.includes('T')) return new Date(str); 
         
-        if (str.includes('T')) return new Date(str); // Se for formato ISO de servidor
-
         const partes = str.split('/');
         if (partes.length >= 3) {
             const dia = parseInt(partes[0]);
@@ -116,6 +109,7 @@ function parsearDataBR(dataStr) {
         }
         return new Date(str);
     } catch (e) { return null; }
+}
 }
 function analisarDadosMineramix(dados) {
     if (!dados || dados.length < 5) return null;
@@ -1527,7 +1521,6 @@ function mostrarRelatorioCombustivel(resumo) {
             
             cabecalhoComb.forEach((c, i) => {
                 const col = String(c).toUpperCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                
                 if (col.includes('PLACA') || col.includes('FROTA')) idxC.placa = i;
                 else if (col.includes('DATA')) idxC.data = i;
                 else if (col === 'LITROS' || col.includes('ABASTECIDO')) idxC.litros = i;
@@ -1536,16 +1529,12 @@ function mostrarRelatorioCombustivel(resumo) {
                 else if (col.includes('TIPO')) idxC.tipo = i;
             });
 
-            if(idxC.placa === -1) idxC.placa = 0;
-            if(idxC.data === -1) idxC.data = 1;
-            if(idxC.litros === -1) idxC.litros = 3;
-            if(idxC.hodometro === -1) idxC.hodometro = 4;
-            if(idxC.tipo === -1) idxC.tipo = 6;
-            if(idxC.valor === -1) idxC.valor = 7;
+            if(idxC.placa === -1) idxC.placa = 0; if(idxC.data === -1) idxC.data = 1;
+            if(idxC.litros === -1) idxC.litros = 3; if(idxC.hodometro === -1) idxC.hodometro = 4;
+            if(idxC.tipo === -1) idxC.tipo = 6; if(idxC.valor === -1) idxC.valor = 7;
 
             dadosCombustivelOriginais.slice(1).forEach(linha => {
                 const dataReal = parsearDataBR(linha[idxC.data]);
-                
                 if (dataReal && dataReal >= dInicio && dataReal <= dFim) {
                     let placaLinha = String(linha[idxC.placa] || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
                     let placaAlvo = Object.keys(consumoPorPlaca).find(p => p.toUpperCase().replace(/[^A-Z0-9]/g, '') === placaLinha);
@@ -1567,12 +1556,8 @@ function mostrarRelatorioCombustivel(resumo) {
                         } else {
                             consumoPorPlaca[placaAlvo].litrosDiesel += qtd;
                             consumoPorPlaca[placaAlvo].gastoDiesel += vlr;
-                            
                             if (hodometroLido > 0) {
-                                consumoPorPlaca[placaAlvo].abastecimentos.push({
-                                    hodometro: hodometroLido,
-                                    litros: qtd
-                                });
+                                consumoPorPlaca[placaAlvo].abastecimentos.push({ hodometro: hodometroLido, litros: qtd });
                             }
                         }
                     }
@@ -1584,7 +1569,7 @@ function mostrarRelatorioCombustivel(resumo) {
         Object.keys(consumoPorPlaca).forEach(p => {
             const c = consumoPorPlaca[p];
             
-            // Ordenação infalível: Do menor hodômetro para o maior (ignora erros de digitação de data)
+            // A MÁGICA ESTÁ AQUI: Ordena sempre do menor hodômetro pro maior (Ignora erros de data)
             c.abastecimentos.sort((a, b) => a.hodometro - b.hodometro);
 
             let kmCalculado = 0;
@@ -1596,8 +1581,9 @@ function mostrarRelatorioCombustivel(resumo) {
                 if (hAtual > 0) {
                     if (ultimoHodometro > 0) {
                         let dist = hAtual - ultimoHodometro;
+                        // Trava só para caso digitem um zero a mais e a diferença passe de 15.000km de uma vez
                         if (dist > 15000) {
-                            c.erroDigitacao = true; // Trava de erro grotesco (ex: digitou um zero a mais)
+                            c.erroDigitacao = true; 
                         } else if (dist > 0) {
                             kmCalculado += dist;
                             litrosValidosParaMedia += abast.litros;
@@ -1658,11 +1644,9 @@ function mostrarRelatorioCombustivel(resumo) {
         if (erroDigitacao) return `<span class="status-badge" style="background:#6f42c1; color:white; font-weight:bold;"><i class="fas fa-keyboard"></i> ERRO HODÔMETRO</span>`;
         if (litros == 0 && kmViagens > 0) return `<span class="status-badge" style="background:#e2e3e5; color:#383d41;">❔ Falta Abastecimento</span>`;
         if (kmViagens == 0 && kmReal == 0 && litros > 0) return `<span class="status-badge status-pendente">⚠️ Abast. Sem Viagem</span>`;
-        
         if (media < 1.0 && media > 0) return `<span class="status-badge" style="background:#f8d7da; color:#dc3545; font-weight:bold;"><i class="fas fa-exclamation-triangle"></i> ROUBO/VAZAMENTO</span>`;
         if (media > 3.0) return `<span class="status-badge status-pendente">🟠 Anormal (>3 km/l)</span>`;
         if (media >= 1.0 && media <= 3.0) return `<span class="status-badge status-pago">✅ Normal (~2 km/l)</span>`;
-        
         return `<span class="status-badge" style="background:#e2e3e5; color:#383d41;">S/ Dados p/ Média</span>`;
     };
 
@@ -1730,7 +1714,6 @@ function mostrarRelatorioCombustivel(resumo) {
         </div>
     `;
 }
-
 // EXPORTAÇÕES GLOBAIS
 window.ordenarRelatorio = ordenarRelatorio;
 window.abrirDetalhesCliente = abrirDetalhesCliente;
