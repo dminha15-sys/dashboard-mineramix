@@ -110,7 +110,8 @@ function parsearDataBR(dataStr) {
         return new Date(str);
     } catch (e) { return null; }
 }
-}
+
+function analisarDadosMineramix(dados) {
 function analisarDadosMineramix(dados) {
     if (!dados || dados.length < 5) return null;
     let indiceCabecalho = -1;
