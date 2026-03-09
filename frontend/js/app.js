@@ -7,20 +7,24 @@ const CUSTOS = {
     MANUTENCAO_PCT: 0.12 // 12% sobre o faturamento
 };
 
+// A constante CONFIG vem do arquivo config.js
+
 const CUSTO_PEDAGIOS = {
-    'AUTOPISTA_FLUMINENSE': 6.90,
-    'VIA_LAGOS': 27.00,
+    'AUTOPISTA_FLUMINENSE': 6.90, // Pedágio BR-101
+    'VIA_LAGOS': 27.00,           // Pedágio Via Lagos
     'PONTE_RIO_NITEROI': 6.20,
     'OUTROS': 0.00
 };
 
+// Variáveis de Estado
 let dadosAnalisados = null;
 let dadosOriginais = null;
 let dadosCombustivelOriginais = null;
 let indiceColunaData = null;
-let chartInstance = null;
-let overviewChart = null;
+let chartInstance = null; // Para o gráfico de modal
+let overviewChart = null; // Para o gráfico da visão geral
 
+// Elementos do DOM
 const elementos = {
     contentArea: document.getElementById('contentArea'),
     reportTitle: document.getElementById('reportTitle'),
@@ -46,6 +50,7 @@ function detectColumnsGlobal(cabecalhos) {
 }
 
 function detectarColunas(cabecalhos) {
+    console.log("🔍 Cabeçalhos recebidos:", cabecalhos);
     const mapeamento = {};
     cabecalhos.forEach((cabecalho, index) => {
         if (!cabecalho) return;
@@ -71,7 +76,7 @@ function detectarColunas(cabecalhos) {
 
 function extrairNumero(valor) {
     if (valor === null || valor === undefined || valor === '') return 0;
-    if (valor instanceof Date) return 0; 
+    if (valor instanceof Date) return 0; // Proteção contra datas
     if (typeof valor === 'number') return valor;
     
     let texto = String(valor).trim();
@@ -105,7 +110,6 @@ function parsearDataBR(dataStr) {
         return new Date(str);
     } catch (e) { return null; }
 }
-
 function analisarDadosMineramix(dados) {
     if (!dados || dados.length < 5) return null;
     let indiceCabecalho = -1;
@@ -189,6 +193,7 @@ function analisarDadosMineramix(dados) {
     resumo.veiculosOrdenados = Object.entries(resumo.veiculos).sort((a, b) => b[1].valor - a[1].valor);
     resumo.clientesOrdenados = Object.entries(resumo.clientes).sort((a, b) => b[1].valor - a[1].valor);
     resumo.rotasOrdenadas = Object.entries(resumo.rotas).sort((a, b) => b[1].viagens - a[1].viagens).slice(0, 10);
+    // Ordena dias por data (padrão)
     resumo.diasOrdenados = Object.entries(resumo.dias).sort((a, b) => new Date(b[0].split('/').reverse().join('-')) - new Date(a[0].split('/').reverse().join('-')));
 
     return resumo;
@@ -283,6 +288,7 @@ function mostrarVisaoGeral(resumo) {
         </div>
     `;
 
+    // --- CHART HTML COM BARRA DE FILTRO INTEGRADA ---
     const chartHTML = `
     <div class="summary-cards" style="grid-template-columns: 1fr; margin-bottom: 1.5rem;">
         <div class="summary-card">
@@ -339,13 +345,18 @@ function mostrarVisaoGeral(resumo) {
     </div>`;
     
     elementos.contentArea.innerHTML = metricsHTML + chartHTML + summaryHTML;
+
+    // --- LÓGICA DE FILTRAGEM E DESENHO DO GRÁFICO ---
     
+    // Função interna que desenha o canvas
     const desenhar = (dadosFiltrados) => {
         const ctx = document.getElementById('graficoGeral').getContext('2d');
         if (window.overviewChart instanceof Chart) window.overviewChart.destroy();
 
+        // Prepara dados (inverte para ficar Cronológico: Antigo -> Novo)
         const dadosGrafico = [...dadosFiltrados].reverse();
-        const labels = dadosGrafico.map(d => d[0].substring(0, 5));
+        
+        const labels = dadosGrafico.map(d => d[0].substring(0, 5)); // DD/MM
         const dataViagens = dadosGrafico.map(d => d[1].viagens);
         const dataValor = dadosGrafico.map(d => d[1].valor);
 
@@ -359,12 +370,34 @@ function mostrarVisaoGeral(resumo) {
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'Qtd Viagens', data: dataViagens, borderColor: '#FF6B35', backgroundColor: isMobile ? '#FF6B35' : 'rgba(255, 107, 53, 0.1)', yAxisID: 'y', tension: 0.3, fill: !isMobile, pointRadius: 4, order: 2 },
-                    { label: 'Valor Total (R$)', data: dataValor, borderColor: '#28a745', backgroundColor: 'transparent', yAxisID: 'y1', tension: 0.3, borderDash: isMobile ? [] : [5, 5], pointRadius: 4, type: 'line', order: 1 }
+                    {
+                        label: 'Qtd Viagens',
+                        data: dataViagens,
+                        borderColor: '#FF6B35', 
+                        backgroundColor: isMobile ? '#FF6B35' : 'rgba(255, 107, 53, 0.1)',
+                        yAxisID: 'y',
+                        tension: 0.3,
+                        fill: !isMobile,
+                        pointRadius: 4,
+                        order: 2
+                    },
+                    {
+                        label: 'Valor Total (R$)',
+                        data: dataValor,
+                        borderColor: '#28a745', 
+                        backgroundColor: 'transparent',
+                        yAxisID: 'y1',
+                        tension: 0.3,
+                        borderDash: isMobile ? [] : [5, 5],
+                        pointRadius: 4,
+                        type: 'line', 
+                        order: 1
+                    }
                 ]
             },
             options: {
-                responsive: true, maintainAspectRatio: false,
+                responsive: true,
+                maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
                 plugins: {
                     legend: { labels: { color: colorText } },
@@ -384,47 +417,89 @@ function mostrarVisaoGeral(resumo) {
                 },
                 scales: {
                     x: { grid: { display: false }, ticks: { color: colorText } },
-                    y: { type: 'linear', display: true, position: 'left', title: { display: !isMobile, text: 'Viagens', color: colorText }, grid: { color: colorGrid }, ticks: { color: colorText } },
-                    y1: { type: 'linear', display: !isMobile, position: 'right', title: { display: !isMobile, text: 'Valor (R$)', color: colorText }, grid: { drawOnChartArea: false }, ticks: { color: colorText } }
+                    y: {
+                        type: 'linear', display: true, position: 'left',
+                        title: { display: !isMobile, text: 'Viagens', color: colorText },
+                        grid: { color: colorGrid }, ticks: { color: colorText }
+                    },
+                    y1: {
+                        type: 'linear', display: !isMobile, position: 'right',
+                        title: { display: !isMobile, text: 'Valor (R$)', color: colorText },
+                        grid: { drawOnChartArea: false }, ticks: { color: colorText }
+                    }
                 }
             }
         });
     };
 
+    // --- FUNÇÃO EXPORTADA PARA OS BOTÕES ---
     window.filtrarGrafico = function(tipo) {
         let dadosFiltrados = [];
         const tituloEl = document.getElementById('tituloGraficoDinamico');
+        
+        // Remove active de todos
         document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
 
         if (tipo === 'custom') {
             const inicioVal = document.getElementById('gInicio').value;
             const fimVal = document.getElementById('gFim').value;
-            if (!inicioVal || !fimVal) { mostrarNotificacao('Selecione as duas datas', 'error'); return; }
+            
+            if (!inicioVal || !fimVal) {
+                mostrarNotificacao('Selecione as duas datas', 'error');
+                return;
+            }
+
+            // Converte input YYYY-MM-DD para Date zerada
             const dInicio = new Date(inicioVal + 'T00:00:00');
             const dFim = new Date(fimVal + 'T23:59:59');
+
+            // Filtra o array completo de dias (diasOrdenados está do mais novo pro mais antigo)
             dadosFiltrados = resumo.diasOrdenados.filter(([dataStr, _]) => {
                 const partes = dataStr.split('/');
-                const dataDia = new Date(partes[2], partes[1]-1, partes[0]);
+                const dataDia = new Date(partes[2], partes[1]-1, partes[0]); // YYYY, MM-1, DD
                 return dataDia >= dInicio && dataDia <= dFim;
             });
+
+            // Atualiza título com datas formatadas
             const fmt = (d) => d.toLocaleDateString('pt-BR');
             tituloEl.textContent = `Período: ${fmt(dInicio)} até ${fmt(dFim)}`;
+            
+            // Marca o botão custom (opcional, ou o botão de ícone)
             event.currentTarget.classList.add('active');
+
         } else {
+            // É um botão de dias predefinidos (5, 10, 15, 30)
             const dias = parseInt(tipo);
             dadosFiltrados = resumo.diasOrdenados.slice(0, dias);
             tituloEl.textContent = `Tendência dos Últimos ${dias} Dias`;
+            
+            // Marca o botão clicado
             const btn = Array.from(document.querySelectorAll('.chart-btn')).find(b => b.textContent.includes(dias + ' Dias'));
             if(btn) btn.classList.add('active');
         }
 
-        if (dadosFiltrados.length === 0) { mostrarNotificacao('Nenhum dado neste período', 'error'); return; }
+        if (dadosFiltrados.length === 0) {
+            mostrarNotificacao('Nenhum dado neste período', 'error');
+            return;
+        }
+
         desenhar(dadosFiltrados);
     };
 
+    // INICIALIZAÇÃO PADRÃO: 10 DIAS
+    // Chama a filtragem diretamente para desenhar e setar o título inicial
     window.filtrarGrafico('10');
-}
 
+    // Listener de resize para responsividade
+    if (window.resizeChartListener) window.removeEventListener('resize', window.resizeChartListener);
+    window.resizeChartListener = () => {
+        // Redesenha com o estado atual (seria ideal salvar estado, mas default 10 serve para resize rápido)
+        // Se quiser persistir o filtro no resize, precisaria de uma var global 'filtroAtualGrafico'
+        // Por simplicidade, mantemos responsividade básica.
+    };
+    window.addEventListener('resize', window.resizeChartListener);
+}
+// === MOTORISTAS COM FILTRO ===
 function mostrarRelatorioMotoristas(resumo) {
     const gerarClick = (nome) => `onclick="abrirDetalhesMotorista('${nome}')" style="cursor:pointer"`;
     if (window.innerWidth < 768) {
@@ -453,6 +528,7 @@ function mostrarRelatorioMotoristas(resumo) {
     </div>`;
 }
 
+// === VEÍCULOS COM FILTRO ===
 function mostrarRelatorioVeiculos(resumo) {
     if (window.innerWidth < 768) {
         const list = resumo.veiculosOrdenados.map(([placa, d]) => 
@@ -480,6 +556,7 @@ function mostrarRelatorioVeiculos(resumo) {
     </div>`;
 }
 
+// === CLIENTES COM FILTRO ===
 function mostrarRelatorioClientes(resumo) {
     if (window.innerWidth < 768) {
         const list = resumo.clientesOrdenados.slice(0, 50).map(([c, d]) => 
@@ -524,6 +601,7 @@ function mostrarRelatorioClientes(resumo) {
     </div>`;
 }
 
+// === ROTAS COM FILTRO ===
 function mostrarRelatorioRotas(resumo) {
     const gerarClick = (rota, km) => {
         const rotaSafe = encodeURIComponent(rota);
@@ -578,6 +656,7 @@ function mostrarRelatorioRotas(resumo) {
     </div>`;
 }
 
+// === DIÁRIO COM FILTRO E ALINHAMENTO CORRIGIDO ===
 function mostrarRelatorioDiario(resumo) {
     const listaDias = resumo.diasOrdenados;
     const gerarClick = (dia) => `onclick="abrirDetalhesDia('${dia}')" style="cursor:pointer"`;
@@ -603,8 +682,11 @@ function mostrarRelatorioDiario(resumo) {
                 <thead>
                     <tr>
                         <th>Data <i class="fas fa-sort-numeric-down btn-sort" onclick="ordenarRelatorio('diario', 'key')" title="Ordenar por Data"></i></th>
+                        
                         <th class="center">Viagens <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('diario', 'viagens')" title="Ordenar por Qtd"></i></th>
+                        
                         <th class="money">Faturamento Total <i class="fas fa-sort-amount-down btn-sort" onclick="ordenarRelatorio('diario', 'valor')" title="Ordenar por Valor"></i></th>
+                        
                         <th class="money">Média</th>
                         <th class="center">Dia da Semana</th>
                         <th class="center">Ação</th>
@@ -1063,18 +1145,20 @@ function toggleDia(idElemento, elementoClicado) {
     else { detalhes.style.display = 'block'; elementoClicado.classList.add('active'); }
 }
 
+// ==========================================
+// FUNÇÃO DE ORDENAÇÃO (FILTRO) COM CORREÇÃO DE DATAS
+// ==========================================
+let ordemAtual = {}; 
+
 function ordenarRelatorio(tipo, campo) {
     if (!dadosAnalisados) return;
-    let ordemAtual = window.ordemAtual || {};
-    window.ordemAtual = ordemAtual;
-
     const mapaListas = {
         'rotas': 'rotasOrdenadas',
         'motoristas': 'motoristasOrdenados',
         'veiculos': 'veiculosOrdenados',
         'clientes': 'clientesOrdenados',
         'diario': 'diasOrdenados',
-        'combustivel': 'combustivelOrdenado'
+        'combustivel': 'combustivelOrdenado' // <--- ADICIONE ESTA LINHA
     };
     const nomeLista = mapaListas[tipo];
     if (!nomeLista) return;
@@ -1090,16 +1174,22 @@ function ordenarRelatorio(tipo, campo) {
 
     dadosAnalisados[nomeLista].sort((a, b) => {
         let valA, valB;
+        
+        // ORDENAÇÃO POR NOME/CHAVE
         if (campo === 'key') {
+            // Se for data (diário), converte para objeto Date para ordenar corretamente
             if (tipo === 'diario') {
                 const dateA = new Date(a[0].split('/').reverse().join('-'));
                 const dateB = new Date(b[0].split('/').reverse().join('-'));
-                return (dateA - dateB) * (direcao * -1); 
+                // Se direcao é 1 (asc), menor data primeiro (a - b)
+                // Se direcao é -1 (desc), maior data primeiro (b - a)
+                return (dateA - dateB) * (direcao * -1); // * -1 para inverter padrão texto
             } else {
                 valA = a[0]; valB = b[0];
                 return valA.localeCompare(valB) * (direcao * -1); 
             }
         } 
+        // ORDENAÇÃO POR VALORES NUMÉRICOS
         else {
             valA = a[1][campo]; valB = b[1][campo];
             return (valA - valB) * direcao;
@@ -1108,6 +1198,9 @@ function ordenarRelatorio(tipo, campo) {
     mostrarRelatorio(tipo);
 }
 
+// ==========================================
+// INICIALIZAÇÃO
+// ==========================================
 function aplicarFiltroData() {
     if (!dadosOriginais) { mostrarNotificacao('❌ Dados não carregados', 'error'); return; }
     const inicio = document.getElementById('dataInicio').value;
@@ -1162,21 +1255,29 @@ async function carregarDados() {
     }
 }
 
+// ==========================================
+// INICIALIZAÇÃO E SISTEMA DE LOGIN (RIGOROSO)
+// ==========================================
 document.addEventListener('DOMContentLoaded', function() {
+    // Carrega botões do menu
     document.querySelectorAll('.menu-item').forEach(item => {
         item.addEventListener('click', function() {
             const report = this.getAttribute('data-report');
             if (report) mostrarRelatorio(report);
-            if (this.id === 'btn-refresh') carregarDados(); 
+            if (this.id === 'btn-refresh') carregarDados(); // Botão de atualizar interno
         });
     });
     
     if (localStorage.getItem('darkMode') === 'on') toggleDarkMode();
+    
+    // COMO NÃO TEM MAIS MEMÓRIA, SEMPRE BLOQUEIA A TELA AO ABRIR OU RECARREGAR (F5)
     document.getElementById('loginOverlay').style.display = 'flex'; 
 });
 
+// AÇÃO DO BOTÃO ENTRAR
 document.getElementById('formLogin').addEventListener('submit', async function(e) {
-    e.preventDefault(); 
+    e.preventDefault(); // Impede o site de piscar (e ativa o Salvar Senha do Chrome)
+    
     const user = document.getElementById('loginUser').value;
     const pass = document.getElementById('loginPass').value;
     const btn = document.getElementById('btnEntrar');
@@ -1187,11 +1288,14 @@ document.getElementById('formLogin').addEventListener('submit', async function(e
     msg.style.display = 'none';
 
     try {
+        // Puxa a planilha para ler as senhas
         const resp = await fetch(CONFIG.API_URL);
         const json = await resp.json();
+        
         const usuarios = json.dadosUsuarios; 
         let validado = false;
 
+        // Procura na aba USUARIOS
         if (usuarios && usuarios.length > 1) {
             for (let i = 1; i < usuarios.length; i++) {
                 const uPlanilha = String(usuarios[i][0]).trim();
@@ -1205,11 +1309,15 @@ document.getElementById('formLogin').addEventListener('submit', async function(e
         }
 
         if (validado) {
+            // LOGIN COM SUCESSO (Apenas esconde a tela, não salva na memória do navegador)
             document.getElementById('loginOverlay').style.display = 'none'; 
+            
+            // Aproveita que já baixou os dados para mostrar o dashboard
             dadosOriginais = json.dados;
             dadosCombustivelOriginais = json.dadosCombustivel;
             const cols = detectarColunas(dadosOriginais[0]);
             indiceColunaData = cols.find(c => c.tipo === 'data').indice;
+            
             dadosAnalisados = analisarDadosMineramix(dadosOriginais);
             mostrarRelatorio('overview');
             atualizarStatus(true, '✅ Bem-vindo!');
@@ -1228,25 +1336,37 @@ document.getElementById('formLogin').addEventListener('submit', async function(e
     }
 });
 
+// ==========================================
+// FUNÇÃO DE IMPRESSÃO DO RELATÓRIO UNIFICADO
+// ==========================================
 window.imprimirRelatorioUnificado = function() {
     if (!dadosAnalisados) {
         mostrarNotificacao('Os dados ainda não foram carregados.', 'error');
         return;
     }
+
     const resumo = dadosAnalisados;
+    
+    // Helpers de formatação
     const fmtMoeda = (v) => 'R$ ' + v.toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     const fmtNum = (v) => v.toFixed(0).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    const topDias = [...resumo.diasOrdenados].sort((a,b) => b[1].valor - a[1].valor).slice(0, 5); 
+
+    // Prepara Listas Específicas
+    const topDias = [...resumo.diasOrdenados].sort((a,b) => b[1].valor - a[1].valor).slice(0, 5); // 5 dias com maior faturamento
     const topClientes = resumo.clientesOrdenados.slice(0, 5);
     const topRotas = resumo.rotasOrdenadas.slice(0, 10);
+    
+    // Pega o período do filtro para mostrar no cabeçalho
     const inputInicio = document.getElementById('dataInicio') ? document.getElementById('dataInicio').value : '';
     const inputFim = document.getElementById('dataFim') ? document.getElementById('dataFim').value : '';
     let periodoTexto = "Todo o período";
     if (inputInicio && inputFim) {
         periodoTexto = `De ${inputInicio.split('-').reverse().join('/')} até ${inputFim.split('-').reverse().join('/')}`;
     }
+
     const dataImpressao = new Date().toLocaleString('pt-BR');
 
+    // Constrói o layout do documento para impressão (Limpo e minimalista)
     const html = `
     <!DOCTYPE html>
     <html lang="pt-br">
@@ -1260,19 +1380,27 @@ window.imprimirRelatorioUnificado = function() {
             h1 { margin: 0; color: #1f2933; font-size: 20px; text-transform: uppercase; }
             h2 { color: #FF6B35; font-size: 14px; margin-top: 25px; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 3px; }
             .info { color: #666; font-size: 10px; margin-top: 5px; }
+            
             .grid-cards { display: flex; gap: 10px; margin-bottom: 20px; }
             .card { flex: 1; border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fdfdfd; text-align: center; }
             .card-title { font-size: 9px; color: #777; text-transform: uppercase; margin-bottom: 5px; font-weight: bold; }
             .card-value { font-size: 14px; font-weight: bold; color: #1f2933; }
+            
             table { width: 100%; border-collapse: collapse; margin-bottom: 20px; page-break-inside: auto; }
             tr { page-break-inside: avoid; page-break-after: auto; }
             th, td { border: 1px solid #ddd; padding: 5px 6px; }
             th { background-color: #f4f4f4; font-weight: bold; font-size: 10px; text-transform: uppercase; color: #444; }
+            
             .center { text-align: center; }
             .right { text-align: right; }
             .bold { font-weight: bold; }
+            
             .page-break { page-break-before: always; }
-            @media print { .no-print { display: none; } }
+            
+            /* Botão escondido na hora de imprimir de verdade */
+            @media print {
+                .no-print { display: none; }
+            }
         </style>
     </head>
     <body>
@@ -1280,6 +1408,7 @@ window.imprimirRelatorioUnificado = function() {
             <h1>MINERAMIX - Relatório Gerencial</h1>
             <div class="info">Período Analisado: <b>${periodoTexto}</b> | Emitido em: ${dataImpressao}</div>
         </div>
+
         <h2>1. Visão Geral Financeira e Operacional</h2>
         <div class="grid-cards">
             <div class="card"><div class="card-title">Total de Viagens</div><div class="card-value">${resumo.totalLinhas}</div></div>
@@ -1287,39 +1416,56 @@ window.imprimirRelatorioUnificado = function() {
             <div class="card"><div class="card-title">Média por Viagem</div><div class="card-value">${fmtMoeda(resumo.mediaValor)}</div></div>
             <div class="card"><div class="card-title">KM Total Rodado</div><div class="card-value">${fmtNum(resumo.totalKM)} km</div></div>
         </div>
+
         <div style="display: flex; gap: 20px;">
             <div style="flex: 1;">
                 <h2>2. Top 5 Clientes</h2>
                 <table>
                     <thead><tr><th>Cliente</th><th class="center">Vgs</th><th class="right">Faturamento</th></tr></thead>
-                    <tbody>${topClientes.map(c => `<tr><td>${c[0]}</td><td class="center">${c[1].viagens}</td><td class="right bold">${fmtMoeda(c[1].valor)}</td></tr>`).join('')}</tbody>
+                    <tbody>
+                        ${topClientes.map(c => `<tr><td>${c[0]}</td><td class="center">${c[1].viagens}</td><td class="right bold">${fmtMoeda(c[1].valor)}</td></tr>`).join('')}
+                    </tbody>
                 </table>
             </div>
+            
             <div style="flex: 1;">
                 <h2>3. Top 5 Dias (Maior Faturamento)</h2>
                 <table>
                     <thead><tr><th>Data</th><th class="center">Vgs</th><th class="right">Faturamento</th></tr></thead>
-                    <tbody>${topDias.map(d => `<tr><td>${d[0]}</td><td class="center">${d[1].viagens}</td><td class="right bold">${fmtMoeda(d[1].valor)}</td></tr>`).join('')}</tbody>
+                    <tbody>
+                        ${topDias.map(d => `<tr><td>${d[0]}</td><td class="center">${d[1].viagens}</td><td class="right bold">${fmtMoeda(d[1].valor)}</td></tr>`).join('')}
+                    </tbody>
                 </table>
             </div>
         </div>
+
         <h2>4. Rotas Mais Rodadas (Top 10)</h2>
         <table>
             <thead><tr><th>Rota</th><th class="center">Viagens</th><th class="center">KM Total</th><th class="right">Faturamento</th></tr></thead>
-            <tbody>${topRotas.map(r => `<tr><td>${r[0]}</td><td class="center">${r[1].viagens}</td><td class="center">${fmtNum(r[1].km)}</td><td class="right bold">${fmtMoeda(r[1].valor)}</td></tr>`).join('')}</tbody>
+            <tbody>
+                ${topRotas.map(r => `<tr><td>${r[0]}</td><td class="center">${r[1].viagens}</td><td class="center">${fmtNum(r[1].km)}</td><td class="right bold">${fmtMoeda(r[1].valor)}</td></tr>`).join('')}
+            </tbody>
         </table>
+
         <div class="page-break"></div>
         <div class="header"><h1>MINERAMIX - Análise de Frota e Equipe</h1></div>
+
         <h2>5. Relatório de Veículos / KM</h2>
         <table>
             <thead><tr><th>Placa</th><th class="center">Viagens</th><th class="center">KM Total</th><th class="right">Receita Bruta</th><th class="right">Receita/KM</th></tr></thead>
-            <tbody>${resumo.veiculosOrdenados.map(v => `<tr><td>${v[0]}</td><td class="center">${v[1].viagens}</td><td class="center">${fmtNum(v[1].km)}</td><td class="right bold">${fmtMoeda(v[1].valor)}</td><td class="right" style="color:#FF6B35">${fmtMoeda(v[1].km > 0 ? v[1].valor / v[1].km : 0)}</td></tr>`).join('')}</tbody>
+            <tbody>
+                ${resumo.veiculosOrdenados.map(v => `<tr><td>${v[0]}</td><td class="center">${v[1].viagens}</td><td class="center">${fmtNum(v[1].km)}</td><td class="right bold">${fmtMoeda(v[1].valor)}</td><td class="right" style="color:#FF6B35">${fmtMoeda(v[1].km > 0 ? v[1].valor / v[1].km : 0)}</td></tr>`).join('')}
+            </tbody>
         </table>
+
         <h2>6. Relatório de Motoristas</h2>
         <table>
             <thead><tr><th>Motorista</th><th class="center">Viagens</th><th class="center">KM Total</th><th class="right">Total Faturado</th></tr></thead>
-            <tbody>${resumo.motoristasOrdenados.map(m => `<tr><td>${m[0]}</td><td class="center">${m[1].viagens}</td><td class="center">${fmtNum(m[1].km)}</td><td class="right bold">${fmtMoeda(m[1].valor)}</td></tr>`).join('')}</tbody>
+            <tbody>
+                ${resumo.motoristasOrdenados.map(m => `<tr><td>${m[0]}</td><td class="center">${m[1].viagens}</td><td class="center">${fmtNum(m[1].km)}</td><td class="right bold">${fmtMoeda(m[1].valor)}</td></tr>`).join('')}
+            </tbody>
         </table>
+        
         <div class="no-print" style="text-align: center; margin-top: 30px; padding: 20px; background: #f9f9f9; border-top: 1px solid #ddd;">
             <p style="margin-bottom: 10px; color: #555;">Caso a janela de impressão não tenha aberto automaticamente, clique no botão abaixo.</p>
             <button onclick="window.print()" style="padding: 10px 20px; font-size: 14px; background: #FF6B35; color: white; border: none; cursor: pointer; border-radius: 5px; font-weight: bold;">Imprimir Relatório</button>
@@ -1328,17 +1474,25 @@ window.imprimirRelatorioUnificado = function() {
     </html>
     `;
 
+    // Abre uma nova janela e injeta o HTML
     const printWindow = window.open('', '_blank');
     if(printWindow) {
         printWindow.document.open();
         printWindow.document.write(html);
         printWindow.document.close();
-        setTimeout(() => { printWindow.print(); }, 500);
+        
+        // Aguarda 0.5 segundos para o navegador renderizar as margens e chama a impressora
+        setTimeout(() => {
+            printWindow.print();
+        }, 500);
     } else {
-        mostrarNotificacao('Seu navegador bloqueou o pop-up de impressão.', 'error');
+        mostrarNotificacao('Seu navegador bloqueou o pop-up de impressão. Permita pop-ups para este site.', 'error');
     }
 };
 
+// ==========================================
+// NOVO: RELATÓRIO E AUDITORIA DE COMBUSTÍVEL (BLINDADO)
+// ==========================================
 function mostrarRelatorioCombustivel(resumo) {
     let veiculosArr = resumo.combustivelOrdenado;
 
@@ -1410,9 +1564,11 @@ function mostrarRelatorioCombustivel(resumo) {
             });
         }
 
+        // CÁLCULO BLINDADO DE HODÔMETRO
         Object.keys(consumoPorPlaca).forEach(p => {
             const c = consumoPorPlaca[p];
             
+            // A MÁGICA ESTÁ AQUI: Ordena sempre do menor hodômetro pro maior (Ignora erros de data)
             c.abastecimentos.sort((a, b) => a.hodometro - b.hodometro);
 
             let kmCalculado = 0;
@@ -1424,6 +1580,7 @@ function mostrarRelatorioCombustivel(resumo) {
                 if (hAtual > 0) {
                     if (ultimoHodometro > 0) {
                         let dist = hAtual - ultimoHodometro;
+                        // Trava só para caso digitem um zero a mais e a diferença passe de 15.000km de uma vez
                         if (dist > 15000) {
                             c.erroDigitacao = true; 
                         } else if (dist > 0) {
@@ -1556,7 +1713,6 @@ function mostrarRelatorioCombustivel(resumo) {
         </div>
     `;
 }
-
 // EXPORTAÇÕES GLOBAIS
 window.ordenarRelatorio = ordenarRelatorio;
 window.abrirDetalhesCliente = abrirDetalhesCliente;
