@@ -1256,7 +1256,7 @@ async function carregarDados() {
 }
 
 // ==========================================
-// INICIALIZAÇÃO E SISTEMA DE LOGIN
+// INICIALIZAÇÃO E SISTEMA DE LOGIN (RIGOROSO)
 // ==========================================
 document.addEventListener('DOMContentLoaded', function() {
     // Carrega botões do menu
@@ -1264,20 +1264,14 @@ document.addEventListener('DOMContentLoaded', function() {
         item.addEventListener('click', function() {
             const report = this.getAttribute('data-report');
             if (report) mostrarRelatorio(report);
-            if (this.id === 'btn-refresh') carregarDados();
+            if (this.id === 'btn-refresh') carregarDados(); // Botão de atualizar interno
         });
     });
     
     if (localStorage.getItem('darkMode') === 'on') toggleDarkMode();
     
-    // VERIFICA SE JÁ FEZ LOGIN ANTES
-    if (sessionStorage.getItem('mineramix_logado') === 'true') {
-        document.getElementById('loginOverlay').style.display = 'none';
-        carregarDados(); // Já tem acesso, então carrega a planilha
-        testarConexao();
-    } else {
-        document.getElementById('loginOverlay').style.display = 'flex'; // Bloqueia a tela
-    }
+    // COMO NÃO TEM MAIS MEMÓRIA, SEMPRE BLOQUEIA A TELA AO ABRIR OU RECARREGAR (F5)
+    document.getElementById('loginOverlay').style.display = 'flex'; 
 });
 
 // AÇÃO DO BOTÃO ENTRAR
@@ -1315,9 +1309,8 @@ document.getElementById('formLogin').addEventListener('submit', async function(e
         }
 
         if (validado) {
-            // LOGIN COM SUCESSO
-            sessionStorage.setItem('mineramix_logado', 'true'); 
-            document.getElementById('loginOverlay').style.display = 'none'; // Esconde a tela de login
+            // LOGIN COM SUCESSO (Apenas esconde a tela, não salva na memória do navegador)
+            document.getElementById('loginOverlay').style.display = 'none'; 
             
             // Aproveita que já baixou os dados para mostrar o dashboard
             dadosOriginais = json.dados;
