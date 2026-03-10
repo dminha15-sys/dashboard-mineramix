@@ -1584,27 +1584,8 @@ function mostrarRelatorioCombustivel(resumo) {
 
         if (dadosCombustivelOriginais && dadosCombustivelOriginais.length > 1) {
             const cabecalhoComb = dadosCombustivelOriginais[0];
-         // Índices travados com base na estrutura exata da sua planilha
+         // Índices 100% cravados com base na sua planilha
             let idxC = { data: 0, placa: 1, tipo: 2, litros: 3, hodometro: 4, valor: 5 };
-            
-            // Garantia extra só para o caso de alguém arrastar uma coluna na planilha
-            cabecalhoComb.forEach((c, i) => {
-                const col = String(c).toUpperCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                if (col.includes('PLACA') || col.includes('FROTA')) idxC.placa = i;
-                else if (col.includes('DATA')) idxC.data = i;
-                else if (col.includes('TIPO')) idxC.tipo = i;
-                else if (col.includes('LITRO') || col.includes('QTD')) idxC.litros = i;
-                else if (col === 'KM' || col.includes('HODOMETRO')) idxC.hodometro = i;
-                else if (col.includes('TOTAL') || col.includes('VALOR')) idxC.valor = i;
-            });
-
-            // Plano B (Fallback) com os índices exatos da sua planilha!
-            if(idxC.data === -1) idxC.data = 0; 
-            if(idxC.placa === -1) idxC.placa = 1; 
-            if(idxC.tipo === -1) idxC.tipo = 2; 
-            if(idxC.litros === -1) idxC.litros = 3; 
-            if(idxC.hodometro === -1) idxC.hodometro = 4; 
-            if(idxC.valor === -1) idxC.valor = 5;
 
             dadosCombustivelOriginais.slice(1).forEach(linha => {
                 const dataReal = parsearDataBR(linha[idxC.data]);
@@ -1620,7 +1601,9 @@ function mostrarRelatorioCombustivel(resumo) {
                     if(placaAlvo && placaAlvo !== "INDEFINIDO") {
                         const qtd = extrairNumero(linha[idxC.litros]);
                         const vlr = extrairNumero(linha[idxC.valor]);
-                        const hodometroLido = idxC.hodometro !== -1 ? extrairNumero(linha[idxC.hodometro]) : 0;
+                        // Leitura blindada: Arranca pontos e textos, extraindo só o número puro
+const valorBrutoKM = linha[idxC.hodometro];
+const hodometroLido = valorBrutoKM ? parseInt(String(valorBrutoKM).replace(/\D/g, '') || "0", 10) : 0;
                         const tipo = String(linha[idxC.tipo] || '').toUpperCase();
 
                         if (tipo.includes('ARLA')) {
