@@ -1577,12 +1577,13 @@ function mostrarRelatorioCombustivel(resumo) {
             
             cabecalhoComb.forEach((c, i) => {
                 const col = String(c).toUpperCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                if (col.includes('PLACA') || col.includes('FROTA')) idxC.placa = i;
+                if (col.includes('PLACA') || col.includes('FROTA') || col.includes('VEICULO') || col.includes('CAVALO')) idxC.placa = i;
                 else if (col.includes('DATA')) idxC.data = i;
-                else if (col === 'LITROS' || col.includes('ABASTECIDO')) idxC.litros = i;
-                else if (col.includes('QUILOMETRAGEM') || col.includes('HODOMETRO')) idxC.hodometro = i;
-                else if (col === 'TOTAL' || col === 'VALOR TOTAL') idxC.valor = i;
-                else if (col.includes('TIPO')) idxC.tipo = i;
+                else if (col.includes('LITRO') || col.includes('ABASTECIDO') || col.includes('QTD')) idxC.litros = i;
+                // Adicionamos a busca flexível por "KM"
+                else if (col.includes('QUILOMETRAGEM') || col.includes('HODOMETRO') || col === 'KM' || col.includes('KM ') || col.includes(' ODO')) idxC.hodometro = i;
+                else if (col === 'TOTAL' || col.includes('VALOR')) idxC.valor = i;
+                else if (col.includes('TIPO') || col.includes('COMBUSTIVEL')) idxC.tipo = i;
             });
 
             if(idxC.placa === -1) idxC.placa = 0; if(idxC.data === -1) idxC.data = 1;
