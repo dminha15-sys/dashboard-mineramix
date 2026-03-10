@@ -1584,17 +1584,18 @@ function mostrarRelatorioCombustivel(resumo) {
 
         if (dadosCombustivelOriginais && dadosCombustivelOriginais.length > 1) {
             const cabecalhoComb = dadosCombustivelOriginais[0];
-            let idxC = { placa: -1, data: -1, litros: -1, valor: -1, tipo: -1, hodometro: -1 };
+         // Índices travados com base na estrutura exata da sua planilha
+            let idxC = { data: 0, placa: 1, tipo: 2, litros: 3, hodometro: 4, valor: 5 };
             
-// Busca inteligente aprimorada
+            // Garantia extra só para o caso de alguém arrastar uma coluna na planilha
             cabecalhoComb.forEach((c, i) => {
                 const col = String(c).toUpperCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                if (col.includes('PLACA') || col.includes('FROTA') || col.includes('VEICULO') || col.includes('CAVALO')) idxC.placa = i;
+                if (col.includes('PLACA') || col.includes('FROTA')) idxC.placa = i;
                 else if (col.includes('DATA')) idxC.data = i;
-                else if (col.includes('LITRO') || col.includes('ABASTECIDO') || col.includes('QTD')) idxC.litros = i;
-                else if (col.includes('QUILOMETRAGEM') || col.includes('HODOMETRO') || col === 'KM' || col.includes('KM ')) idxC.hodometro = i;
-                else if (col === 'TOTAL' || col.includes('VALOR')) idxC.valor = i;
-                else if (col.includes('TIPO') || col.includes('COMBUSTIVEL')) idxC.tipo = i;
+                else if (col.includes('TIPO')) idxC.tipo = i;
+                else if (col.includes('LITRO') || col.includes('QTD')) idxC.litros = i;
+                else if (col === 'KM' || col.includes('HODOMETRO')) idxC.hodometro = i;
+                else if (col.includes('TOTAL') || col.includes('VALOR')) idxC.valor = i;
             });
 
             // Plano B (Fallback) com os índices exatos da sua planilha!
