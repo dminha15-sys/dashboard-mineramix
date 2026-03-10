@@ -913,6 +913,7 @@ function abrirDetalhesVeiculo(placa) {
         const custoManutencao = faturamento * CUSTOS.MANUTENCAO_PCT;
         const lucroLiquidoEstimado = faturamento - custoDieselEstimado - custoManutencao;
 
+        // ========== DADOS DE COMBUSTÍVEL (já estavam corretos) ==========
         let litrosDieselReal = 0, valorDieselReal = 0, litrosArlaReal = 0, valorArlaReal = 0;
         let encontrouDadosReais = false;
 
@@ -922,8 +923,7 @@ function abrirDetalhesVeiculo(placa) {
         let dFim = fimInput ? new Date(fimInput + 'T23:59:59') : new Date(2100, 0, 1);
 
         if (dadosCombustivelOriginais && dadosCombustivelOriginais.length > 1) {
-            // Colunas exatas da sua aba de Combustível real
-        const idxC = { placa: 0, data: 1, litros: 3, hodometro: 4, tipo: 6, valor: 7 };
+            const idxC = { placa: 0, data: 1, litros: 3, hodometro: 4, tipo: 6, valor: 7 };
             dadosCombustivelOriginais.slice(1).forEach(linha => {
                 const placaLinha = String(linha[idxC.placa] || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
                 const placaAlvo = placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -934,13 +934,19 @@ function abrirDetalhesVeiculo(placa) {
                         const qtd = extrairNumero(linha[idxC.litros]);
                         const vlr = extrairNumero(linha[idxC.valor]);
                         const tipo = String(linha[idxC.tipo] || '').toUpperCase();
-                        if (tipo.includes('ARLA')) { litrosArlaReal += qtd; valorArlaReal += vlr; } 
-                        else { litrosDieselReal += qtd; valorDieselReal += vlr; }
+                        if (tipo.includes('ARLA')) {
+                            litrosArlaReal += qtd;
+                            valorArlaReal += vlr;
+                        } else {
+                            litrosDieselReal += qtd;
+                            valorDieselReal += vlr;
+                        }
                     }
                 }
             });
         }
 
+        // ========== PREENCHE OS DADOS ESTIMADOS NO MODAL ==========
         document.getElementById('textoPlaca').textContent = placa;
         document.getElementById('modalFaturamento').textContent = formatarMoeda(faturamento);
         document.getElementById('modalKM').textContent = formatarNumero(kmTotalEstimado) + ' km';
@@ -950,46 +956,92 @@ function abrirDetalhesVeiculo(placa) {
         elLucroLiq.textContent = formatarMoeda(lucroLiquidoEstimado);
         elLucroLiq.style.color = lucroLiquidoEstimado >= 0 ? 'var(--cor-pago)' : '#dc3545';
 
+        // ========== DADOS REAIS DE COMBUSTÍVEL ==========
         const elRealContainer = document.getElementById('containerDadosReais');
         if (encontrouDadosReais) {
             elRealContainer.style.display = 'block';
-            elRealContainer.style.background = 'transparent'; elRealContainer.style.border = 'none'; elRealContainer.style.padding = '0';
             elRealContainer.innerHTML = `
-            <h4 style="font-size: 0.9rem; color: var(--cor-primaria); margin: 1.5rem 0 0.5rem 0.5rem; border-left: 3px solid var(--cor-secundaria); padding-left: 8px;">Consumo Real (Abastecimentos)</h4>
-            <div style="background: var(--cor-fundo-menu); border-radius: 8px; border: 1px solid var(--cor-borda); overflow: hidden;">
-                <div class="driver-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid var(--cor-borda);">
-                    <div><strong style="color:var(--cor-primaria); font-size: 0.95rem;">DIESEL S-10</strong><br><small style="color:var(--cor-texto-sec); font-size: 0.8rem;">${formatarNumero(litrosDieselReal)} Litros</small></div>
-                    <div class="money" style="color: #dc3545; font-size: 1rem;">- ${formatarMoeda(valorDieselReal)}</div>
-                </div>
-                <div class="driver-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem;">
-                    <div><strong style="color:var(--cor-primaria); font-size: 0.95rem;">ARLA 32</strong><br><small style="color:var(--cor-texto-sec); font-size: 0.8rem;">${formatarNumero(litrosArlaReal)} Litros</small></div>
-                    <div class="money" style="color: #dc3545; font-size: 1rem;">- ${formatarMoeda(valorArlaReal)}</div>
-                </div>
-            </div>`;
+                <h4 style="font-size: 0.9rem; color: var(--cor-primaria); margin: 1.5rem 0 0.5rem 0.5rem; border-left: 3px solid var(--cor-secundaria); padding-left: 8px;">Consumo Real (Abastecimentos)</h4>
+                <div style="background: var(--cor-fundo-menu); border-radius: 8px; border: 1px solid var(--cor-borda); overflow: hidden;">
+                    <div class="driver-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid var(--cor-borda);">
+                        <div><strong style="color:var(--cor-primaria); font-size: 0.95rem;">DIESEL S-10</strong><br><small style="color:var(--cor-texto-sec); font-size: 0.8rem;">${formatarNumero(litrosDieselReal)} Litros</small></div>
+                        <div class="money" style="color: #dc3545; font-size: 1rem;">- ${formatarMoeda(valorDieselReal)}</div>
+                    </div>
+                    <div class="driver-list-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem;">
+                        <div><strong style="color:var(--cor-primaria); font-size: 0.95rem;">ARLA 32</strong><br><small style="color:var(--cor-texto-sec); font-size: 0.8rem;">${formatarNumero(litrosArlaReal)} Litros</small></div>
+                        <div class="money" style="color: #dc3545; font-size: 1rem;">- ${formatarMoeda(valorArlaReal)}</div>
+                    </div>
+                </div>`;
         } else {
             elRealContainer.style.display = 'none';
         }
 
+        // ========== ANÁLISE DE MOTORISTA E ROTA PREFERIDA (COM CLIENTE) ==========
         let motoristaPrincipal = "---", rotaPrincipal = "---";
-        if(dadosOriginais && indiceColunaData !== null) {
-             let viagensFiltradas = dadosOriginais.slice(1).filter(linha => {
-                 const dt = parsearDataBR(linha[indiceColunaData]);
-                 return dt >= dInicio && dt <= dFim && linha.toString().includes(placa);
-             });
-             const cols = detectColumnsGlobal(dadosOriginais[0]); 
-             const contMot = {}, contRota = {};
-             viagensFiltradas.forEach(v => {
-                 if(cols.motorista !== undefined) { const m = v[cols.motorista] || 'Desc'; contMot[m] = (contMot[m] || 0) + 1; }
-                 if(cols.origem !== undefined && cols.destino !== undefined) { const r = `${v[cols.origem]} -> ${v[cols.destino]}`; contRota[r] = (contRota[r] || 0) + 1; }
-             });
-             const sortMot = Object.entries(contMot).sort((a,b)=>b[1]-a[1]);
-             if(sortMot.length > 0) motoristaPrincipal = `${sortMot[0][0]} (${Math.round(sortMot[0][1]/viagensFiltradas.length*100)}%)`;
-             const sortRota = Object.entries(contRota).sort((a,b)=>b[1]-a[1]);
-             if(sortRota.length > 0) rotaPrincipal = sortRota[0][0];
+
+        if (dadosOriginais && indiceColunaData !== null) {
+            // Detecta os índices das colunas necessárias nos dados ORIGINAIS
+            const cabecalho = dadosOriginais[0];
+            const colunas = detectarColunas(cabecalho);
+            
+            // Índices específicos
+            const idxData = colunas.find(c => c.tipo === 'data')?.indice;
+            const idxVeiculo = colunas.find(c => c.tipo === 'veiculo')?.indice;
+            const idxMotorista = colunas.find(c => c.tipo === 'motorista')?.indice;
+            const idxCliente = colunas.find(c => c.tipo === 'cliente')?.indice;
+            const idxOrigem = colunas.find(c => c.tipo === 'origem')?.indice;
+            const idxDestino = colunas.find(c => c.tipo === 'destino')?.indice;
+
+            // Filtra as viagens do veículo dentro do período
+            const viagensFiltradas = dadosOriginais.slice(1).filter(linha => {
+                if (!linha[idxData]) return false;
+                const dt = parsearDataBR(linha[idxData]);
+                if (!dt) return false;
+                // Compara a placa usando o índice correto da coluna de veículo
+                const placaNaLinha = idxVeiculo !== undefined ? String(linha[idxVeiculo] || '').toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
+                return dt >= dInicio && dt <= dFim && placaNaLinha === placa.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            });
+
+            // Contadores
+            const contMotorista = {};
+            const contRotaComCliente = {};
+
+            viagensFiltradas.forEach(v => {
+                // Motorista
+                if (idxMotorista !== undefined) {
+                    const m = String(v[idxMotorista] || 'Desconhecido').trim();
+                    contMotorista[m] = (contMotorista[m] || 0) + 1;
+                }
+
+                // Cliente + Rota
+                if (idxCliente !== undefined && idxOrigem !== undefined && idxDestino !== undefined) {
+                    const cliente = String(v[idxCliente] || 'Sem cliente').trim();
+                    const origem = String(v[idxOrigem] || '?').trim();
+                    const destino = String(v[idxDestino] || '?').trim();
+                    const chave = `${cliente} - ${origem} → ${destino}`;
+                    contRotaComCliente[chave] = (contRotaComCliente[chave] || 0) + 1;
+                }
+            });
+
+            // Motorista mais frequente
+            const sortedMot = Object.entries(contMotorista).sort((a, b) => b[1] - a[1]);
+            if (sortedMot.length > 0) {
+                const nomeMot = sortedMot[0][0];
+                const perc = Math.round((sortedMot[0][1] / viagensFiltradas.length) * 100);
+                motoristaPrincipal = `${nomeMot} (${perc}%)`;
+            }
+
+            // Rota + Cliente mais frequente
+            const sortedRota = Object.entries(contRotaComCliente).sort((a, b) => b[1] - a[1]);
+            if (sortedRota.length > 0) {
+                rotaPrincipal = sortedRota[0][0]; // Ex: "POLIMIX CAJU - Rio de Janeiro, RJ → São Gonçalo, RJ"
+            }
         }
+
+        // Atualiza os elementos no modal
         document.getElementById('textoMotoristaVeiculo').textContent = motoristaPrincipal;
         document.getElementById('textoRotaVeiculo').textContent = rotaPrincipal;
-        document.getElementById('modalMedia').textContent = formatarMoeda(d.viagens > 0 ? faturamento/d.viagens : 0);
+        document.getElementById('modalMedia').textContent = formatarMoeda(d.viagens > 0 ? faturamento / d.viagens : 0);
 
         abrirModalComHistorico('modalVeiculo');
     } catch (e) {
