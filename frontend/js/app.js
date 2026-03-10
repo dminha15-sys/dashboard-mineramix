@@ -1575,20 +1575,24 @@ function mostrarRelatorioCombustivel(resumo) {
             const cabecalhoComb = dadosCombustivelOriginais[0];
             let idxC = { placa: -1, data: -1, litros: -1, valor: -1, tipo: -1, hodometro: -1 };
             
+// Busca inteligente aprimorada
             cabecalhoComb.forEach((c, i) => {
                 const col = String(c).toUpperCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
                 if (col.includes('PLACA') || col.includes('FROTA') || col.includes('VEICULO') || col.includes('CAVALO')) idxC.placa = i;
                 else if (col.includes('DATA')) idxC.data = i;
                 else if (col.includes('LITRO') || col.includes('ABASTECIDO') || col.includes('QTD')) idxC.litros = i;
-                // Adicionamos a busca flexível por "KM"
-                else if (col.includes('QUILOMETRAGEM') || col.includes('HODOMETRO') || col === 'KM' || col.includes('KM ') || col.includes(' ODO')) idxC.hodometro = i;
+                else if (col.includes('QUILOMETRAGEM') || col.includes('HODOMETRO') || col === 'KM' || col.includes('KM ')) idxC.hodometro = i;
                 else if (col === 'TOTAL' || col.includes('VALOR')) idxC.valor = i;
                 else if (col.includes('TIPO') || col.includes('COMBUSTIVEL')) idxC.tipo = i;
             });
 
-            if(idxC.placa === -1) idxC.placa = 0; if(idxC.data === -1) idxC.data = 1;
-            if(idxC.litros === -1) idxC.litros = 3; if(idxC.hodometro === -1) idxC.hodometro = 4;
-            if(idxC.tipo === -1) idxC.tipo = 6; if(idxC.valor === -1) idxC.valor = 7;
+            // Plano B (Fallback) com os índices exatos da sua planilha!
+            if(idxC.data === -1) idxC.data = 0; 
+            if(idxC.placa === -1) idxC.placa = 1; 
+            if(idxC.tipo === -1) idxC.tipo = 2; 
+            if(idxC.litros === -1) idxC.litros = 3; 
+            if(idxC.hodometro === -1) idxC.hodometro = 4; 
+            if(idxC.valor === -1) idxC.valor = 5;
 
             dadosCombustivelOriginais.slice(1).forEach(linha => {
                 const dataReal = parsearDataBR(linha[idxC.data]);
