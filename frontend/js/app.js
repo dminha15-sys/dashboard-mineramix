@@ -78,14 +78,25 @@ function detectarColunas(cabecalhos) {
 
 function extrairNumero(valor) {
     if (valor === null || valor === undefined || valor === '') return 0;
-    if (valor instanceof Date) return 0; // Proteção contra datas
+    if (valor instanceof Date) return 0;
     if (typeof valor === 'number') return valor;
     
     let texto = String(valor).trim();
-    if (texto.includes(',')) {
+    // Remove qualquer R$ ou espaços extras
+    texto = texto.replace(/R\$\s?/gi, '');
+    
+    const temVirgula = texto.includes(',');
+    const temPonto = texto.includes('.');
+    
+    if (temVirgula) {
+        // Padrão de dinheiro/litros: 1.110,48 ou 185,08
         texto = texto.replace(/\./g, '').replace(',', '.');
-    } else if ((texto.match(/\./g) || []).length > 1) {
-        texto = texto.replace(/\./g, '');
+    } else if (temPonto) {
+        // Padrão do seu Hodômetro: 379.799 ou 1.468.998
+        // Se termina com ponto e 3 números, ou se tem mais de um ponto, é milhar com certeza
+        if (/\.\d{3}$/.test(texto) || (texto.match(/\./g) || []).length > 1) {
+            texto = texto.replace(/\./g, ''); // Tira o ponto de milhar
+        }
     }
     
     const limpo = texto.replace(/[^\d.-]/g, '');
