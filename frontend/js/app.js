@@ -1587,12 +1587,12 @@ function mostrarRelatorioCombustivel(resumo) {
             });
 
             // Plano B (Fallback) com os índices exatos da sua planilha!
-            if(idxC.data === -1) idxC.data = 1; 
-            if(idxC.placa === -1) idxC.placa = 0; 
-            if(idxC.tipo === -1) idxC.tipo = 6; 
+            if(idxC.data === -1) idxC.data = 0; 
+            if(idxC.placa === -1) idxC.placa = 1; 
+            if(idxC.tipo === -1) idxC.tipo = 2; 
             if(idxC.litros === -1) idxC.litros = 3; 
             if(idxC.hodometro === -1) idxC.hodometro = 4; 
-            if(idxC.valor === -1) idxC.valor = 7;
+            if(idxC.valor === -1) idxC.valor = 5;
 
             dadosCombustivelOriginais.slice(1).forEach(linha => {
                 const dataReal = parsearDataBR(linha[idxC.data]);
